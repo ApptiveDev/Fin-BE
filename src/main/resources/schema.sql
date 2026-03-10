@@ -52,24 +52,26 @@ CREATE TABLE IF NOT EXISTS terms (
 );
 
 CREATE TABLE IF NOT EXISTS user_terms (
+                            id BIGSERIAL PRIMARY KEY,
                             user_id BIGINT NOT NULL,
-                            terms_id BIGINT NOT NULL,
+                            term_id BIGINT NOT NULL,
                             agreed BOOLEAN NOT NULL,
                             agreed_at TIMESTAMP NULL,
 
-                            PRIMARY KEY (user_id, terms_id),
+                            CONSTRAINT uq_user_id_term_id
+                                UNIQUE (user_id, term_id),
 
-                            CONSTRAINT fk_user_terms_user
+                            CONSTRAINT fk_user_term_user
                                 FOREIGN KEY (user_id)
                                     REFERENCES users(id)
                                     ON DELETE CASCADE,
 
-                            CONSTRAINT fk_user_terms_terms
-                                FOREIGN KEY (terms_id)
+                            CONSTRAINT fk_user_term_terms
+                                FOREIGN KEY (term_id)
                                     REFERENCES terms(id)
                                     ON DELETE CASCADE,
 
-                            CONSTRAINT chk_user_terms_agreed_at
+                            CONSTRAINT chk_user_term_agreed_at
                                 CHECK (
                                     (agreed = TRUE AND agreed_at IS NOT NULL)
                                         OR
@@ -77,5 +79,5 @@ CREATE TABLE IF NOT EXISTS user_terms (
                                     )
 );
 
-CREATE INDEX IF NOT EXISTS idx_user_terms_terms_id
-    ON user_terms(terms_id);
+CREATE INDEX IF NOT EXISTS idx_user_terms_term_id
+    ON user_terms(term_id);
