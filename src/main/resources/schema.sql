@@ -9,7 +9,7 @@ CREATE TYPE user_role AS ENUM (
 
 CREATE TABLE IF NOT EXISTS users (
                        id BIGSERIAL PRIMARY KEY,
-                       email VARCHAR(255) NOT NULL UNIQUE,
+                       email VARCHAR(255),
                        name VARCHAR(100) NOT NULL,
                        provider VARCHAR(50) NOT NULL,
                        provider_id VARCHAR(255) NOT NULL,
