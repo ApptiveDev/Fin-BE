@@ -1,11 +1,11 @@
-package apptive.fin.user.dto;
+package apptive.fin.user;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @Getter
 @AllArgsConstructor
-public class UserResponse {
+public class UserResponseDto {
 
     private Long id;
     private String email;

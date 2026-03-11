@@ -1,4 +1,4 @@
-package apptive.fin.user.controller;
+package apptive.fin.user;
 
 import org.springframework.web.bind.annotation.*;
 

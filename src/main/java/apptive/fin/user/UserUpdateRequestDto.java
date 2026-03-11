@@ -1,9 +1,9 @@
-package apptive.fin.user.dto;
+package apptive.fin.user;
 
 import lombok.Getter;
 
 @Getter
-public class UserUpdateRequest {
+public class UserUpdateRequestDto {
 
     private String name;
     private String email;
