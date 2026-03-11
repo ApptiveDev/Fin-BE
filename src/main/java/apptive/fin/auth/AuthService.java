@@ -28,7 +28,7 @@ public class AuthService {
             RefreshToken refreshToken = refreshTokenRepository.findByTokenHash(hashedToken)
                     .orElseThrow(()->new BusinessException(AuthErrorCode.UNAUTHORIZED));
 
-            if (!refreshToken.isActive()) {
+            if (!refreshToken.checkValidity()) {
                 throw new BusinessException(AuthErrorCode.UNAUTHORIZED);
             }
 

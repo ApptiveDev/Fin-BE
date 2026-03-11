@@ -48,9 +48,10 @@ public class RefreshToken extends BaseCreatedAtEntity {
         this.tokenHash = tokenHash;
         this.expiresAt = expiresAt;
         this.user = user;
+        this.isActive = true;
     }
 
     public boolean checkValidity() {
-        return (expiresAt.isBefore(LocalDateTime.now()) && isActive);
+        return isActive && expiresAt.isAfter(LocalDateTime.now());
     }
 }
