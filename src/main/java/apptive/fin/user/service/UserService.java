@@ -1,6 +1,9 @@
-package apptive.fin.user;
+package apptive.fin.user.service;
 
 import apptive.fin.global.error.BusinessException;
+import apptive.fin.user.*;
+import apptive.fin.user.dto.UserResponseDto;
+import apptive.fin.user.dto.UserUpdateRequestDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

@@ -1,8 +1,10 @@
-package apptive.fin.user;
+package apptive.fin.user.controller;
 
 import apptive.fin.auth.AuthUserDetails;
+import apptive.fin.user.dto.UserResponseDto;
+import apptive.fin.user.service.UserService;
+import apptive.fin.user.dto.UserUpdateRequestDto;
 import lombok.RequiredArgsConstructor;
-import org.apache.tomcat.util.net.openssl.ciphers.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 

@@ -1,4 +1,4 @@
-package apptive.fin.user;
+package apptive.fin.user.dto;
 
 import lombok.Getter;
 
