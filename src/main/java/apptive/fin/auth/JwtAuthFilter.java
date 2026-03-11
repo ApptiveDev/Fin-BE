@@ -50,9 +50,6 @@ public class JwtAuthFilter extends GenericFilterBean {
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
-            catch (UsernameNotFoundException e) {
-                SecurityContextHolder.clearContext();
-            }
             catch (Exception e) {
                 log.error("인증 처리 중 알 수 없는 에러", e);
                 SecurityContextHolder.clearContext();

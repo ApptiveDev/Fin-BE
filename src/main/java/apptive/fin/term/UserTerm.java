@@ -3,6 +3,7 @@ package apptive.fin.term;
 import apptive.fin.user.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.OnDelete;
@@ -40,5 +41,13 @@ public class UserTerm {
     @Column(name = "agreed_at")
     private LocalDateTime agreedAt = null;
 
+
+    @Builder
+    public UserTerm(User user, Term term, boolean agreed, LocalDateTime agreedAt) {
+        this.user = user;
+        this.term = term;
+        this.agreed = agreed;
+        this.agreedAt = agreedAt;
+    }
 
 }
