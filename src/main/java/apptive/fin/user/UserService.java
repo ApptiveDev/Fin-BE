@@ -3,6 +3,7 @@ package apptive.fin.user;
 import apptive.fin.global.error.BusinessException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +25,7 @@ public class UserService {
 
     }
 
+    @Transactional
     public void updateUser(Long userId, UserUpdateRequestDto request){
 
         User user = userRepository.findById(userId)
