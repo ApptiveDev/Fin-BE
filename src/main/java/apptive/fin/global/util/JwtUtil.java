@@ -1,5 +1,6 @@
 package apptive.fin.global.util;
 
+import apptive.fin.user.UserRole;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -43,9 +44,10 @@ public class JwtUtil {
 
     }
 
-    public String generateAccessToken(String userId) {
+    public String generateAccessToken(String userId, UserRole role) {
         return Jwts.builder()
                 .subject(userId)
+                .claim("role", role.name())
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + EXPIRATION))
                 .signWith(getKey())
