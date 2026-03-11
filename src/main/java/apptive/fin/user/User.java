@@ -31,8 +31,8 @@ public class User extends BaseTimeEntity {
     @Column(name = "provider_id", length = 255, nullable = false)
     private String providerId;
 
-    @Enumerated
-    @Column(name = "user_role", nullable = false)
+    @Enumerated(EnumType.STRING)
+    @Column(name = "user_role", nullable = false, length = 50)
     private UserRole userRole = UserRole.BEFORE_AGREED;
 
 
@@ -46,5 +46,9 @@ public class User extends BaseTimeEntity {
         this.userRole = userRole;
     }
 
+
+    public String getOAuthIdentifier() {
+        return provider + "_" + providerId;
+    }
 
 }

@@ -29,3 +29,10 @@ spring:
 jwt:
   expiration: 600
   refresh_expiration: 86400
+  secret: ${JWT_SECRET}
+
+
+app:
+  cookie:
+    secure: false
+    same-site: Lax

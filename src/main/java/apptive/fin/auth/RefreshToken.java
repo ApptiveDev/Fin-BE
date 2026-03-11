@@ -39,11 +39,18 @@ public class RefreshToken extends BaseCreatedAtEntity {
     @OnDelete(action = OnDeleteAction.CASCADE)
     private User user;
 
+    @Column(name = "is_active", nullable = false)
+    private boolean isActive;
+
 
     @Builder
     public RefreshToken(String tokenHash, LocalDateTime expiresAt, User user) {
         this.tokenHash = tokenHash;
         this.expiresAt = expiresAt;
         this.user = user;
+    }
+
+    public boolean checkValidity() {
+        return (expiresAt.isBefore(LocalDateTime.now()) && isActive);
     }
 }
