@@ -11,8 +11,8 @@ services:
       TZ: Asia/Seoul                # 타임존 설정
     ports:
       - "5678:5432"                 # 호스트 포트 : 컨테이너 포트
-    volumes:
-      - postgres_data:/var/lib/postgresql/data # 데이터 영구 저장을 위한 볼륨 매핑
-
-volumes:
-  postgres_data:
+#    volumes:
+#      - :/var/lib/postgresql/data # 데이터 영구 저장을 위한 볼륨 매핑
+#
+#volumes:
+#  postgres_data:
