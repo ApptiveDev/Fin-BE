@@ -1,5 +1,6 @@
 package apptive.fin.user;
 
+import apptive.fin.global.error.BusinessException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -9,14 +10,34 @@ public class UserService {
 
     private final UserRepository userRepository;
 
-    public String getMyInfo(){
-        return "user info";
+    public UserResponseDto getMyInfo(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND));
+        // ++ 유렬님 코드 참고해서 나중에 에러코드만 따로 뽑아내서 정의하기
+
+        return new UserResponseDto(
+                user.getId(),
+                user.getEmail(),
+                user.getName(),
+                user.getUserRole().toString()
+        );
+
     }
 
-    public void validateEmailDuplicate(String email){
+    public void updateUser(Long userId, UserUpdateRequestDto request){
 
-        if(userRepository.existsByEmail(email)){
-            throw new IllegalArgumentException("이미 사용중인 이메일");
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND));
+
+        if(request.getEmail() != null){
+            if(userRepository.existsByEmail(request.getEmail())){
+                throw new BusinessException(UserErrorCode.EMAIL_ALREADY_EXISTS);
+            }
+            user.updateEmail(request.getEmail());
+        }
+
+        if(request.getName() != null){
+            user.updateName(request.getName());
         }
 
     }

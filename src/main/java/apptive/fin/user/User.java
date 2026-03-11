@@ -51,4 +51,14 @@ public class User extends BaseTimeEntity {
         return provider + "_" + providerId;
     }
 
+    public void updateUserRole(UserRole userRole) {
+        this.userRole = userRole;
+    }
+
+    public void updateName(String name) {
+        this.name = name;
+    }
+    public void updateEmail(String email) {
+        this.email = email;
+    }
 }
