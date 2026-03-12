@@ -53,8 +53,7 @@ public class TermService {
                             .build()
                     );
 
-            userTerm.setAgreed(true);
-            userTerm.setAgreedAt(LocalDateTime.now());
+            userTerm.agree();
             userTermRepository.save(userTerm);
         }
     }
