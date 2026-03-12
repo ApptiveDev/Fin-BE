@@ -1,14 +1,11 @@
 package apptive.fin.term;
 
-import apptive.fin.term.TermResponseDto;
-import apptive.fin.term.UserTermRequestDto;
 import apptive.fin.user.User;
 import apptive.fin.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -18,7 +15,6 @@ public class TermService {
 
     private final TermRepository termRepository;
     private final UserTermRepository userTermRepository;
-    private final UserRepository userRepository;
 
     public List<TermResponseDto> getTermsForUser(User user) {
         List<UserTerm> userTerms = userTermRepository.findAllByUser(user);
