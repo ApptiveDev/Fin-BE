@@ -1,7 +1,6 @@
 package apptive.fin.term;
 
 import apptive.fin.user.User;
-import apptive.fin.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
