@@ -50,4 +50,8 @@ public class UserTerm {
         this.agreedAt = agreedAt;
     }
 
+    public void agree(){
+        this.agreed = true;
+        this.agreedAt = LocalDateTime.now();
+    }
 }
