@@ -1,6 +1,12 @@
-package apptive.fin.term;
+package apptive.fin.term.service;
 
-import apptive.fin.user.User;
+import apptive.fin.term.entity.Term;
+import apptive.fin.term.repository.TermRepository;
+import apptive.fin.term.entity.UserTerm;
+import apptive.fin.term.repository.UserTermRepository;
+import apptive.fin.term.dto.TermResponseDto;
+import apptive.fin.term.dto.UserTermRequestDto;
+import apptive.fin.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

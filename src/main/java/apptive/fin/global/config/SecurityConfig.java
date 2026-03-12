@@ -5,7 +5,7 @@ import apptive.fin.auth.JwtAuthFilter;
 import apptive.fin.auth.oauth.OAuth2SuccessHandler;
 import apptive.fin.auth.oauth.OAuth2UserService;
 import apptive.fin.global.util.JwtUtil;
-import apptive.fin.user.UserRepository;
+import apptive.fin.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

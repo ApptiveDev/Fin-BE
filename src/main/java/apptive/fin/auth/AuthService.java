@@ -3,7 +3,7 @@ package apptive.fin.auth;
 
 import apptive.fin.global.error.BusinessException;
 import apptive.fin.global.util.JwtUtil;
-import apptive.fin.user.User;
+import apptive.fin.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

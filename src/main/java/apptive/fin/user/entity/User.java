@@ -1,6 +1,7 @@
-package apptive.fin.user;
+package apptive.fin.user.entity;
 
 import apptive.fin.global.entity.BaseTimeEntity;
+import apptive.fin.user.UserRole;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;

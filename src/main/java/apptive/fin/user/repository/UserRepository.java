@@ -1,5 +1,6 @@
-package apptive.fin.user;
+package apptive.fin.user.repository;
 
+import apptive.fin.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

@@ -11,10 +11,10 @@ import java.util.Map;
 @Getter
 public class CustomOAuth2User extends User implements OAuth2User {
 
-    private final apptive.fin.user.User user;
+    private final apptive.fin.user.entity.User user;
     private final Map<String, Object> attributes;
 
-    public CustomOAuth2User(apptive.fin.user.User user, Map<String, Object> attributes) {
+    public CustomOAuth2User(apptive.fin.user.entity.User user, Map<String, Object> attributes) {
         super(user.getOAuthIdentifier(), "", List.of(new SimpleGrantedAuthority(user.getUserRole().toString())));
         this.user = user;
         this.attributes = attributes;

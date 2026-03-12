@@ -1,8 +1,9 @@
-package apptive.fin.term;
+package apptive.fin.term.controller;
 
 import apptive.fin.auth.AuthUserDetails;
-import apptive.fin.term.TermResponseDto;
-import apptive.fin.term.UserTermRequestDto;
+import apptive.fin.term.dto.TermResponseDto;
+import apptive.fin.term.service.TermService;
+import apptive.fin.term.dto.UserTermRequestDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;

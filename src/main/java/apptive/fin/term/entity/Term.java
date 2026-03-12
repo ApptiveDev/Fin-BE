@@ -1,4 +1,4 @@
-package apptive.fin.term;
+package apptive.fin.term.entity;
 
 import apptive.fin.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;

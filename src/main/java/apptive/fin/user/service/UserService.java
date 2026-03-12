@@ -4,6 +4,8 @@ import apptive.fin.global.error.BusinessException;
 import apptive.fin.user.*;
 import apptive.fin.user.dto.UserResponseDto;
 import apptive.fin.user.dto.UserUpdateRequestDto;
+import apptive.fin.user.entity.User;
+import apptive.fin.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;

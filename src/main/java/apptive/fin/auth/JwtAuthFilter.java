@@ -2,8 +2,8 @@ package apptive.fin.auth;
 
 import apptive.fin.global.error.BusinessException;
 import apptive.fin.global.util.JwtUtil;
-import apptive.fin.user.User;
-import apptive.fin.user.UserRepository;
+import apptive.fin.user.entity.User;
+import apptive.fin.user.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletRequest;
@@ -15,7 +15,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.filter.GenericFilterBean;
 
 import java.io.IOException;
