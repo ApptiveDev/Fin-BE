@@ -1,0 +1,62 @@
+package apptive.fin.term;
+
+import apptive.fin.term.TermResponseDto;
+import apptive.fin.term.UserTermRequestDto;
+import apptive.fin.user.User;
+import apptive.fin.user.UserRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class TermService {
+
+    private final TermRepository termRepository;
+    private final UserTermRepository userTermRepository;
+    private final UserRepository userRepository;
+
+    public List<TermResponseDto> getTermsForUser(User user) {
+        List<UserTerm> userTerms = userTermRepository.findAllByUser(user);
+
+        return termRepository.findAll()
+                .stream()
+                .map(term -> {
+                    boolean agreed = userTerms.stream()
+                            .anyMatch(ut -> ut.getTerm().getId().equals(term.getId()) && ut.isAgreed());
+                    return new TermResponseDto(
+                            term.getId(),
+                            term.getTitle(),
+                            term.getContent(),
+                            term.isRequired(),
+                            agreed
+                    );
+                })
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public void agreeTerms(User user, UserTermRequestDto request) {
+        List<Term> termsToAgree = termRepository.findAllById(request.getTermIds());
+
+        for (Term term : termsToAgree) {
+            UserTerm userTerm = userTermRepository.findByUserAndTerm(user, term)
+                    .orElse(UserTerm.builder()
+                            .user(user)
+                            .term(term)
+                            .agreed(false)
+                            .agreedAt(null)
+                            .build()
+                    );
+
+            userTerm.setAgreed(true);
+            userTerm.setAgreedAt(LocalDateTime.now());
+            userTermRepository.save(userTerm);
+        }
+    }
+
+}
