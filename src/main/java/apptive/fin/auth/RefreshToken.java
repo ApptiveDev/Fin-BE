@@ -1,7 +1,7 @@
 package apptive.fin.auth;
 
 import apptive.fin.global.entity.BaseCreatedAtEntity;
-import apptive.fin.user.User;
+import apptive.fin.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;

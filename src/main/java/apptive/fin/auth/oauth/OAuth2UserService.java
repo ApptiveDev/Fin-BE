@@ -2,8 +2,8 @@ package apptive.fin.auth.oauth;
 
 import apptive.fin.auth.oauth.touserinfo.OAuth2UserInfo;
 import apptive.fin.auth.oauth.touserinfo.OAuth2UserInfoFactory;
-import apptive.fin.user.User;
-import apptive.fin.user.UserRepository;
+import apptive.fin.user.entity.User;
+import apptive.fin.user.repository.UserRepository;
 import apptive.fin.user.UserRole;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;

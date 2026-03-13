@@ -1,6 +1,6 @@
-package apptive.fin.term;
+package apptive.fin.term.entity;
 
-import apptive.fin.user.User;
+import apptive.fin.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -50,4 +50,8 @@ public class UserTerm {
         this.agreedAt = agreedAt;
     }
 
+    public void agree(){
+        this.agreed = true;
+        this.agreedAt = LocalDateTime.now();
+    }
 }

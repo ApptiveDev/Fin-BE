@@ -8,9 +8,9 @@ import java.util.List;
 
 @Getter
 public class AuthUserDetails extends User {
-    private final apptive.fin.user.User user;
+    private final apptive.fin.user.entity.User user;
 
-    public AuthUserDetails(apptive.fin.user.User user) {
+    public AuthUserDetails(apptive.fin.user.entity.User user) {
         super(user.getOAuthIdentifier(), "",
                 List.of(new SimpleGrantedAuthority(user.getUserRole().toString()))
         );

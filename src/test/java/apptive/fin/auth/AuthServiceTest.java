@@ -2,7 +2,7 @@ package apptive.fin.auth;
 
 import apptive.fin.global.error.BusinessException;
 import apptive.fin.global.util.JwtUtil;
-import apptive.fin.user.User;
+import apptive.fin.user.entity.User;
 import apptive.fin.user.UserRole;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
