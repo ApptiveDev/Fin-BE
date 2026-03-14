@@ -1,12 +1,10 @@
 # FIN
 청년들의 금융(Finance) 고민을 끝(Finish)내다.
 
----
 ## 기술스택
 - Backend : Spring Boot
 - Database : PostgreSQL
 
----
 ## API 명세
 ### /auth
 | 기능      | Method | API Path   |
