@@ -1,11 +1,13 @@
 # FIN
 청년들의 금융(Finance) 고민을 끝(Finish)내다.
+---
 
-## 기술스택
+## 1. 기술스택
 - Backend : Spring Boot
 - Database : PostgreSQL
 
-## API 명세
+
+## 2. API 명세
 ### /auth
 | 기능      | Method | API Path   |
 | ------- | ------ | ---------- |
@@ -35,3 +37,11 @@
 | 약관 목록 조회 | GET    | `/`      |
 | 약관 동의    | POST   | `/agree` |
 
+
+## 3. 개발현황
+Update : 2026/03/14
+| 도메인       | 진행상황 | 비고 |
+| -------- | ------ | -------- |
+| Auth | 완료    | OAuth2 기반 SNS 로그인, JWT(Access Token + Refresh Token)     |
+| User   | 완료   | 유저 정보 조회 및 수정 |
+| Term   | 완료   | 약관 조회 및 약관 동의 기록 |
