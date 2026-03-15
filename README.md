@@ -21,10 +21,6 @@
 | 구글 계정 로그인  | GET    | `/authorization/google` |
 | 카카오 계정 로그인 | GET    | `/authorization/kakao`  |
 
-### /template
-| 기능         | Method | API Path                |
-| ---------- | ------ | ----------------------- |
-| 로그아웃  | POST    | `/logout` |
 
 ### /user
 | 기능       | Method | API Path |
