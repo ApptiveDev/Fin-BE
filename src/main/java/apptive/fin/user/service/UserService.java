@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class UserService {
 
     private final UserRepository userRepository;
@@ -36,15 +37,15 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND));
 
-        if(request.getEmail() != null){
-            if(userRepository.existsByEmail(request.getEmail())){
+        if(request.email() != null){
+            if(userRepository.existsByEmail(request.email())){
                 throw new BusinessException(UserErrorCode.EMAIL_ALREADY_EXISTS);
             }
-            user.updateEmail(request.getEmail());
+            user.updateEmail(request.email());
         }
 
-        if(request.getName() != null){
-            user.updateName(request.getName());
+        if(request.name() != null){
+            user.updateName(request.name());
         }
 
     }
