@@ -42,7 +42,7 @@ public class TermService {
 
     @Transactional
     public void agreeTerms(User user, UserTermRequestDto request) {
-        List<Term> termsToAgree = termRepository.findAllById(request.getTermIds());
+        List<Term> termsToAgree = termRepository.findAllById(request.termIds());
 
         for (Term term : termsToAgree) {
             UserTerm userTerm = userTermRepository.findByUserAndTerm(user, term)
