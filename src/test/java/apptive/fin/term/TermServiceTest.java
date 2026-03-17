@@ -106,6 +106,6 @@ class TermServiceTest {
         List<TermResponseDto> terms = termService.getTermsForUser(user);
 
         assertThat(terms).isNotEmpty();
-        assertThat(terms.get(0).getTitle()).isEqualTo("마케팅 수신 동의");
+        assertThat(terms.get(0).title()).isEqualTo("마케팅 수신 동의");
     }
 }
