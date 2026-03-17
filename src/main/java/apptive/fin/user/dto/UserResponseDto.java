@@ -1,15 +1,4 @@
 package apptive.fin.user.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-
-@Getter
-@AllArgsConstructor
-public class UserResponseDto {
-
-    private Long id;
-    private String email;
-    private String name;
-    private String userRole;
-
+public record UserResponseDto (Long id, String email, String name, String userRole) {
 }
