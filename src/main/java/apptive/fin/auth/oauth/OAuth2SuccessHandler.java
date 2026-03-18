@@ -37,7 +37,10 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         ResponseCookie cookie = refreshTokenCookieProvider.createRefreshTokenCookie(refreshToken);
 //        log.info("Refresh Token: {}", cookie.getValue());
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-        getRedirectStrategy().sendRedirect(request, response, appProperties.oAuth2().successRedirectUrl());
+        getRedirectStrategy().sendRedirect(
+                request, response,
+                appProperties.frontend().url() + appProperties.oAuth2().successRedirectUrl()
+        );
     }
 
 }
