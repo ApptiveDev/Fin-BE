@@ -50,9 +50,9 @@ class UserServiceTest {
 
         UserResponseDto response = userService.getMyInfo(1L);
 
-        assertEquals(1L, response.getId());
-        assertEquals("test@email.com", response.getEmail());
-        assertEquals("testUser", response.getName());
+        assertEquals(1L, response.id());
+        assertEquals("test@email.com", response.email());
+        assertEquals("testUser", response.name());
     }
 
     @Test

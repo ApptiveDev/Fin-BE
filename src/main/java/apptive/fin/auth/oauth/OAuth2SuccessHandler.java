@@ -2,6 +2,7 @@ package apptive.fin.auth.oauth;
 
 import apptive.fin.auth.AuthService;
 import apptive.fin.auth.RefreshTokenCookieProvider;
+import apptive.fin.global.properties.AppProperties;
 import apptive.fin.global.util.JwtUtil;
 import apptive.fin.user.entity.User;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,6 +25,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     private final JwtUtil jwtUtil;
     private final AuthService authService;
     private final RefreshTokenCookieProvider refreshTokenCookieProvider;
+    private final AppProperties appProperties;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
@@ -33,9 +35,12 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         String refreshToken = authService.getRefreshToken(user);
 
         ResponseCookie cookie = refreshTokenCookieProvider.createRefreshTokenCookie(refreshToken);
-        log.info("Refresh Token: {}", cookie.getValue());
+//        log.info("Refresh Token: {}", cookie.getValue());
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-        getRedirectStrategy().sendRedirect(request, response, "/login-success");
+        getRedirectStrategy().sendRedirect(
+                request, response,
+                appProperties.frontend().url() + appProperties.oAuth2().successRedirectUrl()
+        );
     }
 
 }

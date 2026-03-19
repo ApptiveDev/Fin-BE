@@ -1,5 +1,6 @@
 package apptive.fin.global.util;
 
+import apptive.fin.global.properties.JwtProperties;
 import apptive.fin.user.UserRole;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -22,7 +23,8 @@ class JwtUtilTest {
 
     @BeforeEach
     void setUp() {
-        jwtUtil = new JwtUtil(SECRET, 600, 86400);
+        JwtProperties jwtProperties = new JwtProperties(SECRET, 600, 86400);
+        jwtUtil = new JwtUtil(jwtProperties);
     }
 
     @Test

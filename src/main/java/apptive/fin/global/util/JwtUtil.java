@@ -1,5 +1,6 @@
 package apptive.fin.global.util;
 
+import apptive.fin.global.properties.JwtProperties;
 import apptive.fin.user.UserRole;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -12,36 +13,35 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Base64;
 import java.util.Date;
 
 @Component
 public class JwtUtil {
 
-    private final String SECRET;
-    private final int EXPIRATION;
-    private final int REFRESH_EXPIRATION;
+//    private final String SECRET;
+//    private final int EXPIRATION;
+//    private final int REFRESH_EXPIRATION;
     private final SecureRandom secureRandom;
+    private final JwtProperties jwtProperties;
 
 
     public JwtUtil(
-            @Value("${jwt.secret}") String secret,
-            @Value("${jwt.expiration}") int expiration,
-            @Value("${jwt.refresh_expiration}") int refreshExpiration
+        JwtProperties jwtProperties
     ) {
-        this.SECRET = secret;
-        this.EXPIRATION = expiration * 1000;
-        this.REFRESH_EXPIRATION = refreshExpiration ;
         this.secureRandom = new SecureRandom();
+        this.jwtProperties = jwtProperties;
     }
 
     private SecretKey getKey() {
-        return Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8));
+        String secret = jwtProperties.secret();
+        return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
     public int getRefreshExpiration() {
-        return REFRESH_EXPIRATION;
-
+        return jwtProperties.refreshExpiration();
     }
 
     public String generateAccessToken(String userId, UserRole role) {
@@ -49,7 +49,7 @@ public class JwtUtil {
                 .subject(userId)
                 .claim("role", role.name())
                 .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + EXPIRATION))
+                .expiration(new Date(System.currentTimeMillis() + jwtProperties.expiration() * 1000L))
                 .signWith(getKey())
                 .compact();
     }
