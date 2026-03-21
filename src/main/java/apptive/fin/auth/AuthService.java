@@ -33,10 +33,13 @@ public class AuthService {
             }
 
             User user = refreshToken.getUser();
+
+            if (refreshTokenRepository.deactivateIfActive(hashedToken) < 1) {
+                throw new BusinessException(AuthErrorCode.UNAUTHORIZED);
+            }
+
             String accessToken = jwtUtil.generateAccessToken(user.getId().toString(), user.getUserRole());
 
-            // Rotate refresh token : 이전 토큰 제거 및 새 토큰 발급
-            refreshTokenRepository.delete(refreshToken);
             return LoginResponseDto.builder()
                     .refreshToken(getRefreshToken(user))
                     .accessToken(accessToken)
