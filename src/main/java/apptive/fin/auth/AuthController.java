@@ -1,6 +1,7 @@
 package apptive.fin.auth;
 
 import apptive.fin.global.dto.GenericDataDto;
+import apptive.fin.global.error.BusinessException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
@@ -17,7 +18,8 @@ public class AuthController {
 
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@CookieValue("refresh_token") String refreshToken) {
+    public ResponseEntity<Void> logout(@CookieValue(value = "refresh_token", required = false) String refreshToken) {
+        checkRefreshToken(refreshToken);
         authService.logout(refreshToken);
 
         ResponseCookie cookie = refreshTokenCookieProvider.createLogoutCookie();
@@ -29,7 +31,9 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<GenericDataDto<String>> refresh(@CookieValue("refresh_token") String refreshToken) {
+    public ResponseEntity<GenericDataDto<String>> refresh(@CookieValue(value = "refresh_token", required = false) String refreshToken) {
+        checkRefreshToken(refreshToken);
+
         LoginResponseDto res = authService.refresh(refreshToken);
         ResponseCookie cookie
                 = refreshTokenCookieProvider.createRefreshTokenCookie(res.refreshToken());
@@ -37,5 +41,11 @@ public class AuthController {
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
                 .body(new GenericDataDto<>(res.accessToken()));
+    }
+
+    private void checkRefreshToken(String refreshToken) {
+        if (refreshToken == null || refreshToken.isBlank()) {
+            throw new BusinessException(AuthErrorCode.UNAUTHORIZED);
+        }
     }
 }
