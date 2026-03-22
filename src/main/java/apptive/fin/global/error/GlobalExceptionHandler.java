@@ -1,7 +1,9 @@
 package apptive.fin.global.error;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.HttpMediaTypeNotAcceptableException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -24,6 +26,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(NoResourceFoundException.class)
     protected ResponseEntity<ErrorResponseDto> handleNoResourceFoundException(NoResourceFoundException e) {
         return ErrorResponseDto.toResponseEntity(CommonErrorCode.NOT_FOUND);
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotAcceptableException.class)
+    protected ResponseEntity<String> handleHttpMediaTypeNotAcceptableException(HttpMediaTypeNotAcceptableException e) {
+        return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body("");
     }
 
     @ExceptionHandler(Exception.class)
