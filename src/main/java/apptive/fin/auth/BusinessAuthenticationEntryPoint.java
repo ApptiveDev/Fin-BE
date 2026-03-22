@@ -2,14 +2,20 @@ package apptive.fin.auth;
 
 
 import apptive.fin.global.error.BusinessException;
+import apptive.fin.global.error.ErrorResponseDto;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.http.MediaType;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerExceptionResolver;
+import tools.jackson.databind.ObjectMapper;
+
+import java.io.IOException;
+import java.net.http.HttpHeaders;
 
 @Component
 @RequiredArgsConstructor
@@ -17,18 +23,36 @@ public class BusinessAuthenticationEntryPoint implements AuthenticationEntryPoin
 
     @Qualifier("handlerExceptionResolver")
     private final HandlerExceptionResolver handlerExceptionResolver;
+    private final ObjectMapper objectMapper;
 
     @Override
     public void commence(
             HttpServletRequest request,
             HttpServletResponse response,
             AuthenticationException authException
-    ) {
-        handlerExceptionResolver.resolveException(
-                request,
-                response,
-                null,
-                new BusinessException(AuthErrorCode.UNAUTHORIZED)
-        );
+    ) throws IOException  {
+        AuthErrorCode errorCode = AuthErrorCode.UNAUTHORIZED;
+
+        response.setStatus(errorCode.getHttpStatus().value());
+        response.setCharacterEncoding("UTF-8");
+
+        String accept = request.getHeader("Accept");
+        boolean wantsJson =
+                accept == null
+                || accept.contains("*/*")
+                || accept.contains("application/json")
+                || accept.contains("+json");
+
+        if (wantsJson) {
+            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+            objectMapper.writeValue(
+                    response.getWriter(),
+                    ErrorResponseDto.of(errorCode)
+            );
+        }
+        else {
+            response.setContentType(MediaType.TEXT_PLAIN_VALUE + ";charset=UTF-8");
+            response.getWriter().write("");
+        }
     }
 }

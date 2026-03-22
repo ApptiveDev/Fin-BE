@@ -8,13 +8,17 @@ public record ErrorResponseDto(
         String code,
         String message
 ) {
+
+    public static ErrorResponseDto of(ErrorCode errorCode) {
+        return ErrorResponseDto.builder()
+                .code(errorCode.getCode())
+                .message(errorCode.getMessage())
+                .build();
+    }
+
     public static ResponseEntity<ErrorResponseDto> toResponseEntity(ErrorCode errorCode) {
         return ResponseEntity
                 .status(errorCode.getHttpStatus())
-                .body(ErrorResponseDto.builder()
-                        .code(errorCode.getCode())
-                        .message(errorCode.getMessage())
-                        .build()
-                );
+                .body(of(errorCode));
     }
 }
