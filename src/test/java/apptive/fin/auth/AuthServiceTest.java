@@ -62,7 +62,7 @@ class AuthServiceTest {
     }
 
     @Test
-    void 리프레시_요청이_성공하면_이전_토큰을_삭제하고_새_토큰을_재발급한다() {
+    void 리프레시_요청이_성공하면_이전_토큰을_비활성화하고_새_토큰을_재발급한다() {
         byte[] oldRawToken = new byte[]{9, 8, 7, 6};
         byte[] newRawToken = new byte[]{1, 2, 3, 4};
         String encodedOldToken = Base64.getEncoder().encodeToString(oldRawToken);
@@ -75,6 +75,7 @@ class AuthServiceTest {
 
         when(jwtUtil.hashToken(oldRawToken)).thenReturn("old-hash");
         when(refreshTokenRepository.findByTokenHash("old-hash")).thenReturn(Optional.of(storedToken));
+        when(refreshTokenRepository.deactivateIfActive("old-hash")).thenReturn(1);
         when(jwtUtil.generateAccessToken("1", UserRole.ADMIN)).thenReturn("new-access-token");
         when(jwtUtil.generateRefreshToken()).thenReturn(newRawToken);
         when(jwtUtil.hashToken(newRawToken)).thenReturn("new-hash");
@@ -82,7 +83,7 @@ class AuthServiceTest {
 
         LoginResponseDto response = authService.refresh(encodedOldToken);
 
-        verify(refreshTokenRepository).delete(storedToken);
+        verify(refreshTokenRepository).deactivateIfActive("old-hash");
         verify(refreshTokenRepository).save(refreshTokenCaptor.capture());
 
         assertThat(response.accessToken()).isEqualTo("new-access-token");
