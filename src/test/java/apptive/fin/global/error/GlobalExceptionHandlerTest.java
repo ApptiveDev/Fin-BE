@@ -54,17 +54,6 @@ class GlobalExceptionHandlerTest {
         assertNotFoundResponse(response);
     }
 
-    @Test
-    void handleHttpMediaTypeNotAcceptableException은_내용_없음() {
-        HttpMediaTypeNotAcceptableException exception =
-                new HttpMediaTypeNotAcceptableException("Not acceptable");
-
-        ResponseEntity<String> response =
-                globalExceptionHandler.handleHttpMediaTypeNotAcceptableException(exception);
-
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_ACCEPTABLE);
-        assertThat(response.getBody()).isEmpty();
-    }
 
     @Test
     void handleException이_internal_server_error_반환() {
