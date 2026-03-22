@@ -28,10 +28,6 @@ public class GlobalExceptionHandler {
         return ErrorResponseDto.toResponseEntity(CommonErrorCode.NOT_FOUND);
     }
 
-    @ExceptionHandler(HttpMediaTypeNotAcceptableException.class)
-    protected ResponseEntity<String> handleHttpMediaTypeNotAcceptableException(HttpMediaTypeNotAcceptableException e) {
-        return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body("");
-    }
 
     @ExceptionHandler(Exception.class)
     protected ResponseEntity<ErrorResponseDto> handleException(Exception e) {
