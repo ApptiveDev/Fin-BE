@@ -1,5 +1,6 @@
 package apptive.fin.global.config;
 
+import apptive.fin.auth.BusinessAccessDeniedHandler;
 import apptive.fin.auth.BusinessAuthenticationEntryPoint;
 import apptive.fin.auth.JwtAuthFilter;
 import apptive.fin.auth.oauth.OAuth2SuccessHandler;
@@ -34,6 +35,7 @@ public class SecurityConfig {
     private final OAuth2UserService oAuth2UserService;
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
     private final BusinessAuthenticationEntryPoint businessAuthenticationEntryPoint;
+    private final BusinessAccessDeniedHandler businessAccessDeniedHandler;
     private final AppProperties appProperties;
 
 
@@ -56,6 +58,7 @@ public class SecurityConfig {
                 )
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint(businessAuthenticationEntryPoint)
+                        .accessDeniedHandler(businessAccessDeniedHandler)
                 )
                 .addFilterBefore(new JwtAuthFilter(jwtUtil, userRepository), UsernamePasswordAuthenticationFilter.class);
 

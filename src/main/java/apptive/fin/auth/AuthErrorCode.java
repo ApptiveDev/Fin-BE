@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 public enum AuthErrorCode implements ErrorCode {
 
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "001", "인증되지 않음."),
+    FORBIDDEN(HttpStatus.FORBIDDEN, "002", "인가되지 않음.")
     ;
 
     private final String codePrefix = "A";

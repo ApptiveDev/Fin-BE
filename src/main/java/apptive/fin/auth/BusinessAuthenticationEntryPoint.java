@@ -21,8 +21,6 @@ import java.net.http.HttpHeaders;
 @RequiredArgsConstructor
 public class BusinessAuthenticationEntryPoint implements AuthenticationEntryPoint {
 
-    @Qualifier("handlerExceptionResolver")
-    private final HandlerExceptionResolver handlerExceptionResolver;
     private final ObjectMapper objectMapper;
 
     @Override
