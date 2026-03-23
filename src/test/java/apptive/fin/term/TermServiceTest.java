@@ -7,6 +7,7 @@ import apptive.fin.term.entity.UserTerm;
 import apptive.fin.term.repository.TermRepository;
 import apptive.fin.term.repository.UserTermRepository;
 import apptive.fin.term.service.TermService;
+import apptive.fin.user.UserRole;
 import apptive.fin.user.entity.User;
 import apptive.fin.user.repository.UserRepository;
 import org.junit.jupiter.api.DisplayName;
@@ -59,6 +60,7 @@ class TermServiceTest {
                         .email("test@test.com")
                         .name("tester")
                         .provider("google")
+                        .userRole(UserRole.BEFORE_AGREED)
                         .providerId("1234")
                         .build()
         );
@@ -90,6 +92,7 @@ class TermServiceTest {
                 User.builder()
                         .email("test@test.com")
                         .name("tester")
+                        .userRole(UserRole.BEFORE_AGREED)
                         .provider("google")
                         .providerId("9999")
                         .build()
