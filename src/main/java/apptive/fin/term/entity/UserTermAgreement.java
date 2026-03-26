@@ -1,5 +1,6 @@
 package apptive.fin.term.entity;
 
+import apptive.fin.global.entity.BaseCreatedAtEntity;
 import apptive.fin.user.entity.User;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -13,14 +14,11 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "user_terms", uniqueConstraints = {
-        @UniqueConstraint(name = "uq_user_id_term_id", columnNames = {"user_id", "term_id"})
-    },
-    indexes = {
-        @Index(name = "idx_user_terms_term_id", columnList = "term_id")
+        @UniqueConstraint(name = "uq_user_term_agreements_user_version", columnNames = {"user_id", "term_version_id"})
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class UserTermAgreement {
+public class UserTermAgreement extends BaseCreatedAtEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -31,9 +29,9 @@ public class UserTermAgreement {
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "term_id", nullable = false)
+    @JoinColumn(name = "term_version_id", nullable = false)
     @OnDelete(action = OnDeleteAction.CASCADE)
-    private Term term;
+    private TermVersion termVersion;
 
     @Column(name = "agreed", nullable = false)
     private boolean agreed;
@@ -43,9 +41,9 @@ public class UserTermAgreement {
 
 
     @Builder
-    public UserTermAgreement(User user, Term term, boolean agreed, LocalDateTime agreedAt) {
+    public UserTermAgreement(User user, TermVersion termVersion, boolean agreed, LocalDateTime agreedAt) {
         this.user = user;
-        this.term = term;
+        this.termVersion = termVersion;
         this.agreed = agreed;
         this.agreedAt = agreedAt;
     }
