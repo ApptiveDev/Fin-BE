@@ -20,7 +20,7 @@ import java.time.LocalDateTime;
 })
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class UserTerm {
+public class UserTermAgreement {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -43,7 +43,7 @@ public class UserTerm {
 
 
     @Builder
-    public UserTerm(User user, Term term, boolean agreed, LocalDateTime agreedAt) {
+    public UserTermAgreement(User user, Term term, boolean agreed, LocalDateTime agreedAt) {
         this.user = user;
         this.term = term;
         this.agreed = agreed;
