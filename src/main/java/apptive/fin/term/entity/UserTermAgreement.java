@@ -13,7 +13,7 @@ import org.hibernate.annotations.OnDeleteAction;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "user_terms", uniqueConstraints = {
+@Table(name = "user_term_agreements", uniqueConstraints = {
         @UniqueConstraint(name = "uq_user_term_agreements_user_version", columnNames = {"user_id", "term_version_id"})
 })
 @Getter
@@ -51,5 +51,10 @@ public class UserTermAgreement extends BaseCreatedAtEntity {
     public void agree(){
         this.agreed = true;
         this.agreedAt = LocalDateTime.now();
+    }
+
+    public void disagree() {
+        this.agreed = false;
+        this.agreedAt = null;
     }
 }

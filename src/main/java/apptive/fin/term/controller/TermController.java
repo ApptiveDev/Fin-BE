@@ -19,13 +19,15 @@ public class TermController {
     // 로그인 유저 기준 약관 조회
     @GetMapping
     public List<TermResponseDto> getTerms(@AuthenticationPrincipal AuthUserDetails authUserDetails){
-        return termService.getTermsForUser(authUserDetails.getUser());
+        return termService.getTermsForUser(authUserDetails.getId());
     }
 
     // 약관 동의
-    @PostMapping("/agree")
-    public void agreeTerms(@AuthenticationPrincipal AuthUserDetails authUserDetails,
+    @PostMapping
+    public void saveTermAgreementResults(@AuthenticationPrincipal AuthUserDetails authUserDetails,
                            @RequestBody UserTermRequestDto request){
-        termService.agreeTerms(authUserDetails.getUser(), request);
+        termService.saveTermAgreementResults(authUserDetails.getId(), request);
     }
+
+
 }
