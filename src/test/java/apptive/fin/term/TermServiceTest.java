@@ -117,6 +117,9 @@ class TermServiceTest {
         doReturn(List.of(requiredVersion, optionalVersion))
                 .when(termVersionRepository)
                 .findAllById(any());
+        doReturn(List.of(requiredVersion, optionalVersion))
+                .when(termVersionRepository)
+                .findByIsCurrentTrue();
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(userTermAgreementRepository.findAllByUserAndTermVersionIn(eq(user), anyList())).thenReturn(List.of());
 
@@ -157,6 +160,9 @@ class TermServiceTest {
         doReturn(List.of(currentVersion))
                 .when(termVersionRepository)
                 .findAllById(any());
+        doReturn(List.of(currentVersion))
+                .when(termVersionRepository)
+                .findByIsCurrentTrue();
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(userTermAgreementRepository.findAllByUserAndTermVersionIn(eq(user), anyList()))
                 .thenReturn(List.of(existingAgreement));
@@ -195,6 +201,48 @@ class TermServiceTest {
     }
 
     @Test
+    void saveTermAgreementResults는_요청에_중복된_versionId가_있으면_예외를_던진다() {
+        Long userId = 1L;
+        UserTermRequestDto request = new UserTermRequestDto(List.of(
+                new UserTermRequestDto.TermAgreement(100L, true),
+                new UserTermRequestDto.TermAgreement(100L, false)
+        ));
+
+        assertThatThrownBy(() -> termService.saveTermAgreementResults(userId, request))
+                .isInstanceOf(BusinessException.class)
+                .satisfies(exception ->
+                        assertThat(((BusinessException) exception).getErrorCode()).isEqualTo(TermErrorCode.DUPLICATE_TERM_VERSION_ID)
+                );
+
+        verifyNoInteractions(termVersionRepository, termRepository, userRepository, userTermAgreementRepository);
+    }
+
+
+    @Test
+    void saveTermAgreementResults는_요청한_versionId가_조회된_최신버전에_없으면_예외를_던진다() {
+        Long userId = 1L;
+        UserTermRequestDto request = new UserTermRequestDto(List.of(
+                new UserTermRequestDto.TermAgreement(105L, true)
+        ));
+        TermVersion foundVersion = createTermVersion(105L, createTerm(10L, "SERVICE_TERMS", true), 1, 0, true);
+
+        doReturn(List.of(foundVersion))
+                .when(termVersionRepository)
+                .findAllById(any());
+
+        doReturn(List.of(createTermVersion(100L, createTerm(10L, "SERVICE_TERMS", true), 1, 0, true)))
+                .when(termVersionRepository).findByIsCurrentTrue();
+
+        assertThatThrownBy(() -> termService.saveTermAgreementResults(userId, request))
+                .isInstanceOf(BusinessException.class)
+                .satisfies(exception ->
+                        assertThat(((BusinessException) exception).getErrorCode()).isEqualTo(TermErrorCode.TERM_NOT_FOUND)
+                );
+
+        verifyNoInteractions(userRepository, userTermAgreementRepository);
+    }
+
+    @Test
     void saveTermAgreementResults는_사용자가_없으면_예외를_던진다() {
         Long userId = 1L;
         TermVersion version = createTermVersion(100L, createTerm(10L, "SERVICE_TERMS", true), 1, 0, true);
@@ -205,6 +253,9 @@ class TermServiceTest {
         doReturn(List.of(version))
                 .when(termVersionRepository)
                 .findAllById(any());
+        doReturn(List.of(version))
+                .when(termVersionRepository)
+                .findByIsCurrentTrue();
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> termService.saveTermAgreementResults(userId, request))
