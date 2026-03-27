@@ -1,12 +1,10 @@
-package apptive.fin.global.util;
+package apptive.fin.auth.util;
 
 import apptive.fin.global.properties.JwtProperties;
 import apptive.fin.user.UserRole;
-import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -14,8 +12,6 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.Base64;
 import java.util.Date;
 

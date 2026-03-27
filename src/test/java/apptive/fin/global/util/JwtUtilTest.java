@@ -1,5 +1,6 @@
 package apptive.fin.global.util;
 
+import apptive.fin.auth.util.JwtUtil;
 import apptive.fin.global.properties.JwtProperties;
 import apptive.fin.user.UserRole;
 import io.jsonwebtoken.Claims;

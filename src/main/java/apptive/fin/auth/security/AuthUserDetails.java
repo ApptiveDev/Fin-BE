@@ -1,4 +1,4 @@
-package apptive.fin.auth;
+package apptive.fin.auth.security;
 
 import apptive.fin.user.UserRole;
 import lombok.Getter;

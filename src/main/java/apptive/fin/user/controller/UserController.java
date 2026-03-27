@@ -1,6 +1,6 @@
 package apptive.fin.user.controller;
 
-import apptive.fin.auth.AuthUserDetails;
+import apptive.fin.auth.security.AuthUserDetails;
 import apptive.fin.user.dto.UserResponseDto;
 import apptive.fin.user.service.UserService;
 import apptive.fin.user.dto.UserUpdateRequestDto;

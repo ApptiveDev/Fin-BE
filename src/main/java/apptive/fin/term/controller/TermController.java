@@ -1,6 +1,6 @@
 package apptive.fin.term.controller;
 
-import apptive.fin.auth.AuthUserDetails;
+import apptive.fin.auth.security.AuthUserDetails;
 import apptive.fin.term.dto.TermResponseDto;
 import apptive.fin.term.service.TermService;
 import apptive.fin.term.dto.UserTermRequestDto;
