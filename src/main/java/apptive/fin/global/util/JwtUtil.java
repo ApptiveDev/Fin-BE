@@ -2,6 +2,7 @@ package apptive.fin.global.util;
 
 import apptive.fin.global.properties.JwtProperties;
 import apptive.fin.user.UserRole;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -44,10 +45,11 @@ public class JwtUtil {
         return jwtProperties.refreshExpiration();
     }
 
-    public String generateAccessToken(String userId, UserRole role) {
+    public String generateAccessToken(String userId, UserRole role, boolean requiredTermsAgreement) {
         return Jwts.builder()
                 .subject(userId)
                 .claim("role", role.name())
+                .claim("required_terms_agreement", requiredTermsAgreement)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + jwtProperties.expiration() * 1000L))
                 .signWith(getKey())
@@ -79,6 +81,25 @@ public class JwtUtil {
                         .getPayload()
                         .getSubject()
         );
+    }
+
+    public boolean getRequiredTermsAgreementFromToken(String token) {
+        return Jwts.parser()
+                .verifyWith(getKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .get("required_terms_agreement", Boolean.class);
+    }
+
+    public UserRole getRoleFromToken(String token) {
+        String roleStr = Jwts.parser()
+                .verifyWith(getKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .get("role", String.class);
+        return UserRole.valueOf(roleStr);
     }
 
     public boolean validateToken(String token) {
