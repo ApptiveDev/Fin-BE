@@ -17,14 +17,17 @@ public interface TermRepository extends JpaRepository<Term,Long> {
             tv.content,
             tv.effectiveFrom,
             t.isRequired,
-            CASE WHEN uta.id IS NOT NULL AND uta.agreed = true
-                THEN true
-                ELSE false
-            END
+            CASE WHEN EXISTS (
+                SELECT 1 FROM UserTermAgreement uta
+                JOIN uta.termVersion agreedTv
+                WHERE uta.user.id = :userId
+                  AND agreedTv.term = t
+                  AND agreedTv.majorVersion = tv.majorVersion
+                  AND uta.agreed = true
+            ) THEN true ELSE false END
         )
         FROM Term t
-        LEFT JOIN TermVersion tv ON tv.term = t
-        LEFT JOIN UserTermAgreement uta on uta.termVersion = tv AND uta.user.id = :userId
+        JOIN TermVersion tv ON tv.term = t
         WHERE tv.isCurrent = true
     """)
     List<TermResponseDto> getTermResponseDtosByUserId(Long userId);
