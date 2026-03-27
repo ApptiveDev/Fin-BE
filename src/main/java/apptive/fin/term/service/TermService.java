@@ -17,10 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.swing.text.html.Option;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -52,12 +49,26 @@ public class TermService {
         Map<Long, Boolean> agreementRequestMap = request.agreements().stream()
                 .collect(Collectors.toMap(
                         UserTermRequestDto.TermAgreement::versionId,
-                        UserTermRequestDto.TermAgreement::agreed
+                        UserTermRequestDto.TermAgreement::agreed,
+                        (oldValue, newValue) -> {
+                            throw new BusinessException(TermErrorCode.DUPLICATE_TERM_VERSION_ID);
+                        }
                 ));
 
         List<TermVersion> termsToAgree = termVersionRepository.findAllById(agreementRequestMap.keySet());
+
+
         if (termsToAgree.size() != agreementRequestMap.size()) {
             throw new BusinessException(TermErrorCode.TERM_ID_MISMATCH);
+        }
+
+        Set<Long> availableTermVersionIds = termVersionRepository.findByIsCurrentTrue()
+                .stream().map(TermVersion::getId).collect(Collectors.toSet());
+
+        if (!availableTermVersionIds.
+                containsAll(termsToAgree.stream().map(TermVersion::getId).toList())
+        ) {
+            throw new BusinessException(TermErrorCode.TERM_NOT_FOUND);
         }
 
         User user = userRepository.findById(userId).
