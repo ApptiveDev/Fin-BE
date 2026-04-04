@@ -1,4 +1,4 @@
-package apptive.fin.category;
+package apptive.fin.category.dto;
 
 import java.util.List;
 
