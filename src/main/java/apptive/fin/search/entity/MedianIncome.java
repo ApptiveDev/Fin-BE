@@ -4,9 +4,10 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
+@Table(name = "median_incomes")
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Getter
-public class MedianIncomeEntity {
+public class MedianIncome {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -24,7 +25,7 @@ public class MedianIncomeEntity {
     private Integer monthlyIncome;
 
     @Builder
-    public MedianIncomeEntity(int year, int householdSize, int earnPercent, int monthlyIncome) {
+    public MedianIncome(int year, int householdSize, int earnPercent, int monthlyIncome) {
         this.year = year;
         this.householdSize = householdSize;
         this.earnPercent = earnPercent;

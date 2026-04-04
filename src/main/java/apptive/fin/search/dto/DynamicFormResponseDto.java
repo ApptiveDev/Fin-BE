@@ -6,4 +6,6 @@ public record DynamicFormResponseDto(
     boolean showBankInterestRateCheckList,
     MedianIncomesDto medianIncomes
 ) {
+
+
 }

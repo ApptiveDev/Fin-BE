@@ -35,6 +35,18 @@ CREATE TABLE refresh_tokens (
 CREATE INDEX idx_refresh_tokens_user_id ON refresh_tokens(user_id);
 CREATE INDEX idx_refresh_tokens_expires_at ON refresh_tokens(expires_at);
 
+CREATE TABLE median_incomes (
+    id BIGSERIAL PRIMARY KEY,
+    year INT NOT NULL CHECK (year > 0),
+    household_size INT NOT NULL CHECK (household_size > 0),
+    earn_percent INT NOT NULL CHECK (earn_percent > 0),
+    monthly_income INT NOT NULL CHECK (monthly_income >= 0),
+
+    CONSTRAINT uq_year_household_size_earn_percent UNIQUE (year, household_size, earn_percent)
+);
+
+
+
 CREATE TABLE terms (
        id BIGSERIAL PRIMARY KEY,
        code VARCHAR(100) NOT NULL UNIQUE,
