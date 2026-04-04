@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class CategoryService {
 
-    public final CategoryRepository categoryRepository;
+    private final CategoryRepository categoryRepository;
 
     public List<CategoryResponseDto> getCategories() {
         List<CategoryFlatDto> flats = categoryRepository.findAllWithOptions();
@@ -26,6 +26,8 @@ public class CategoryService {
                         ));
         return grouped.values().stream()
                 .map(list -> {
+                    if (list.isEmpty()) return null;
+
                     Long categoryId = list.get(0).categoryId();
                     String categoryName = list.get(0).categoryName();
 
