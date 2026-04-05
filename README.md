@@ -47,6 +47,7 @@
 
 ## 4. 개발현황
 Update : 2026/04/05
+
 | 도메인       | 진행상황 | 비고 |
 | -------- | ------ | -------- |
 | Auth | 완료    | OAuth2 기반 SNS 로그인, JWT(Access Token + Refresh Token)     |
