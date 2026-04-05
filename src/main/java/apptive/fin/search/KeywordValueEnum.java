@@ -52,4 +52,12 @@ public enum KeywordValueEnum {
 
     private final String code;
 
+    public static KeywordValueEnum from(String code) {
+        try {
+            return KeywordValueEnum.valueOf(code);
+        }
+        catch (IllegalArgumentException e) {
+            return null;
+        }
+    }
 }

@@ -1,5 +1,6 @@
 package apptive.fin.search.service;
 
+import apptive.fin.category.service.CategoryOptionService;
 import apptive.fin.search.KeywordValueEnum;
 import apptive.fin.search.dto.DynamicFormResponseDto;
 import apptive.fin.search.dto.OptionRequestDto;
@@ -9,12 +10,15 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 
 @Service
 @RequiredArgsConstructor
 public class DynamicFormService {
     private final MedianIncomeService medianIncomeService;
+    private final CategoryOptionService categoryOptionService;
+
     public DynamicFormResponseDto calcFormCondition(SearchRequestDto searchRequestDto) {
 
         List<KeywordValueEnum> keywords = optionsToKeywords(searchRequestDto.options());
@@ -50,12 +54,15 @@ public class DynamicFormService {
 //                !searchRequestDto.detailedOptions().mainBanks().isEmpty()) {
 //
 //        }
-
         return builder.build();
     }
 
     private List<KeywordValueEnum> optionsToKeywords(List<OptionRequestDto> options) {
+        Map<Long, KeywordValueEnum> mapping = categoryOptionService.getOptionMap();
 
+        return options.stream()
+                .map((e)->mapping.get(e.optionId()))
+                .toList();
     }
 
 }
