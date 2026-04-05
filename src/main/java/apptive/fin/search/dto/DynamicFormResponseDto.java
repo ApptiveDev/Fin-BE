@@ -2,13 +2,16 @@ package apptive.fin.search.dto;
 
 import lombok.Builder;
 
+import java.util.List;
+
 @Builder
 public record DynamicFormResponseDto(
     Boolean showTenure,
     Integer ageBound,
     Integer yearlyEarnDefault,
     Boolean showBankInterestRateCheckList,
-    MedianIncomesDto medianIncomes
+    MedianIncomesDto medianIncomes,
+    List<PreferentialInterestRateOption> preferentialInterestRateOptions
 ) {
 
     public DynamicFormResponseDto {
@@ -17,6 +20,7 @@ public record DynamicFormResponseDto(
         // if (yearlyEarnDefault == null);
         if (showBankInterestRateCheckList == null) showBankInterestRateCheckList = false;
         // if (medianIncomes == null) medianIncomes = null;
+        if (preferentialInterestRateOptions == null) preferentialInterestRateOptions = List.of();
     }
 
 }

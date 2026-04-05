@@ -13,6 +13,7 @@ public record DetailedOptionsDto(
         Boolean isHomeless,
         Boolean isHouseholder, // 세대주 여부
         Long monthlySavingsGoal,
-        List<String> mainBanks
+        List<String> mainBanks,
+        List<PreferentialInterestRateOption> selectedInterestRateOptions
 ) {
 }
