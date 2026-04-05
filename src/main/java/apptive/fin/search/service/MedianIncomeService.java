@@ -6,11 +6,13 @@ import apptive.fin.search.repository.MedianIncomeRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class MedianIncomeService {
     private final MedianIncomeRepository medianIncomeRepository;
 
