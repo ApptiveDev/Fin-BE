@@ -1,7 +1,6 @@
 package apptive.fin.search.service;
 
 import apptive.fin.search.KeywordValueEnum;
-import apptive.fin.search.dto.DynamicFormRequestDto;
 import apptive.fin.search.dto.DynamicFormResponseDto;
 import apptive.fin.search.dto.OptionRequestDto;
 import apptive.fin.search.dto.SearchRequestDto;
@@ -16,7 +15,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DynamicFormService {
     private final MedianIncomeService medianIncomeService;
-    // TODO : 지원님 코드 머지한 뒤에 enum 정의하고 입력받는 로직 만들기
     public DynamicFormResponseDto calcFormCondition(SearchRequestDto searchRequestDto) {
 
         List<KeywordValueEnum> keywords = optionsToKeywords(searchRequestDto.options());
