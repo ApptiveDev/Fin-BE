@@ -16,7 +16,7 @@ public interface CategoryRepository extends JpaRepository<Category, Long>{
           )
           FROM Category c
           JOIN CategoryOption o ON c.id = o.category.id
-          ORDER BY c.id, oid
+          ORDER BY c.id, o.id
     """)
     List<CategoryFlatDto> findAllWithOptions();
 }

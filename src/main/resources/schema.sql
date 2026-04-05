@@ -225,18 +225,20 @@ INSERT INTO term_versions (
           '2026-03-12 00:00:00'
       );
 
+DROP TABLE IF EXISTS category_option;
+DROP TABLE IF EXISTS category;
+
 -- 키워드 카테고리 테이블
-CREATE TABLE category (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS category (
+    id BIGSERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL UNIQUE
 );
 
 -- 키워드에 따른 value 테이블
-CREATE TABLE category_option (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    category_id INT NOT NULL,
+CREATE TABLE IF NOT EXISTS category_option (
+    id BIGSERIAL PRIMARY KEY,
+    category_id BIGINT NOT NULL,
     value VARCHAR(100) NOT NULL,
-    UNIQUE (category_id, value),
     FOREIGN KEY (category_id) REFERENCES category(id)
 );
 
