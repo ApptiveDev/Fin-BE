@@ -28,7 +28,7 @@ public class DynamicFormService {
         for (KeywordValueEnum keyword : keywords) {
             switch (keyword) {
                 // 현재 신분이 미취업이면 연소득 기본값을 0으로 설정한다.
-                case KeywordValueEnum.STATUS_UNEMPLOYED -> builder.yearlyEarnDefault(0);
+                case KeywordValueEnum.STATUS_UNEMPLOYED -> builder.yearlyEarnDefault(0).showTenure(false);
                 // 현재 신분이 군복무이면 생년월일 상한을 39로 확장한다.
                 case KeywordValueEnum.STATUS_MILITARY ->  builder.ageBound(39);
             }
