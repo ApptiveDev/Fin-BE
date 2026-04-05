@@ -1,13 +1,56 @@
 package apptive.fin.search.service;
 
+import apptive.fin.search.KeywordValueEnum;
+import apptive.fin.search.dto.DynamicFormRequestDto;
+import apptive.fin.search.dto.DynamicFormResponseDto;
+import apptive.fin.search.dto.OptionRequestDto;
+import apptive.fin.search.dto.SearchRequestDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
 
 @Service
 @RequiredArgsConstructor
 public class DynamicFormService {
     private final MedianIncomeService medianIncomeService;
+    // TODO : 지원님 코드 머지한 뒤에 enum 정의하고 입력받는 로직 만들기
+    public DynamicFormResponseDto calcFormCondition(SearchRequestDto searchRequestDto) {
 
+        List<KeywordValueEnum> keywords = optionsToKeywords(searchRequestDto.options());
+        var builder = DynamicFormResponseDto.builder();
 
+        for (KeywordValueEnum keyword : keywords) {
+            switch (keyword) {
+                // 현재 신분이 미취업이면 연소득 기본값을 0으로 설정한다.
+                case KeywordValueEnum.STATUS_UNEMPLOYED -> builder.yearlyEarnDefault(0);
+                // 현재 신분이 군복무이면 생년월일 상한을 39로 확장한다.
+                case KeywordValueEnum.STATUS_MILITARY ->  builder.ageBound(39);
+            }
+        }
+
+        // 사용자가 입력한 가구원 수에 따라 중위소득 데이터를 반환한다
+        if (searchRequestDto.detailedOptions().householdSize() != null)
+            builder.medianIncomes(
+                    medianIncomeService.getMedianIncomesDto(
+                            LocalDateTime.now().getYear(),
+                            searchRequestDto.detailedOptions().householdSize()
+                    )
+            );
+
+        // 주거래 은행을 선택하면 은행의 우대금리 목록을 노출한다
+        if (searchRequestDto.detailedOptions().mainBanks() != null &&
+            !searchRequestDto.detailedOptions().mainBanks().isEmpty()
+        )
+            builder.showBankInterestRateCheckList(true);
+
+        return builder.build();
+    }
+
+    private List<KeywordValueEnum> optionsToKeywords(List<OptionRequestDto> options) {
+
+    }
 
 }
