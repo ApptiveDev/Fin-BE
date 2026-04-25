@@ -8,7 +8,8 @@ import apptive.fin.search.dto.SearchRequestDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
+import java.time.Year;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -35,13 +36,15 @@ public class DynamicFormService {
         }
 
         // 사용자가 입력한 가구원 수에 따라 중위소득 데이터를 반환한다
-        if (searchRequestDto.detailedOptions().householdSize() != null)
+        if (searchRequestDto.detailedOptions().householdSize() != null) {
+            int currentYear = Year.now(ZoneId.of("Asia/Seoul")).getValue();
             builder.medianIncomes(
                     medianIncomeService.getMedianIncomesDto(
-                            LocalDateTime.now().getYear(),
+                            currentYear,
                             searchRequestDto.detailedOptions().householdSize()
                     )
             );
+        }
 
         // 주거래 은행을 선택하면 은행의 우대금리 목록을 노출한다
         if (searchRequestDto.detailedOptions().mainBanks() != null &&
