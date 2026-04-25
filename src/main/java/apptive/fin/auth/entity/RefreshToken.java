@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "refresh_tokens",
@@ -32,7 +32,7 @@ public class RefreshToken extends BaseCreatedAtEntity {
     private String tokenHash;
 
     @Column(name = "expires_at", nullable = false)
-    private LocalDateTime expiresAt;
+    private Instant expiresAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -44,7 +44,7 @@ public class RefreshToken extends BaseCreatedAtEntity {
 
 
     @Builder
-    public RefreshToken(String tokenHash, LocalDateTime expiresAt, User user) {
+    public RefreshToken(String tokenHash, Instant expiresAt, User user) {
         this.tokenHash = tokenHash;
         this.expiresAt = expiresAt;
         this.user = user;
@@ -52,6 +52,6 @@ public class RefreshToken extends BaseCreatedAtEntity {
     }
 
     public boolean checkValidity() {
-        return isActive && expiresAt.isAfter(LocalDateTime.now());
+        return isActive && expiresAt.isAfter(Instant.now());
     }
 }

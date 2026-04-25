@@ -1,7 +1,7 @@
 package apptive.fin.term.dto;
 
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public record TermResponseDto (
     Long id,
@@ -9,7 +9,7 @@ public record TermResponseDto (
     String code,
     String title,
     String content,
-    LocalDateTime effectiveFrom,
+    Instant effectiveFrom,
     boolean isRequired,
     boolean agreed
 ) {

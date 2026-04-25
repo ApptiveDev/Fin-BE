@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "term_versions", uniqueConstraints = {
@@ -46,5 +46,5 @@ public class TermVersion extends BaseCreatedAtEntity {
     private boolean isCurrent;
 
     @Column(name = "effective_from", nullable = false)
-    private LocalDateTime effectiveFrom;
+    private Instant effectiveFrom;
 }

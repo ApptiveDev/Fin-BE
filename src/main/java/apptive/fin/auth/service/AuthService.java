@@ -13,7 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Base64;
 
 @Service
@@ -70,7 +70,7 @@ public class AuthService {
 
         RefreshToken refreshToken = RefreshToken.builder()
                 .tokenHash(hashedRefreshToken)
-                .expiresAt(LocalDateTime.now().plusSeconds(jwtUtil.getRefreshExpiration()))
+                .expiresAt(Instant.now().plusSeconds(jwtUtil.getRefreshExpiration()))
                 .user(user)
                 .build();
         refreshTokenRepository.save(refreshToken);

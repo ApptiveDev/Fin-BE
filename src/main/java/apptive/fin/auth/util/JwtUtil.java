@@ -12,6 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.time.Instant;
 import java.util.Base64;
 import java.util.Date;
 
@@ -42,12 +43,13 @@ public class JwtUtil {
     }
 
     public String generateAccessToken(String userId, UserRole role, boolean requiredTermsAgreement) {
+        Instant now = Instant.now();
         return Jwts.builder()
                 .subject(userId)
                 .claim("role", role.name())
                 .claim("required_terms_agreement", requiredTermsAgreement)
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + jwtProperties.expiration() * 1000L))
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(now.plusSeconds(jwtProperties.expiration())))
                 .signWith(getKey())
                 .compact();
     }

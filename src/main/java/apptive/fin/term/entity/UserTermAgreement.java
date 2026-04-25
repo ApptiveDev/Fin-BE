@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "user_term_agreements", uniqueConstraints = {
@@ -37,11 +37,11 @@ public class UserTermAgreement extends BaseCreatedAtEntity {
     private boolean agreed;
 
     @Column(name = "agreed_at")
-    private LocalDateTime agreedAt = null;
+    private Instant agreedAt = null;
 
 
     @Builder
-    public UserTermAgreement(User user, TermVersion termVersion, boolean agreed, LocalDateTime agreedAt) {
+    public UserTermAgreement(User user, TermVersion termVersion, boolean agreed, Instant agreedAt) {
         this.user = user;
         this.termVersion = termVersion;
         this.agreed = agreed;
@@ -50,7 +50,7 @@ public class UserTermAgreement extends BaseCreatedAtEntity {
 
     public void agree(){
         this.agreed = true;
-        this.agreedAt = LocalDateTime.now();
+        this.agreedAt = Instant.now();
     }
 
     public void disagree() {
