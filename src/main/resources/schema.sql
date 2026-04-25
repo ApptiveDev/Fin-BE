@@ -15,8 +15,8 @@ CREATE TABLE users (
                        provider VARCHAR(50) NOT NULL,
                        provider_id VARCHAR(255) NOT NULL,
                        user_role VARCHAR(50) NOT NULL DEFAULT 'BEFORE_AGREED',
-                       created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                       updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                       created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                       updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
                        CONSTRAINT uq_users_provider_account UNIQUE (provider, provider_id)
 );
 
@@ -25,8 +25,8 @@ CREATE TABLE refresh_tokens (
                                 user_id BIGINT NOT NULL,
                                 token_hash VARCHAR(255) NOT NULL,
                                 is_active BOOLEAN NOT NULL,
-                                expires_at TIMESTAMP NOT NULL,
-                                created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                                expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+                                created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
                                 CONSTRAINT fk_refresh_tokens_user
                                     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
                                 CONSTRAINT uq_refresh_tokens_token_hash UNIQUE (token_hash)
@@ -49,7 +49,7 @@ CREATE TABLE terms (
        id BIGSERIAL PRIMARY KEY,
        code VARCHAR(100) NOT NULL UNIQUE,
        is_required BOOLEAN NOT NULL,
-       created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+       created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE term_versions(
@@ -60,8 +60,8 @@ CREATE TABLE term_versions(
     title VARCHAR(255) NOT NULL,
     content TEXT NOT NULL,
     is_current BOOLEAN NOT NULL DEFAULT TRUE,
-    effective_from TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, -- 효력이 생기는 날짜
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    effective_from TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP, -- 효력이 생기는 날짜
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
 
     CONSTRAINT fk_term_version_term
@@ -80,8 +80,8 @@ CREATE TABLE user_term_agreements (
     user_id BIGINT NOT NULL,
     term_version_id BIGINT NOT NULL,
     agreed BOOLEAN NOT NULL,
-    agreed_at TIMESTAMP NULL,
-    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    agreed_at TIMESTAMP WITH TIME ZONE NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT fk_user_term_agreement_user
           FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,

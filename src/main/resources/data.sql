@@ -92,7 +92,7 @@ INSERT INTO term_versions (
 **제7조 (준거법 및 재판관할)**
 본 약관과 관련하여 발생한 분쟁에 대하여는 대한민국 법을 준거법으로 하며, **Y-Fin.** 운영 주체 소재지의 관할 법원을 합의 관할 법원으로 합니다.$$,
           TRUE,
-          '2026-03-12 00:00:00'
+          '2026-03-12T00:00:00+09:00'
       ),
       (
           (SELECT id FROM terms WHERE code = 'PRIVACY_POLICY'),
@@ -134,7 +134,7 @@ INSERT INTO term_versions (
 - 성명: **이서빈**
 - 연락처: [팀 공용 메일]$$,
           TRUE,
-          '2026-03-12 00:00:00'
+          '2026-03-12T00:00:00+09:00'
       ),
       (
           (SELECT id FROM terms WHERE code = 'LOCATION_SERVICE_TERMS'),
@@ -157,7 +157,7 @@ INSERT INTO term_versions (
 1. **Y-Fin.**은 위치정보법에 따라 위치정보 이용·제공사실 확인자료를 시스템에 자동으로 기록하며, 해당 자료를 **6개월 이상 보관**합니다.
 2. 이용 목적 달성 시 재생이 불가능한 방법으로 즉시 파기합니다.$$,
           TRUE,
-          '2026-03-12 00:00:00'
+          '2026-03-12T00:00:00+09:00'
       ),
       (
           (SELECT id FROM terms WHERE code = 'MARKETING_TERMS'),
@@ -179,7 +179,7 @@ INSERT INTO term_versions (
 - **본 동의는 선택 사항이며, 거부하더라도 기본 시뮬레이션 서비스 이용에는 제한이 없습니다.**
 - 동의 후에도 마이페이지 설정을 통해 언제든지 수신 거부 및 동의 철회가 가능합니다.$$,
           TRUE,
-          '2026-03-12 00:00:00'
+          '2026-03-12T00:00:00+09:00'
       );
 
 INSERT INTO category (name) VALUES
