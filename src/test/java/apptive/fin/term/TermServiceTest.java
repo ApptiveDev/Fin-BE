@@ -24,7 +24,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.BeanUtils;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.StreamSupport;
@@ -71,7 +71,7 @@ class TermServiceTest {
                         "SERVICE_TERMS",
                         "서비스 이용약관 v2.0",
                         "content",
-                        LocalDateTime.now(),
+                        Instant.now(),
                         true,
                         false
                 )
@@ -91,7 +91,7 @@ class TermServiceTest {
                         "SERVICE_TERMS",
                         "서비스 이용약관 v1.0",
                         "content",
-                        LocalDateTime.now(),
+                        Instant.now(),
                         true,
                         true
                 )
@@ -295,7 +295,7 @@ class TermServiceTest {
         ReflectionTestUtils.setField(termVersion, "title", term.getCode() + " v" + majorVersion + "." + minorVersion);
         ReflectionTestUtils.setField(termVersion, "content", "content");
         ReflectionTestUtils.setField(termVersion, "isCurrent", current);
-        ReflectionTestUtils.setField(termVersion, "effectiveFrom", LocalDateTime.of(2026, 3, 12, 0, 0));
+        ReflectionTestUtils.setField(termVersion, "effectiveFrom", Instant.parse("2026-03-11T15:00:00Z"));
         return termVersion;
     }
 }

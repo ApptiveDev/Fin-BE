@@ -15,7 +15,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
+import java.time.Year;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 
@@ -85,7 +86,7 @@ class DynamicFormServiceTest {
 
     @Test
     void 가구원수가_있으면_현재연도와_가구원수로_중위소득을_조회한다() {
-        int currentYear = LocalDateTime.now().getYear();
+        int currentYear = Year.now(ZoneId.of("Asia/Seoul")).getValue();
         MedianIncomesDto medianIncomesDto = createMedianIncomesDto(currentYear, 3);
         SearchRequestDto request = createRequest(List.of(), 3, List.of());
 
@@ -180,7 +181,7 @@ class DynamicFormServiceTest {
 
     @Test
     void 복합조건이_들어오면_여러_분기를_동시에_반영한다() {
-        int currentYear = LocalDateTime.now().getYear();
+        int currentYear = Year.now(ZoneId.of("Asia/Seoul")).getValue();
         MedianIncomesDto medianIncomesDto = createMedianIncomesDto(currentYear, 3);
         SearchRequestDto request = createRequest(
                 List.of(
