@@ -1,9 +1,12 @@
+// search/entity/Product.java
 package apptive.fin.search.entity;
 
 import apptive.fin.search.ProductType;
 import jakarta.persistence.*;
 import lombok.Getter;
 
+import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,19 +19,74 @@ public class Product {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "source_id", nullable = false)
+    private ProductSource source;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "provider_id", nullable = false)
+    private Provider provider;
+
     @Enumerated(EnumType.STRING)
-    private ProductType type; // GOVERMENT, BANK
+    @Column(nullable = false)
+    private ProductType type;
 
-    private String providerName; // 은행명 or '정부'
-    private String content;  // 상품 내용
-    private String bankTerm;  // 은행 조건 텍스트
+    private String productCode;
 
-    private Double baseRate; // 기본 금리
-    private Integer termMonths; // 저축 기간(개월)
-    private Long maxMonthlyAmt; // 최대 월 납입액
-    private Long minMonthlyAmt; // 최소 월 납입액
-    // TODO: 최소 월 납입액은 제공이 안되는 경우가 있어서 default값 설정이 요구될듯 함.
+    @Column(nullable = false)
+    private String productName;
 
-    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY)
-    private final List<ProductKeyword> keywords = new ArrayList<>();
+    @Column(columnDefinition = "TEXT")
+    private String content;
+
+    // 공통
+    @Column(precision = 5, scale = 2)
+    private BigDecimal baseRate;
+
+    @Column(precision = 5, scale = 2)
+    private BigDecimal maxRate;
+
+    private Long minMonthlyLimit;
+    private Long maxMonthlyLimit;
+
+    // 조건 (파싱 결과)
+    private Integer minAge;
+    private Integer maxAge;
+    private Long    earnMaxAmt;
+    private Integer earnPercent;
+    private Integer minTenureMonths;
+
+    @Column(nullable = false)
+    private Boolean requiresHomeless    = false;
+
+    @Column(nullable = false)
+    private Boolean requiresHouseholder = false;
+
+    // url
+    private String applyUrl;
+
+    // 연관관계
+    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<ProductOption> options = new ArrayList<>();
+
+    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<ProductKeyword> keywords = new ArrayList<>();
+
+    // 시간
+    @Column(nullable = false, updatable = false)
+    private Instant createdAt;
+
+    @Column(nullable = false)
+    private Instant updatedAt;
+
+    @PrePersist
+    void onCreate() {
+        this.createdAt = Instant.now();
+        this.updatedAt = Instant.now();
+    }
+
+    @PreUpdate
+    void onUpdate() {
+        this.updatedAt = Instant.now();
+    }
 }
