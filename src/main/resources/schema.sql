@@ -123,7 +123,7 @@ CREATE TABLE IF NOT EXISTS category_option (
 CREATE TABLE product_source (
     id      BIGSERIAL PRIMARY KEY,
     code    VARCHAR(20)  NOT NULL UNIQUE,  -- 'FSS' | 'ONTONG'
-    name    VARCHAR(50)  NOT NULL          -- '금융감독원' | '온통청년'
+    name    VARCHAR(50)  NOT NULL  -- '금융감독원' | '온통청년'
 );
 
 INSERT INTO product_source (code, name) VALUES
@@ -134,8 +134,8 @@ INSERT INTO product_source (code, name) VALUES
 CREATE TABLE provider (
     id        BIGSERIAL PRIMARY KEY,
     source_id BIGINT      NOT NULL REFERENCES product_source(id),
-    code      VARCHAR(100),                -- FSS: fin_co_no / ONTONG: sprvsnInstCd
-    name      VARCHAR(100) NOT NULL        -- FSS: kor_co_nm / ONTONG: sprvsnInstCdNm
+    code      VARCHAR(100), -- FSS: fin_co_no / ONTONG: sprvsnInstCd
+    name      VARCHAR(100) NOT NULL  -- FSS: kor_co_nm / ONTONG: sprvsnInstCdNm
 );
 
 -- 상품 메인 테이블
@@ -146,7 +146,7 @@ CREATE TABLE product (
     type                 VARCHAR(20)  NOT NULL,   -- 'DEPOSIT' | 'SAVING' | 'POLICY'
     product_code         VARCHAR(100),
     product_name         VARCHAR(200) NOT NULL,
-    content              TEXT,                    -- 상품 설명
+    content              TEXT,  -- 상품 설명
 
     -- 공통
     base_rate            DECIMAL(5,2),
@@ -157,11 +157,11 @@ CREATE TABLE product (
     -- 조건(파싱 결과)
     min_age              INT,
     max_age              INT,
-    earn_max_amt         BIGINT,-- 최대 연 소득 (만원)
+    earn_max_amt         BIGINT, -- 최대 연 소득 (만원)
     earn_percent         INT, -- 중위소득 기준 % (ex : 150)
-    min_tenure_months    INT,-- 최소 근속 기간 (개월)
-    requires_homeless    BOOLEAN DEFAULT FALSE,-- 무주택 요건 여부
-    requires_householder BOOLEAN DEFAULT FALSE,-- 세대주 요건 여부
+    min_tenure_months    INT, -- 최소 근속 기간 (개월)
+    requires_homeless    BOOLEAN DEFAULT FALSE, -- 무주택 요건 여부
+    requires_householder BOOLEAN DEFAULT FALSE, -- 세대주 요건 여부
 
     -- 현재 온통청년에서만 url이 제공되고 있음.
     apply_url            VARCHAR(500),
