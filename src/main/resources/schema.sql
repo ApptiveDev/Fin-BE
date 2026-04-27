@@ -135,7 +135,7 @@ CREATE TABLE provider (
     id        BIGSERIAL PRIMARY KEY,
     source_id BIGINT      NOT NULL REFERENCES product_source(id),
     code      VARCHAR(100), -- FSS: fin_co_no / ONTONG: sprvsnInstCd
-    name      VARCHAR(100) NOT NULL  -- FSS: kor_co_nm / ONTONG: sprvsnInstCdNm
+    name      VARCHAR(100) NOT NULL  -- FSS: kor_co_nm / ONTONG: sprvsnInstCdNm 칼럼 값 가져와서 저장.
 );
 
 -- 상품 메인 테이블
