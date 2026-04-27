@@ -166,8 +166,8 @@ CREATE TABLE product (
     -- 현재 온통청년에서만 url이 제공되고 있음.
     apply_url            VARCHAR(500),
 
-    created_at  TIMESTAMP DEFAULT NOW(),
-    updated_at  TIMESTAMP DEFAULT NOW()
+    created_at   TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at   TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 -- 상품-옵션 테이블 (FSS 단리/복리, 기간)
