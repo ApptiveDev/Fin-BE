@@ -20,7 +20,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
                 AND (p.earnMaxAmt IS NULL OR p.earnMaxAmt >= :annualIncome)
                 AND (p.requiresHomeless = FALSE OR :isHomeless = TRUE)
                 AND (p.requiresHouseholder = FALSE OR :isHouseholder = TRUE)
-                AND (p.minTenurMonths IS NULL OR p.minTenureMonths <= :tenureMonths)
+                AND (p.minTenureMonths IS NULL OR p.minTenureMonths <= :tenureMonths OR :tenureMonths IS NULL)
                 AND (p.maxMonthlyLimit IS NULL OR p.maxMonthlyLimit >= :monthlyDeposit)
             """)
     List<Product> findEligibleProducts(
@@ -28,7 +28,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             @Param("annualIncome") long annualIncome,
             @Param("isHomeless")     boolean isHomeless,
             @Param("isHouseholder")  boolean isHouseholder,
-            @Param("tenureMonths")   int tenureMonths,
+            @Param("tenureMonths")   Integer tenureMonths,
             @Param("monthlyDeposit") long monthlyDeposit
     );
 
