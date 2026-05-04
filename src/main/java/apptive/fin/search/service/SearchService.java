@@ -4,13 +4,16 @@ import apptive.fin.category.repository.CategoryOptionRepository;
 import apptive.fin.category.service.CategoryOptionService;
 import apptive.fin.search.KeywordValueEnum;
 import apptive.fin.search.dto.OptionRequestDto;
+import apptive.fin.search.dto.ProductMatchDto;
 import apptive.fin.search.dto.ProductSearchResultDto;
 import apptive.fin.search.dto.SearchRequestDto;
+import apptive.fin.search.entity.Product;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -18,11 +21,33 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SearchService {
 
-    private final CategoryOptionRepository categoryOptionRepository;
     private final CategoryOptionService categoryOptionService;
+    private final EligibilityFilterService eligibilityFilterService;
+    private final MatchScoreService matchScoreService;
+    private final RateCalculatorService rateCalculatorService;
 
     public ProductSearchResultDto search(SearchRequestDto request){
-        ResolvedKeywords keywords = resolveKeywords (request.options());
+        // 자격 필터링
+        List<Product> eligible = eligibilityFilterService.filterEligible(request);
+
+        // source별 분리
+        List<Product> govList = eligible.stream()
+                .filter(p -> p.getSource().getCode().equals("ONTONG")).toList();
+        List<Product> bankList = eligible.stream()
+                .filter(p -> p.getSource().getCode().equals("FSS")).toList();
+
+        // 탭 A
+        List<ProductMatchDto> govRanked = govList.stream()
+                .map(p -> matchScoreService.score(p, request))
+                .sorted(Comparator.comparingDouble(ProductMatchDto::totalScore).reversed())
+                .toList();
+        List<ProductMatchDto> bankRanked = bankList.stream()
+                .map(p -> matchScoreService.score(p, request))
+                .sorted(Comparator.comparingDouble(ProductMatchDto::totalScore).reversed())
+                .toList();
+
+        // 탭 B
+
 
         // TODO : 계산 로직 추가 후 최종 완성할 부분
         return ProductSearchResultDto.builder()
