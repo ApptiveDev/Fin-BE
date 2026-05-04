@@ -4,7 +4,7 @@ import lombok.Builder;
 
 @Builder
 public record ProductMatchDto(
-        String productId,
+        Long productId,
         String productName,
         String source, // government 또는 bank
         double totalScore,
