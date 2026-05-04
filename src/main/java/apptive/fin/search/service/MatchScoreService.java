@@ -23,7 +23,7 @@ public class MatchScoreService {
     );
     private static final Map<String, Double> BANK_BASE = Map.of(
             "bankCond", 40.0, "benefits", 20.0,
-            "identity", 20.0, "deposit", 15.0, "identity",5.0
+            "period", 20.0, "deposit", 15.0, "identity",5.0
     );
 
     public ProductMatchDto score(Product p, SearchRequestDto request) {
