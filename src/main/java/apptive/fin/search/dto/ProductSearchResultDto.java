@@ -11,6 +11,6 @@ public record ProductSearchResultDto (
     List<ProductMatchDto> bankRanked,
 
     // 탭 B : 금리 높은 순
-    List<ProductMatchDto> rateRanked,
-    List<ProductMatchDto> subscriptionProducts
+    List<ProductRateDto> rateRanked,
+    List<ProductRateDto> subscriptionProducts
 ){}

@@ -3,10 +3,7 @@ package apptive.fin.search.service;
 import apptive.fin.category.repository.CategoryOptionRepository;
 import apptive.fin.category.service.CategoryOptionService;
 import apptive.fin.search.KeywordValueEnum;
-import apptive.fin.search.dto.OptionRequestDto;
-import apptive.fin.search.dto.ProductMatchDto;
-import apptive.fin.search.dto.ProductSearchResultDto;
-import apptive.fin.search.dto.SearchRequestDto;
+import apptive.fin.search.dto.*;
 import apptive.fin.search.entity.Product;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -16,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -47,14 +45,24 @@ public class SearchService {
                 .toList();
 
         // 탭 B
+        List<ProductRateDto> allRated = Stream.concat(govList.stream(), bankList.stream())
+                .map(p -> rateCalculatorService.calculate(p, request)).toList();
 
+        List<ProductRateDto> rateRanked = allRated.stream()
+                .filter(r -> !r.isSubscription())
+                .sorted(Comparator.comparingDouble(ProductRateDto::achievableRate).reversed())
+                .toList();
+
+        List<ProductRateDto> subscriptions = allRated.stream()
+                .filter(ProductRateDto::isSubscription)
+                .toList();
 
         // TODO : 계산 로직 추가 후 최종 완성할 부분
         return ProductSearchResultDto.builder()
-                .governmentRanked(List.of())
-                .bankRanked(List.of())
-                .rateRanked(List.of())
-                .subscriptionProducts(List.of())
+                .governmentRanked(govRanked)
+                .bankRanked(bankRanked)
+                .rateRanked(rateRanked)
+                .subscriptionProducts(subscriptions)
                 .build();
     }
 
