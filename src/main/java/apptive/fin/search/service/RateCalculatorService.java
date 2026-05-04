@@ -49,7 +49,7 @@ public class RateCalculatorService {
                     .productName(p.getProductName())
                     .source(p.getSource().getCode())
                     .isSubscription(true)
-                    .subcriptionNote("청약: 금리 비교 대상 아님")
+                    .subscriptionNote("청약: 금리 비교 대상 아님")
                     .build();
         }
 
