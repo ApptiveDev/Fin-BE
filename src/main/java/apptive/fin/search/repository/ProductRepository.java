@@ -15,7 +15,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             SELECT DISTINCT p FROM Product p
             LEFT JOIN FETCH p.options
             LEFT JOIN FETCH p.keywords
-            WHERE (p.minAge IS NULL OR p.minAge <= :age)
+            WHERE p.isJoinable = TRUE
+                AND (p.minAge IS NULL OR p.minAge <= :age)
                 AND (p.maxAge IS NULL OR p.maxAge >= :age)
                 AND (p.earnMaxAmt IS NULL OR p.earnMaxAmt >= :annualIncome)
                 AND (p.requiresHomeless = FALSE OR :isHomeless = TRUE)

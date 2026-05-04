@@ -89,4 +89,8 @@ public class Product {
     void onUpdate() {
         this.updatedAt = Instant.now();
     }
+
+    // 현재 가입 가능 상품 판단
+    @Column(nullable = false)
+    private Boolean isJoinable = true;
 }
