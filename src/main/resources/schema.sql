@@ -163,6 +163,8 @@ CREATE TABLE product (
     requires_homeless    BOOLEAN DEFAULT FALSE, -- 무주택 요건 여부
     requires_householder BOOLEAN DEFAULT FALSE, -- 세대주 요건 여부
 
+    -- 현재 활성화 된(가입 가능한)상품 여부
+    is_joinable         BOOLEAN NOT NULL DEFAULT True,
     -- 현재 온통청년에서만 url이 제공되고 있음.
     apply_url            VARCHAR(500),
 
