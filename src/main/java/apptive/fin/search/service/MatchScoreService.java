@@ -14,6 +14,7 @@ import java.util.Map;
 
 import static apptive.fin.search.KeywordValueEnum.*;
 
+// 탭 A - 나에게 맞는 순
 @Service
 public class MatchScoreService {
     private static final Map<String, Double> GOV_BASE = Map.of(
