@@ -14,7 +14,6 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     @Query("""
             SELECT DISTINCT p FROM Product p
             LEFT JOIN FETCH p.options
-            LEFT JOIN FETCH p.keywords
             WHERE p.isJoinable = TRUE
                 AND (p.minAge IS NULL OR p.minAge <= :age)
                 AND (p.maxAge IS NULL OR p.maxAge >= :age)
@@ -29,7 +28,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             @Param("annualIncome") long annualIncome,
             @Param("isHomeless")     boolean isHomeless,
             @Param("isHouseholder")  boolean isHouseholder,
-            @Param("tenureMonths")   Integer tenureMonths,
+            @Param("tenureMonths")   int tenureMonths,
             @Param("monthlyDeposit") long monthlyDeposit
     );
 

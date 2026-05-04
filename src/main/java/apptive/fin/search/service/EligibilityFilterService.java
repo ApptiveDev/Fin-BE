@@ -21,7 +21,9 @@ public class EligibilityFilterService {
 
         int age = Period.between(detail.birthdate(), LocalDate.now()).getYears();
 
-        Integer tenureMonths = Boolean.TRUE.equals(detail.isFirstJob())? null : detail.tenureMonths();
+        int tenureMonths = Boolean.TRUE.equals(detail.isFirstJob())
+                ? -1
+                : (detail.tenureMonths() != null ? detail.tenureMonths() : 0);
 
         return productRepository.findEligibleProducts(
                 age, detail.annualIncome(), detail.isHomeless(),

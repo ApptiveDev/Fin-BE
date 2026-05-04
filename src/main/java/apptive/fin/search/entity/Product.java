@@ -4,6 +4,7 @@ package apptive.fin.search.entity;
 import apptive.fin.search.ProductType;
 import jakarta.persistence.*;
 import lombok.Getter;
+import org.hibernate.annotations.BatchSize;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -66,9 +67,11 @@ public class Product {
     private String applyUrl;
 
     // 연관관계
+    @BatchSize(size = 100)
     @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<ProductOption> options = new ArrayList<>();
 
+    @BatchSize(size = 100)
     @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<ProductKeyword> keywords = new ArrayList<>();
 
