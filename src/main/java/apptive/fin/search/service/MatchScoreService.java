@@ -1,6 +1,8 @@
 package apptive.fin.search.service;
 
 import apptive.fin.search.KeywordValueEnum;
+import apptive.fin.search.ScoreWeightEnum;
+import apptive.fin.search.dto.OptionRequestDto;
 import apptive.fin.search.dto.ProductMatchDto;
 import apptive.fin.search.dto.SearchRequestDto;
 import apptive.fin.search.entity.ProductKeyword;
@@ -17,14 +19,6 @@ import static apptive.fin.search.KeywordValueEnum.*;
 // 탭 A - 나에게 맞는 순
 @Service
 public class MatchScoreService {
-    private static final Map<String, Double> GOV_BASE = Map.of(
-            "benefits", 40.0,"period", 20.0,
-            "identity", 20.0, "deposit",12.0,"bankCond",8.0
-    );
-    private static final Map<String, Double> BANK_BASE = Map.of(
-            "bankCond", 40.0, "benefits", 20.0,
-            "period", 20.0, "deposit", 15.0, "identity",5.0
-    );
 
     public ProductMatchDto score(Product p, SearchRequestDto request) {
         var keywords = request.options();
@@ -43,11 +37,16 @@ public class MatchScoreService {
                 .filter(kw -> kw == TERM_AROUND_1_YEAR || kw == TERM_2_TO_3_YEARS || kw == TERM_OVER_5_YEARS)
                 .findFirst().orElse(null);
 
-        double benefitScore  = calcBenefitScore(coreBenefits, productKeywords, isGov)  * weights.get("benefits");
-        double periodScore   = calcPeriodScore(savingPeriod, p)                         * weights.get("period");
-        double identityScore = calcIdentityScore(identities, productKeywords, isGov)   * weights.get("identity");
-        double depositScore  = calcDepositScore(detail.monthlySavingsGoal(), p)         * weights.get("deposit");
-        double bankCondScore = calcBankCondScore(bankConditions, productKeywords)        * weights.get("bankCond");
+        double benefitScore  = calcBenefitScore(coreBenefits, productKeywords, isGov)
+                            * weights.get(ScoreWeightEnum.GOV_BENEFITS.getKey());
+        double periodScore   = calcPeriodScore(savingPeriod, p)
+                            * weights.get(ScoreWeightEnum.GOV_PERIOD.getKey());
+        double identityScore = calcIdentityScore(identities, productKeywords, isGov)
+                            * weights.get(ScoreWeightEnum.GOV_IDENTITY.getKey());
+        double depositScore  = calcDepositScore(detail.monthlySavingsGoal(), p)
+                            * weights.get(ScoreWeightEnum.GOV_DEPOSIT.getKey());
+        double bankCondScore = calcBankCondScore(bankConditions, productKeywords)
+                            * weights.get(ScoreWeightEnum.GOV_DEPOSIT.getKey());
 
         return ProductMatchDto.builder()
                 .productId(p.getId())
@@ -125,17 +124,14 @@ public class MatchScoreService {
     private Map<String, Double> distributeWeights(
             List<apptive.fin.search.dto.OptionRequestDto> options, boolean isGov
     ) {
-        Map<String, Double> weights = new HashMap<>(isGov ? GOV_BASE : BANK_BASE);
+        Map<String, Double> weights = new HashMap<>(ScoreWeightEnum.baseWeights(isGov));
 
         Map<Long, KeywordValueEnum> mapping = getKeywordMapping(options);
-        boolean noBenefits  = filterByCategory(mapping, 4L).isEmpty();
-        boolean noPeriod    = filterByCategory(mapping, 3L).isEmpty();
-        boolean noBankCond  = filterByCategory(mapping, 6L).isEmpty();
 
         List<String> inactive = new ArrayList<>();
-        if (noBenefits) inactive.add("benefits");
-        if (noPeriod)   inactive.add("period");
-        if (noBankCond) inactive.add("bankCond");
+        if (filterByCategory(mapping, 4L).isEmpty()) inactive.add(ScoreWeightEnum.GOV_BENEFITS.getKey());
+        if (filterByCategory(mapping, 3L).isEmpty()) inactive.add(ScoreWeightEnum.GOV_PERIOD.getKey());
+        if (filterByCategory(mapping, 6L).isEmpty()) inactive.add(ScoreWeightEnum.GOV_BANK_COND.getKey());
 
         if (inactive.isEmpty()) return weights;
 
@@ -147,10 +143,9 @@ public class MatchScoreService {
         return weights;
     }
 
-    private Map<Long, KeywordValueEnum> getKeywordMapping(
-            List<apptive.fin.search.dto.OptionRequestDto> options
-    ) {
+    private Map<Long, KeywordValueEnum> getKeywordMapping(List<OptionRequestDto> options) {
         Map<Long, KeywordValueEnum> map = new HashMap<>();
+
         for (var opt : options) {
             KeywordValueEnum kw = KeywordValueEnum.from(String.valueOf(opt.optionId()));
             if (kw != null) map.put(opt.categoryId(), kw);
