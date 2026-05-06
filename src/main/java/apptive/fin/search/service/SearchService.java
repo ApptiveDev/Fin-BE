@@ -1,6 +1,5 @@
 package apptive.fin.search.service;
 
-import apptive.fin.category.repository.CategoryOptionRepository;
 import apptive.fin.category.service.CategoryOptionService;
 import apptive.fin.search.CategoryIdEnum;
 import apptive.fin.search.KeywordValueEnum;
@@ -8,8 +7,8 @@ import apptive.fin.search.dto.*;
 import apptive.fin.search.entity.Product;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.security.Key;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -18,6 +17,7 @@ import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class SearchService {
 
     private final CategoryOptionService categoryOptionService;
