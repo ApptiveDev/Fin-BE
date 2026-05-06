@@ -1,5 +1,6 @@
 package apptive.fin.search.service;
 
+import apptive.fin.search.CategoryIdEnum;
 import apptive.fin.search.KeywordValueEnum;
 import apptive.fin.search.ScoreWeightEnum;
 import apptive.fin.search.dto.OptionRequestDto;
@@ -30,9 +31,9 @@ public class MatchScoreService {
         List<KeywordValueEnum> productKeywords= p.getKeywords().stream().map(ProductKeyword::getKeywordCode).toList();
 
         Map<Long, KeywordValueEnum> mapping = getKeywordMapping(keywords);
-        List<KeywordValueEnum> coreBenefits   = filterByCategory(mapping, 4L);
-        List<KeywordValueEnum> identities     = filterByCategory(mapping, 2L);
-        List<KeywordValueEnum> bankConditions = filterByCategory(mapping, 6L);
+        List<KeywordValueEnum> coreBenefits   = filterByCategory(mapping, CategoryIdEnum.BENEFIT.getId());
+        List<KeywordValueEnum> identities     = filterByCategory(mapping, CategoryIdEnum.IDENTITY.getId());
+        List<KeywordValueEnum> bankConditions = filterByCategory(mapping, CategoryIdEnum.BANK_COND.getId());
         KeywordValueEnum savingPeriod = mapping.values().stream()
                 .filter(kw -> kw == TERM_AROUND_1_YEAR || kw == TERM_2_TO_3_YEARS || kw == TERM_OVER_5_YEARS)
                 .findFirst().orElse(null);
@@ -129,9 +130,9 @@ public class MatchScoreService {
         Map<Long, KeywordValueEnum> mapping = getKeywordMapping(options);
 
         List<String> inactive = new ArrayList<>();
-        if (filterByCategory(mapping, 4L).isEmpty()) inactive.add(ScoreWeightEnum.GOV_BENEFITS.getKey());
-        if (filterByCategory(mapping, 3L).isEmpty()) inactive.add(ScoreWeightEnum.GOV_PERIOD.getKey());
-        if (filterByCategory(mapping, 6L).isEmpty()) inactive.add(ScoreWeightEnum.GOV_BANK_COND.getKey());
+        if (filterByCategory(mapping, CategoryIdEnum.BENEFIT.getId()).isEmpty()) inactive.add(ScoreWeightEnum.GOV_BENEFITS.getKey());
+        if (filterByCategory(mapping, CategoryIdEnum.PERIOD.getId()).isEmpty()) inactive.add(ScoreWeightEnum.GOV_PERIOD.getKey());
+        if (filterByCategory(mapping, CategoryIdEnum.BANK_COND.getId()).isEmpty()) inactive.add(ScoreWeightEnum.GOV_BANK_COND.getKey());
 
         if (inactive.isEmpty()) return weights;
 
