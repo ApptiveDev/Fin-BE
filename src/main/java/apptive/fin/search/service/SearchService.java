@@ -2,6 +2,7 @@ package apptive.fin.search.service;
 
 import apptive.fin.category.repository.CategoryOptionRepository;
 import apptive.fin.category.service.CategoryOptionService;
+import apptive.fin.search.CategoryIdEnum;
 import apptive.fin.search.KeywordValueEnum;
 import apptive.fin.search.dto.*;
 import apptive.fin.search.entity.Product;
@@ -79,14 +80,12 @@ public class SearchService {
             KeywordValueEnum kw = mapping.get(option.optionId());
             if(kw == null) continue;
 
-            switch(option.categoryId().intValue()){
-                case 1 -> regions.add(kw);
-                case 2 -> identities.add(kw);
-                case 3 -> savingPeriod = kw;
-                case 4 -> bankConds.add(kw);
-                case 6 -> benefits.add(kw);
-
-            }
+            Long categoryId = option.categoryId();
+            if (categoryId.equals(CategoryIdEnum.REGION.getId())) regions.add(kw);
+            else if(categoryId.equals(CategoryIdEnum.IDENTITY.getId())) identities.add(kw);
+            else if(categoryId.equals(CategoryIdEnum.PERIOD.getId())) savingPeriod = kw;
+            else if(categoryId.equals(CategoryIdEnum.BENEFIT.getId())) benefits.add(kw);
+            else if(categoryId.equals(CategoryIdEnum.BANK_COND.getId())) bankConds.add(kw);
         }
         return new ResolvedKeywords(regions,identities,savingPeriod, bankConds,benefits);
     }
