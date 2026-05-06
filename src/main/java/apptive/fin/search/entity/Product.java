@@ -1,6 +1,7 @@
 // search/entity/Product.java
 package apptive.fin.search.entity;
 
+import apptive.fin.global.entity.BaseTimeEntity;
 import apptive.fin.search.ProductType;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -14,7 +15,7 @@ import java.util.List;
 @Entity
 @Getter
 @Table(name = "product")
-public class Product {
+public class Product extends BaseTimeEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -74,24 +75,6 @@ public class Product {
     @BatchSize(size = 100)
     @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<ProductKeyword> keywords = new ArrayList<>();
-
-    // 시간
-    @Column(nullable = false, updatable = false)
-    private Instant createdAt;
-
-    @Column(nullable = false)
-    private Instant updatedAt;
-
-    @PrePersist
-    void onCreate() {
-        this.createdAt = Instant.now();
-        this.updatedAt = Instant.now();
-    }
-
-    @PreUpdate
-    void onUpdate() {
-        this.updatedAt = Instant.now();
-    }
 
     // 현재 가입 가능 상품 판단
     @Column(nullable = false)
