@@ -82,11 +82,13 @@ public class MatchScoreService {
     private double calcPeriodScore(KeywordValueEnum selected, Product p) {
         if (selected == null) return 0.0;
 
-        // 금감원 상품은 options에서 기간 확인
-        if (!p.getOptions().isEmpty()) {
-            return p.getOptions().stream().anyMatch(opt -> {
+        // 금감원 상품은 properties에서 기간 확인
+        if (!p.getProperties().isEmpty()) {
+            return p.getProperties().stream()
+                    .filter(property -> property.getSaveTrm() != null)
+                    .anyMatch(property -> {
                 int[] range = periodRange(selected);
-                return opt.getSaveTrm() >= range[0] && opt.getSaveTrm() <= range[1];
+                return property.getSaveTrm() >= range[0] && property.getSaveTrm() <= range[1];
             }) ? 1.0 : isAdjacentOption(p, selected) ? 0.5 : 0.0;
         }
 
@@ -108,10 +110,18 @@ public class MatchScoreService {
         return selected.stream().anyMatch(productKeywords::contains) ? 1.0 : 0.4;
     }
 
-    private double calcDepositScore(long monthlyDeposit, Product p) {
-        if (p.getMaxMonthlyLimit() == null) return 1.0;
-        if (monthlyDeposit <= p.getMaxMonthlyLimit()) return 1.0;
-        return (double) p.getMaxMonthlyLimit() / monthlyDeposit;
+    private double calcDepositScore(Long monthlyDeposit, Product p) {
+        if (monthlyDeposit == null) return 0.0;
+
+        Long maxMonthlyLimit = p.getProperties().stream()
+                .map(property -> property.getMaxMonthlyLimit())
+                .filter(limit -> limit != null)
+                .max(Long::compareTo)
+                .orElse(null);
+
+        if (maxMonthlyLimit == null) return 1.0;
+        if (monthlyDeposit <= maxMonthlyLimit) return 1.0;
+        return (double) maxMonthlyLimit / monthlyDeposit;
     }
 
     private double calcBankCondScore(List<KeywordValueEnum> selected, List<KeywordValueEnum> productKeywords) {
@@ -171,8 +181,10 @@ public class MatchScoreService {
     }
 
     private boolean isAdjacentOption(Product p, KeywordValueEnum selected) {
-        return p.getOptions().stream().anyMatch(opt -> {
-            int trm = opt.getSaveTrm();
+        return p.getProperties().stream()
+                .filter(property -> property.getSaveTrm() != null)
+                .anyMatch(property -> {
+            int trm = property.getSaveTrm();
             return switch (selected) {
                 case TERM_AROUND_1_YEAR -> trm >= 19 && trm <= 42;
                 case TERM_2_TO_3_YEARS  -> (trm >= 6 && trm <= 18) || trm >= 43;

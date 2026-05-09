@@ -22,24 +22,20 @@ public class EligibilityFilterService {
         // TODO : QueryDSL 도입
         if (detail == null) return List.of();
 
-        int age = detail.birthdate() != null
+        Integer age = detail.birthdate() != null
                 ? Period.between(detail.birthdate(), LocalDate.now()).getYears()
-                : 0;
+                : null;
 
-        long annualIncome = detail.annualIncome() != null
-                ? detail.annualIncome()
-                : 0L;
+        Long annualIncome = detail.annualIncome();
 
-        boolean isHomeless = Boolean.TRUE.equals(detail.isHomeless());
-        boolean isHouseholder = Boolean.TRUE.equals(detail.isHouseholder());
+        Boolean isHomeless = detail.isHomeless();
+        Boolean isHouseholder = detail.isHouseholder();
 
-        int tenureMonths =Boolean.TRUE.equals(detail.isFirstJob())
-                ? -1
-                : (detail.tenureMonths() != null ? detail.tenureMonths() : 0);
+        Integer tenureMonths = Boolean.TRUE.equals(detail.isFirstJob())
+                ? 0
+                : detail.tenureMonths();
 
-        long monthlyDeposit = detail.monthlySavingsGoal() != null
-                ? detail.monthlySavingsGoal()
-                : 0L;
+        Long monthlyDeposit = detail.monthlySavingsGoal();
 
         return productRepository.findEligibleProducts(
                 age, annualIncome, isHomeless,
