@@ -132,11 +132,8 @@ CREATE TABLE product_properties (
     requires_householder BOOLEAN NOT NULL DEFAULT FALSE,
     is_joinable BOOLEAN NOT NULL DEFAULT TRUE,
     apply_url VARCHAR(500),
-    intr_rate_type VARCHAR(10),
-    intr_rate_type_nm VARCHAR(20),
-    save_trm INT,
-    intr_rate DECIMAL(5,2),
-    intr_rate2 DECIMAL(5,2)
+    intr_rate_type VARCHAR(30),
+    save_trm INT
 );
 
 CREATE TABLE product_keyword (

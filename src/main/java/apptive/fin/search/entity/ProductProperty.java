@@ -1,7 +1,10 @@
 package apptive.fin.search.entity;
 
+import apptive.fin.search.InterestRateType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -56,15 +59,8 @@ public class ProductProperty {
 
     private String applyUrl;
 
-    private String intrRateType;
-
-    private String intrRateTypeNm;
+    @Enumerated(EnumType.STRING)
+    private InterestRateType intrRateType;
 
     private Integer saveTrm;
-
-    @Column(precision = 5, scale = 2)
-    private BigDecimal intrRate;
-
-    @Column(precision = 5, scale = 2)
-    private BigDecimal intrRate2;
 }

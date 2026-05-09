@@ -228,12 +228,12 @@ INSERT INTO product (source_id, type, product_code, product_name, content) VALUE
 INSERT INTO product_properties (
     product_id, provider_id, base_rate, max_rate, min_monthly_limit, max_monthly_limit,
     min_age, max_age, min_tenure_months, requires_homeless, requires_householder, is_joinable,
-    intr_rate_type, intr_rate_type_nm, save_trm, intr_rate, intr_rate2
+    intr_rate_type, save_trm
 ) VALUES
-((SELECT id FROM product WHERE product_code = '240076'), (SELECT id FROM provider WHERE code = '0010363'), 3.45, 3.45, 10, 100, 19, 34, NULL, false, false, true, 'S', '단리', 12, 3.45, 3.45),
-((SELECT id FROM product WHERE product_code = '240076'), (SELECT id FROM provider WHERE code = '0010363'), 3.45, 3.45, 10, 100, 19, 34, NULL, false, false, true, 'M', '복리', 12, 3.45, 3.45),
-((SELECT id FROM product WHERE product_code = 'GOV001'), (SELECT id FROM provider WHERE code = 'GOV001'), 10.0, 10.0, 12, 50, 15, 34, 6, false, false, true, NULL, NULL, NULL, NULL, NULL),
-((SELECT id FROM product WHERE product_code = 'GOV002'), (SELECT id FROM provider WHERE code = 'GOV001'), 4.5, 6.0, 1, 70, 19, 34, NULL, true, false, true, NULL, NULL, NULL, NULL, NULL),
-((SELECT id FROM product WHERE product_code = 'BANK001'), (SELECT id FROM provider WHERE code = '0010364'), 3.8, 4.5, 10, 50, 19, 29, NULL, false, false, true, 'S', '단리', 12, 3.8, 4.5),
-((SELECT id FROM product WHERE product_code = 'BANK001'), (SELECT id FROM provider WHERE code = '0010364'), 3.5, 4.2, 10, 50, 19, 29, NULL, false, false, true, 'S', '단리', 24, 3.5, 4.2),
-((SELECT id FROM product WHERE product_code = 'BANK001'), (SELECT id FROM provider WHERE code = '0010364'), 3.8, 4.5, 10, 50, 19, 29, NULL, false, false, true, 'M', '복리', 12, 3.8, 4.5);
+((SELECT id FROM product WHERE product_code = '240076'), (SELECT id FROM provider WHERE code = '0010363'), 3.45, 3.45, 10, 100, 19, 34, NULL, false, false, true, 'SINGLE_INTEREST', 12),
+((SELECT id FROM product WHERE product_code = '240076'), (SELECT id FROM provider WHERE code = '0010363'), 3.45, 3.45, 10, 100, 19, 34, NULL, false, false, true, 'COMPOUND_INTEREST', 12),
+((SELECT id FROM product WHERE product_code = 'GOV001'), (SELECT id FROM provider WHERE code = 'GOV001'), 10.0, 10.0, 12, 50, 15, 34, 6, false, false, true, NULL, NULL),
+((SELECT id FROM product WHERE product_code = 'GOV002'), (SELECT id FROM provider WHERE code = 'GOV001'), 4.5, 6.0, 1, 70, 19, 34, NULL, true, false, true, NULL, NULL),
+((SELECT id FROM product WHERE product_code = 'BANK001'), (SELECT id FROM provider WHERE code = '0010364'), 3.8, 4.5, 10, 50, 19, 29, NULL, false, false, true, 'SINGLE_INTEREST', 12),
+((SELECT id FROM product WHERE product_code = 'BANK001'), (SELECT id FROM provider WHERE code = '0010364'), 3.5, 4.2, 10, 50, 19, 29, NULL, false, false, true, 'SINGLE_INTEREST', 24),
+((SELECT id FROM product WHERE product_code = 'BANK001'), (SELECT id FROM provider WHERE code = '0010364'), 3.8, 4.5, 10, 50, 19, 29, NULL, false, false, true, 'COMPOUND_INTEREST', 12);

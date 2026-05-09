@@ -17,7 +17,7 @@ public class RateCalculatorService {
                 .orElse(null);
 
         boolean hasRateOption = p.getProperties().stream()
-                .anyMatch(property -> property.getIntrRate() != null || property.getIntrRate2() != null);
+                .anyMatch(property -> property.getBaseRate() != null || property.getMaxRate() != null);
         if (hasRateOption) {
             return ProductRateDto.builder()
                     .productId(p.getId())
@@ -38,7 +38,7 @@ public class RateCalculatorService {
                     .productName(p.getProductName())
                     .source(p.getSource().getCode())
                     .isSubscription(true)
-                    .subscriptionNote("Subscription product: excluded from rate comparison")
+                    .subscriptionNote("청약: 금리 비교 대상 아님")
                     .build();
         }
 
@@ -62,12 +62,6 @@ public class RateCalculatorService {
     }
 
     private double effectiveRate(ProductProperty property) {
-        if (property.getIntrRate2() != null) {
-            return property.getIntrRate2().doubleValue();
-        }
-        if (property.getIntrRate() != null) {
-            return property.getIntrRate().doubleValue();
-        }
         if (property.getMaxRate() != null) {
             return property.getMaxRate().doubleValue();
         }
