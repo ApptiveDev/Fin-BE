@@ -32,7 +32,7 @@ public class EligibilityFilterService {
         Boolean isHouseholder = detail.isHouseholder();
 
         Integer tenureMonths = Boolean.TRUE.equals(detail.isFirstJob())
-                ? 0
+                ? Integer.valueOf(0)
                 : detail.tenureMonths();
 
         Long monthlyDeposit = detail.monthlySavingsGoal();
