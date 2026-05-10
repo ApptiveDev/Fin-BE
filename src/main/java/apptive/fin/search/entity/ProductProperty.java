@@ -1,6 +1,7 @@
 package apptive.fin.search.entity;
 
 import apptive.fin.search.InterestRateType;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -11,10 +12,14 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.Getter;
+import org.hibernate.annotations.BatchSize;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -66,4 +71,8 @@ public class ProductProperty {
     private InterestRateType intrRateType;
 
     private Integer saveTrm;
+
+    @BatchSize(size = 100)
+    @OneToMany(mappedBy = "productProperty", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<ProductKeyword> keywords = new ArrayList<>();
 }

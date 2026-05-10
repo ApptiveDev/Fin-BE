@@ -21,7 +21,9 @@ public class RateCalculatorService {
         if (hasRateOption) {
             return ProductRateDto.builder()
                     .productId(p.getId())
+                    .productPropertyId(bestProperty != null ? bestProperty.getId() : null)
                     .productName(p.getProductName())
+                    .providerName(providerName(bestProperty))
                     .source(p.getSource().getCode())
                     .baseRate(baseRate(bestProperty))
                     .achievableRate(bestProperty != null ? effectiveRate(bestProperty) : 0.0)
@@ -29,13 +31,18 @@ public class RateCalculatorService {
                     .build();
         }
 
-        boolean isSubscription = p.getKeywords().stream()
-                .anyMatch(k -> k.getKeywordCode() == KeywordValueEnum.INTEREST_SAVINGS);
+        ProductProperty subscriptionProperty = p.getProperties().stream()
+                .filter(property -> property.getKeywords().stream()
+                        .anyMatch(k -> k.getKeywordCode() == KeywordValueEnum.INTEREST_SAVINGS))
+                .findFirst()
+                .orElse(null);
 
-        if (isSubscription) {
+        if (subscriptionProperty != null) {
             return ProductRateDto.builder()
                     .productId(p.getId())
+                    .productPropertyId(subscriptionProperty.getId())
                     .productName(p.getProductName())
+                    .providerName(providerName(subscriptionProperty))
                     .source(p.getSource().getCode())
                     .isSubscription(true)
                     .subscriptionNote("청약: 금리 비교 대상 아님")
@@ -47,7 +54,9 @@ public class RateCalculatorService {
 
         return ProductRateDto.builder()
                 .productId(p.getId())
+                .productPropertyId(bestProperty != null ? bestProperty.getId() : null)
                 .productName(p.getProductName())
+                .providerName(providerName(bestProperty))
                 .source(p.getSource().getCode())
                 .baseRate(baseRate)
                 .achievableRate(maxRate)
@@ -69,5 +78,11 @@ public class RateCalculatorService {
             return property.getBaseRate().doubleValue();
         }
         return 0.0;
+    }
+
+    private String providerName(ProductProperty property) {
+        return property != null && property.getProvider() != null
+                ? property.getProvider().getName()
+                : null;
     }
 }

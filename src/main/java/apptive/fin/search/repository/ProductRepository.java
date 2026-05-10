@@ -35,8 +35,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     // 키워드 기준 조회
     @Query("""
         SELECT DISTINCT p FROM Product p
-        LEFT JOIN FETCH p.properties
-        JOIN p.keywords k
+        LEFT JOIN FETCH p.properties pp
+        JOIN pp.keywords k
         WHERE k.keywordCode IN :keywords
     """)
     List<Product> findByKeywords(@Param("keywords") List<KeywordValueEnum> keywords);

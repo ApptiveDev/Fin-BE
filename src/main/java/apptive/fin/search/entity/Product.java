@@ -50,7 +50,4 @@ public class Product extends BaseTimeEntity {
     @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<ProductProperty> properties = new ArrayList<>();
 
-    @BatchSize(size = 100)
-    @OneToMany(mappedBy = "product", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<ProductKeyword> keywords = new ArrayList<>();
 }
