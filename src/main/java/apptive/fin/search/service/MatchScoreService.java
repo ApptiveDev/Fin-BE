@@ -7,6 +7,7 @@ import apptive.fin.search.dto.OptionRequestDto;
 import apptive.fin.search.dto.ProductMatchDto;
 import apptive.fin.search.dto.SearchRequestDto;
 import apptive.fin.search.entity.ProductKeyword;
+import org.springframework.data.domain.Score;
 import org.springframework.stereotype.Service;
 import apptive.fin.search.entity.Product;
 
@@ -39,15 +40,21 @@ public class MatchScoreService {
                 .findFirst().orElse(null);
 
         double benefitScore  = calcBenefitScore(coreBenefits, productKeywords, isGov)
-                            * weights.get(ScoreWeightEnum.GOV_BENEFITS.getKey());
+                            * weights.get(isGov ? ScoreWeightEnum.GOV_BENEFITS.getKey()
+                                                :ScoreWeightEnum.BANK_BENEFITS.getKey());
         double periodScore   = calcPeriodScore(savingPeriod, p)
-                            * weights.get(ScoreWeightEnum.GOV_PERIOD.getKey());
+                            * weights.get(isGov ? ScoreWeightEnum.GOV_PERIOD.getKey()
+                                                : ScoreWeightEnum.BANK_PERIOD.getKey());
         double identityScore = calcIdentityScore(identities, productKeywords, isGov)
-                            * weights.get(ScoreWeightEnum.GOV_IDENTITY.getKey());
+                            * weights.get(isGov ? ScoreWeightEnum.GOV_IDENTITY.getKey()
+                                                : ScoreWeightEnum.BANK_IDENTITY.getKey());
         double depositScore  = calcDepositScore(detail.monthlySavingsGoal(), p)
-                            * weights.get(ScoreWeightEnum.GOV_DEPOSIT.getKey());
-        double bankCondScore = calcBankCondScore(bankConditions, productKeywords)
-                            * weights.get(ScoreWeightEnum.GOV_DEPOSIT.getKey());
+                            * weights.get(isGov ? ScoreWeightEnum.GOV_DEPOSIT.getKey()
+                                                :  ScoreWeightEnum.BANK_DEPOSIT.getKey());
+        double bankCondScore = isGov? calcGovBankCondScore(bankConditions, p, productKeywords)
+                                    : calcBankCondScore(bankConditions, productKeywords);
+        bankCondScore *= weights.get(isGov ? ScoreWeightEnum.GOV_BANK_COND.getKey()
+                                                : ScoreWeightEnum.BANK_BANK_COND.getKey());
 
         return ProductMatchDto.builder()
                 .productId(p.getId())
@@ -130,6 +137,17 @@ public class MatchScoreService {
         return (double) matched / selected.size();
     }
 
+    // 정부 상품 버전 추가
+    private double calcGovBankCondScore(List<KeywordValueEnum> selected, Product p, List<KeywordValueEnum> productKeywords) {
+        // 청약 상품은 0점
+        boolean isSubscription = productKeywords.stream()
+                .anyMatch(kw -> kw == INTEREST_SAVINGS);
+        if (isSubscription) return 0.0;
+
+        // 나머지는 동일하게 매칭
+        return calcBankCondScore(selected, productKeywords);
+    }
+
     //가중치 재배분
 
     private Map<String, Double> distributeWeights(
@@ -140,9 +158,12 @@ public class MatchScoreService {
         Map<Long, KeywordValueEnum> mapping = getKeywordMapping(options);
 
         List<String> inactive = new ArrayList<>();
-        if (filterByCategory(mapping, CategoryIdEnum.BENEFIT.getId()).isEmpty()) inactive.add(ScoreWeightEnum.GOV_BENEFITS.getKey());
-        if (filterByCategory(mapping, CategoryIdEnum.PERIOD.getId()).isEmpty()) inactive.add(ScoreWeightEnum.GOV_PERIOD.getKey());
-        if (filterByCategory(mapping, CategoryIdEnum.BANK_COND.getId()).isEmpty()) inactive.add(ScoreWeightEnum.GOV_BANK_COND.getKey());
+        if (filterByCategory(mapping, CategoryIdEnum.BENEFIT.getId()).isEmpty())
+            inactive.add(isGov ? ScoreWeightEnum.GOV_BENEFITS.getKey() : ScoreWeightEnum.BANK_BENEFITS.getKey());
+        if (filterByCategory(mapping, CategoryIdEnum.PERIOD.getId()).isEmpty())
+            inactive.add(isGov? ScoreWeightEnum.GOV_PERIOD.getKey() : ScoreWeightEnum.BANK_PERIOD.getKey());
+        if (filterByCategory(mapping, CategoryIdEnum.BANK_COND.getId()).isEmpty())
+            inactive.add(isGov? ScoreWeightEnum.GOV_BANK_COND.getKey() :  ScoreWeightEnum.BANK_BANK_COND.getKey());
 
         if (inactive.isEmpty()) return weights;
 

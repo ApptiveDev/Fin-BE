@@ -45,7 +45,7 @@ public enum KeywordValueEnum {
     INTEREST_SAVINGS("INTEREST_SAVINGS"),
     INTEREST_LOAN("INTEREST_LOAN"),
 
-    // 6. 은행 거래
+    // 6. 은행 거래 - 우대 사항
     BANK_FIRST_TRANSACTION("BANK_FIRST_TRANSACTION"), // 첫 거래 우대
     BANK_SALARY_TRANSFER("BANK_SALARY_TRANSFER"), // 급여이체우대
     BANK_CARD_USAGE("BANK_CARD_USAGE"), // 카드 실적 우대
