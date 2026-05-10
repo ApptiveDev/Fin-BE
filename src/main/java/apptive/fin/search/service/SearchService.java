@@ -26,8 +26,32 @@ public class SearchService {
     private final RateCalculatorService rateCalculatorService;
 
     public ProductSearchResultDto search(SearchRequestDto request){
+        // 거주지역 options에서 추출
+        Map<Long, KeywordValueEnum> mapping = categoryOptionService.getOptionMap();
+        KeywordValueEnum regionKeyword = request.options().stream()
+                .filter(opt -> opt.categoryId().equals(CategoryIdEnum.REGION.getId()))
+                .map(opt -> mapping.get(opt.optionId()))
+                .filter(kw -> kw != null)
+                .findFirst()
+                .orElse(null);
+
         // 자격 필터링
         List<Product> eligible = eligibilityFilterService.filterEligible(request);
+
+        // 거주 지역 필터링
+        if (regionKeyword != null) {
+            final KeywordValueEnum finalRegion = regionKeyword;
+            eligible = eligible.stream()
+                    .filter(p -> {
+                        List<KeywordValueEnum> productRegions = p.getKeywords().stream()
+                                .map(k -> k.getKeywordCode())
+                                .filter(kw -> kw.name().startsWith("REGION_"))
+                                .toList();
+                        return productRegions.isEmpty()        // 전국 상품
+                                || productRegions.contains(finalRegion); // 지역 일치
+                    })
+                    .toList();
+        }
 
         // source별 분리
         List<Product> govList = eligible.stream()
@@ -81,16 +105,16 @@ public class SearchService {
             if(kw == null) continue;
 
             Long categoryId = option.categoryId();
-            if (categoryId.equals(CategoryIdEnum.REGION.getId())) regions.add(kw);
-            else if(categoryId.equals(CategoryIdEnum.IDENTITY.getId())) identities.add(kw);
+            // region 제거
+            if (categoryId.equals(CategoryIdEnum.IDENTITY.getId())) identities.add(kw);
             else if(categoryId.equals(CategoryIdEnum.PERIOD.getId())) savingPeriod = kw;
             else if(categoryId.equals(CategoryIdEnum.BENEFIT.getId())) benefits.add(kw);
             else if(categoryId.equals(CategoryIdEnum.BANK_COND.getId())) bankConds.add(kw);
         }
-        return new ResolvedKeywords(regions,identities,savingPeriod, bankConds,benefits);
+        return new ResolvedKeywords(identities,savingPeriod, bankConds,benefits);
     }
     public record ResolvedKeywords(
-            List<KeywordValueEnum> regions,
+            //region 제거
             List<KeywordValueEnum> identities,
             KeywordValueEnum savingPeriod,
             List<KeywordValueEnum> coreBenefits,

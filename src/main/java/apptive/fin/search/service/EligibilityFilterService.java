@@ -30,12 +30,11 @@ public class EligibilityFilterService {
 
         Boolean isHomeless = detail.isHomeless();
         Boolean isHouseholder = detail.isHouseholder();
+        Long monthlyDeposit   = detail.monthlySavingsGoal();
 
         Integer tenureMonths = Boolean.TRUE.equals(detail.isFirstJob())
                 ? Integer.valueOf(0)
                 : detail.tenureMonths();
-
-        Long monthlyDeposit = detail.monthlySavingsGoal();
 
         return productRepository.findEligibleProducts(
                 age, annualIncome, isHomeless,
