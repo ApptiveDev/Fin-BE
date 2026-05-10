@@ -121,6 +121,7 @@ CREATE TABLE product_properties (
     provider_id BIGINT NOT NULL REFERENCES provider(id),
     base_rate DECIMAL(5,2),
     max_rate DECIMAL(5,2),
+    gov_contribution_rate DECIMAL(5,2),
     min_monthly_limit BIGINT,
     max_monthly_limit BIGINT,
     min_age INT,
@@ -136,8 +137,8 @@ CREATE TABLE product_properties (
     save_trm INT
 );
 
-CREATE TABLE product_keyword (
+CREATE TABLE product_property_keyword (
     id BIGSERIAL PRIMARY KEY,
-    product_id BIGINT NOT NULL REFERENCES product(id) ON DELETE CASCADE,
+    product_property_id BIGINT NOT NULL REFERENCES product_properties(id) ON DELETE CASCADE,
     keyword_code VARCHAR(50) NOT NULL
 );

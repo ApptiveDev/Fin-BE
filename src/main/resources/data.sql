@@ -212,7 +212,9 @@ INSERT INTO category_option (category_id, value, code) VALUES
 (5, '대출', 'INTEREST_LOAN'),
 (6, '첫거래 고객', 'BANK_FIRST_TRANSACTION'),
 (6, '급여이체 가능', 'BANK_SALARY_TRANSFER'),
-(6, '카드실적 연동', 'BANK_CARD_USAGE');
+(6, '카드실적 연동', 'BANK_CARD_USAGE'),
+(6, '자동이체 가능', 'BANK_AUTO_TRANSFER'),
+(6, '마케팅 동의', 'BANK_MARKETING');
 
 INSERT INTO provider (source_id, code, name) VALUES
 ((SELECT id FROM product_source WHERE code = 'FSS'), '0010363', '더케이저축은행'),
