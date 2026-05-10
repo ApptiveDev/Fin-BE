@@ -121,6 +121,7 @@ CREATE TABLE product_properties (
     provider_id BIGINT NOT NULL REFERENCES provider(id),
     base_rate DECIMAL(5,2),
     max_rate DECIMAL(5,2),
+    gov_contribution_rate DECIMAL(5,2),
     min_monthly_limit BIGINT,
     max_monthly_limit BIGINT,
     min_age INT,

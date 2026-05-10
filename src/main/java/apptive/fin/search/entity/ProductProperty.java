@@ -39,6 +39,9 @@ public class ProductProperty {
     @Column(precision = 5, scale = 2)
     private BigDecimal maxRate;
 
+    @Column(precision = 5, scale = 2)
+    private BigDecimal govContributionRate;
+
     private Long minMonthlyLimit;
     private Long maxMonthlyLimit;
 
