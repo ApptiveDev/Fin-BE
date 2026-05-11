@@ -13,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Stream;
@@ -46,15 +47,18 @@ public class SearchService {
 
         List<ProductMatchDto> govRanked = govList.stream()
                 .map(p -> matchScoreService.score(p, request, resolvedKeywords))
+                .flatMap(Collection::stream)
                 .sorted(Comparator.comparingDouble(ProductMatchDto::totalScore).reversed())
                 .toList();
         List<ProductMatchDto> bankRanked = bankList.stream()
                 .map(p -> matchScoreService.score(p, request, resolvedKeywords))
+                .flatMap(Collection::stream)
                 .sorted(Comparator.comparingDouble(ProductMatchDto::totalScore).reversed())
                 .toList();
 
         List<ProductRateDto> allRated = Stream.concat(govList.stream(), bankList.stream())
                 .map(p -> rateCalculatorService.calculate(p, request))
+                .flatMap(Collection::stream)
                 .toList();
 
         List<ProductRateDto> rateRanked = allRated.stream()

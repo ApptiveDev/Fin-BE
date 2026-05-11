@@ -8,51 +8,48 @@ import apptive.fin.search.entity.ProductKeyword;
 import apptive.fin.search.entity.ProductProperty;
 import org.springframework.stereotype.Service;
 
-import java.util.Comparator;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class RateCalculatorService {
-    public ProductRateDto calculate(Product p, SearchRequestDto request) {
-        ProductProperty subscriptionProperty = findSubscriptionProperty(p);
-        if (subscriptionProperty != null) {
-            return ProductRateDto.builder()
+    public List<ProductRateDto> calculate(Product p, SearchRequestDto request) {
+        List<ProductRateDto> result = new ArrayList<>();
+        boolean isGov = p.getSource().getCode().equals("ONTONG");
+        for (ProductProperty property : p.getProperties()) {
+            if (hasKeyword(property, KeywordValueEnum.INTEREST_SAVINGS)) {
+                result.add(ProductRateDto.builder()
+                        .productId(p.getId())
+                        .productPropertyId(property.getId())
+                        .productName(p.getProductName())
+                        .providerName(providerName(property))
+                        .source(p.getSource().getCode())
+                        .isSubscription(true)
+                        .subscriptionNote("청약: 금리 비교 대상 아님")
+                        .build());
+                continue;
+            }
+
+            double base = baseRate(property);
+            double achievableRate = isGov
+                    ? base + contributionRate(property) + group1BankBonus(property)
+                    : (effectiveRate(property));
+            ProductRateDto productRate = ProductRateDto
+                    .builder()
                     .productId(p.getId())
-                    .productPropertyId(subscriptionProperty.getId())
+                    .productPropertyId(property.getId())
                     .productName(p.getProductName())
-                    .providerName(providerName(subscriptionProperty))
+                    .providerName(providerName(property))
                     .source(p.getSource().getCode())
-                    .isSubscription(true)
-                    .subscriptionNote("청약: 금리 비교 대상 아님")
+                    .baseRate(base)
+                    .achievableRate(achievableRate)
+                    .isSubscription(false)
                     .build();
+
+            result.add(productRate);
         }
 
-        ProductProperty bestProperty = p.getProperties().stream()
-                .max(Comparator.comparingDouble(this::effectiveRate))
-                .orElse(null);
-
-        boolean isGov = p.getSource().getCode().equals("ONTONG");
-        double base = baseRate(bestProperty);
-        double achievableRate = isGov
-                ? base + contributionRate(bestProperty) + group1BankBonus(p)
-                : (bestProperty != null ? effectiveRate(bestProperty) : base);
-
-        return ProductRateDto.builder()
-                .productId(p.getId())
-                .productPropertyId(bestProperty != null ? bestProperty.getId() : null)
-                .productName(p.getProductName())
-                .providerName(providerName(bestProperty))
-                .source(p.getSource().getCode())
-                .baseRate(base)
-                .achievableRate(achievableRate)
-                .isSubscription(false)
-                .build();
-    }
-
-    private ProductProperty findSubscriptionProperty(Product p) {
-        return p.getProperties().stream()
-                .filter(property -> hasKeyword(property, KeywordValueEnum.INTEREST_SAVINGS))
-                .findFirst()
-                .orElse(null);
+        return result;
     }
 
     private boolean hasKeyword(ProductProperty property, KeywordValueEnum keyword) {
@@ -61,22 +58,18 @@ public class RateCalculatorService {
                 .anyMatch(keyword::equals);
     }
 
-    private boolean isGroup1Product(Product p) {
-        return p.getProperties().stream()
-                .flatMap(property -> property.getKeywords().stream())
+    private boolean isGroup1Product(ProductProperty p) {
+        return p.getKeywords().stream()
                 .map(ProductKeyword::getKeywordCode)
                 .anyMatch(keyword -> keyword == KeywordValueEnum.STATUS_MILITARY
                         || keyword == KeywordValueEnum.STATUS_SME_WORKER);
     }
 
-    private double group1BankBonus(Product p) {
-        if (!isGroup1Product(p)) return 0.0;
+    private double group1BankBonus(ProductProperty p) {
+        if (!isGroup1Product(p) || p.getMaxRate() == null || p.getBaseRate() == null)
+            return 0.0;
 
-        return p.getProperties().stream()
-                .filter(property -> property.getMaxRate() != null && property.getBaseRate() != null)
-                .mapToDouble(property -> property.getMaxRate().doubleValue() - property.getBaseRate().doubleValue())
-                .max()
-                .orElse(0.0);
+        return p.getMaxRate().doubleValue() - p.getBaseRate().doubleValue();
     }
 
     private double contributionRate(ProductProperty property) {
