@@ -18,7 +18,7 @@ public class RateCalculatorService {
         boolean isGov = p.getSource().getCode().equals("ONTONG");
 
         boolean isSubscription = p.getProperties().stream()
-                .anyMatch(property -> hasKeyword(property,KeywordValueEnum.INTEREST_SAVINGS))
+                .anyMatch(property -> hasKeyword(property,KeywordValueEnum.INTEREST_SAVINGS));
         if (isSubscription) {
             return ProductRateDto.builder()
                     .productId(p.getId())
