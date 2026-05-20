@@ -56,7 +56,6 @@ public class SearchService {
 
         List<ProductRateDto> allRated = Stream.concat(govList.stream(), bankList.stream())
                 .map(p -> rateCalculatorService.calculate(p, request))
-                .flatMap(Collection::stream)
                 .toList();
 
         List<ProductRateDto> rateRanked = allRated.stream()
