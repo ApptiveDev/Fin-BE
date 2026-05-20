@@ -1,6 +1,7 @@
 package apptive.fin.search.controller;
 
 import apptive.fin.search.dto.DynamicFormResponseDto;
+import apptive.fin.search.dto.ProductNameSearchDto;
 import apptive.fin.search.dto.ProductSearchResultDto;
 import apptive.fin.search.dto.SearchRequestDto;
 import apptive.fin.search.service.DynamicFormService;
@@ -8,10 +9,9 @@ import apptive.fin.search.service.SearchService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -29,6 +29,13 @@ public class SearchController {
     @PostMapping("/products")
     public ResponseEntity<ProductSearchResultDto> search(@Valid @RequestBody SearchRequestDto searchRequestDto) {
         return ResponseEntity.ok(searchService.search(searchRequestDto));
+    }
+
+    @GetMapping("/products")
+    public ResponseEntity<List<ProductNameSearchDto>> searchByName(
+            @RequestParam String searchInput
+    ){
+        return ResponseEntity.ok(searchService.searchByName(searchInput));
     }
 
 }
