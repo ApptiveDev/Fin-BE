@@ -46,7 +46,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
            SELECT DISTINCT p FROM Product p
            LEFT JOIN FETCH p.properties pp
            WHERE LOWER(p.productName) LIKE LOWER(CONCAT('%',:searchInput,'%'))
-           AND pp.isJoinable = TRUE 
+           AND pp.isJoinable = TRUE
     """)
     List<Product> findByProductNameContaining(@Param("searchInput") String searchInput);
 
