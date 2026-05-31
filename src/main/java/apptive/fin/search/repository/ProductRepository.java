@@ -21,7 +21,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
                 AND (:isHomeless IS NULL OR pp.requiresHomeless = FALSE OR :isHomeless = TRUE)
                 AND (:isHouseholder IS NULL OR pp.requiresHouseholder = FALSE OR :isHouseholder = TRUE)
                 AND (:tenureMonths IS NULL OR pp.minTenureMonths IS NULL OR pp.minTenureMonths <= :tenureMonths)
-                AND (:monthlyDeposit IS NULL OR pp.maxMonthlyLimit IS NULL OR pp.maxMonthlyLimit >= :monthlyDeposit)
+                AND (:monthlyDeposit IS NULL OR pp.maxMonthlyLimit IS NULL OR pp.minMonthlyLimit >= :monthlyDeposit )
             """)
     List<Product> findEligibleProducts(
             @Param("age") Integer age,
