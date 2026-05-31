@@ -201,20 +201,23 @@ INSERT INTO category_option (category_id, value, code) VALUES
 (2, '아르바이트/프리랜서', 'STATUS_PART_TIME'),
 (2, '중소기업 재직', 'STATUS_SME_WORKER'),
 (2, '군복무', 'STATUS_MILITARY'),
-(3, '5년 이상', 'TERM_OVER_5_YEARS'),
+(3, '5년 이상', 'TERM_OVER_3_YEARS'),
 (3, '2~3년', 'TERM_2_TO_3_YEARS'),
 (3, '1년 내외', 'TERM_AROUND_1_YEAR'),
 (4, '최고이율 중시', 'BENEFIT_MAX_INTEREST'),
 (4, '비과세', 'BENEFIT_TAX_FREE'),
 (4, '우대조건 간편', 'BENEFIT_EASY_CONDITION'),
 (4, '정부기여금', 'BENEFIT_GOV_SUBSIDY'),
+(4, '내집마련', 'BENEFIT_HOUSE_PREPARE'),
 (5, '저축', 'INTEREST_SAVINGS'),
 (5, '대출', 'INTEREST_LOAN'),
 (6, '첫거래 고객', 'BANK_FIRST_TRANSACTION'),
 (6, '급여이체 가능', 'BANK_SALARY_TRANSFER'),
 (6, '카드실적 연동', 'BANK_CARD_USAGE'),
 (6, '자동이체 가능', 'BANK_AUTO_TRANSFER'),
-(6, '마케팅 동의', 'BANK_MARKETING');
+(6, '마케팅 동의', 'BANK_MARKETING'),
+(6, '재예치', 'BANK_REDEPOSIT')
+;
 
 INSERT INTO provider (source_id, code, name) VALUES
 ((SELECT id FROM product_source WHERE code = 'FSS'), '0010363', '더케이저축은행'),

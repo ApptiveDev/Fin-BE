@@ -42,9 +42,9 @@ class SearchServiceIntegrationTest {
                 .containsExactlyInAnyOrder("e-쎄이프 정기예금", "청년우대적금");
 
         assertThat(result.governmentRanked())
-                .allSatisfy(product -> assertThat(product.totalScore()).isCloseTo(60.2941, offset(0.0001)));
+                .allSatisfy(product -> assertThat(product.totalScore()).isCloseTo(100.0, offset(0.0001)));
         assertThat(result.bankRanked())
-                .allSatisfy(product -> assertThat(product.totalScore()).isCloseTo(85.0, offset(0.0001)));
+                .allSatisfy(product -> assertThat(product.totalScore()).isCloseTo(100.0, offset(0.0001)));
 
         assertThat(rateNames(result.rateRanked()))
                 .containsExactly("청년내일채움공제", "청년우대적금", "e-쎄이프 정기예금");
@@ -67,9 +67,9 @@ class SearchServiceIntegrationTest {
         ProductMatchDto oneYearBankProduct = findMatch(result.bankRanked(), "e-쎄이프 정기예금");
         ProductMatchDto adjacentGovProduct = findMatch(result.governmentRanked(), "청년내일채움공제");
 
-        assertThat(oneYearBankProduct.periodScore()).isCloseTo(50.0, offset(0.0001));
-        assertThat(oneYearBankProduct.totalScore()).isCloseTo(92.5, offset(0.0001));
-        assertThat(adjacentGovProduct.periodScore()).isCloseTo(18.5185, offset(0.0001));
+        assertThat(oneYearBankProduct.periodScore()).isCloseTo(57.1429, offset(0.0001));
+        assertThat(oneYearBankProduct.totalScore()).isCloseTo(100.0, offset(0.0001));
+        assertThat(adjacentGovProduct.periodScore()).isCloseTo(27.7778, offset(0.0001));
     }
 
     @Test
@@ -83,8 +83,8 @@ class SearchServiceIntegrationTest {
                 .containsExactly("e-쎄이프 정기예금");
 
         ProductMatchDto bankProduct = result.bankRanked().get(0);
-        assertThat(bankProduct.depositScore()).isCloseTo(75.0, offset(0.0001));
-        assertThat(bankProduct.totalScore()).isCloseTo(85.0, offset(0.0001));
+        assertThat(bankProduct.depositScore()).isCloseTo(100.0, offset(0.0001));
+        assertThat(bankProduct.totalScore()).isCloseTo(100.0, offset(0.0001));
     }
 
     @Test
@@ -101,7 +101,8 @@ class SearchServiceIntegrationTest {
         ProductMatchDto generalProduct = result.bankRanked().get(1);
         assertThat(militaryProduct.identityScore()).isCloseTo(25.0, offset(0.0001));
         assertThat(militaryProduct.totalScore()).isCloseTo(100.0, offset(0.0001));
-        assertThat(generalProduct.identityScore()).isCloseTo(10.0, offset(0.0001));
+        assertThat(generalProduct.identityScore()).isZero();
+        assertThat(generalProduct.totalScore()).isCloseTo(75.0, offset(0.0001));
     }
 
     @Test
