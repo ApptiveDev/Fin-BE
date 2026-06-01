@@ -126,6 +126,8 @@ CREATE TABLE product_properties (
     max_monthly_limit BIGINT,
     min_age INT,
     max_age INT,
+    allows_military_age_extension BOOLEAN NOT NULL DEFAULT FALSE,
+    military_max_age INT,
     earn_max_amt BIGINT,
     earn_percent INT,
     min_tenure_months INT,

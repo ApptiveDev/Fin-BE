@@ -40,7 +40,8 @@ class EligibilityFilterServiceIntegrationTest {
                         "TEST_COMMON",
                         "TEST_TENURE_REQUIRED",
                         "TEST_HOMELESS_ONLY",
-                        "TEST_YOUTH_PREFERENTIAL"
+                        "TEST_YOUTH_PREFERENTIAL",
+                        "TEST_MILITARY_EXTENSION"
                 );
     }
 
@@ -58,7 +59,8 @@ class EligibilityFilterServiceIntegrationTest {
                 .containsExactlyInAnyOrder(
                         "TEST_COMMON",
                         "TEST_HOMELESS_ONLY",
-                        "TEST_YOUTH_PREFERENTIAL"
+                        "TEST_YOUTH_PREFERENTIAL",
+                        "TEST_MILITARY_EXTENSION"
                 );
         assertThat(productCodes(result)).doesNotContain("TEST_TENURE_REQUIRED");
     }
@@ -82,7 +84,8 @@ class EligibilityFilterServiceIntegrationTest {
                 .containsExactlyInAnyOrder(
                         "TEST_COMMON",
                         "TEST_TENURE_REQUIRED",
-                        "TEST_YOUTH_PREFERENTIAL"
+                        "TEST_YOUTH_PREFERENTIAL",
+                        "TEST_MILITARY_EXTENSION"
                 );
         assertThat(productCodes(result)).doesNotContain("TEST_HOMELESS_ONLY");
     }
@@ -97,9 +100,46 @@ class EligibilityFilterServiceIntegrationTest {
                 .containsExactlyInAnyOrder(
                         "TEST_COMMON",
                         "TEST_TENURE_REQUIRED",
-                        "TEST_HOMELESS_ONLY"
+                        "TEST_HOMELESS_ONLY",
+                        "TEST_MILITARY_EXTENSION"
                 );
         assertThat(productCodes(result)).doesNotContain("TEST_YOUTH_PREFERENTIAL");
+    }
+
+    @Test
+    void 만36세_일반유저이면_병역연령확장_상품도_제외된다() {
+        SearchRequestDto request = createRequest(36, true, List.of());
+
+        List<Product> result = eligibilityFilterService.filterEligible(request);
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void 만36세_군복무_신분이면_병역연령확장_상품만_통과한다() {
+        SearchRequestDto request = createRequest(
+                36,
+                true,
+                List.of(new OptionRequestDto(CategoryIdEnum.IDENTITY.getId(), 21L))
+        );
+
+        List<Product> result = eligibilityFilterService.filterEligible(request);
+
+        assertThat(productCodes(result))
+                .containsExactly("TEST_MILITARY_EXTENSION");
+    }
+
+    @Test
+    void 만40세_군복무_신분이면_병역연령확장_상품도_제외된다() {
+        SearchRequestDto request = createRequest(
+                40,
+                true,
+                List.of(new OptionRequestDto(CategoryIdEnum.IDENTITY.getId(), 21L))
+        );
+
+        List<Product> result = eligibilityFilterService.filterEligible(request);
+
+        assertThat(result).isEmpty();
     }
 
     private SearchRequestDto createRequest(int age, Boolean isHomeless, List<OptionRequestDto> options) {

@@ -16,7 +16,17 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             JOIN FETCH p.properties pp
             WHERE pp.isJoinable = TRUE
                 AND (:age IS NULL OR pp.minAge IS NULL OR pp.minAge <= :age)
-                AND (:age IS NULL OR pp.maxAge IS NULL OR pp.maxAge >= :age)
+                AND (
+                    :age IS NULL
+                    OR pp.maxAge IS NULL
+                    OR pp.maxAge >= :age
+                    OR (
+                        :militaryAgeExtensionRequested = TRUE
+                        AND :age BETWEEN 35 AND 39
+                        AND pp.allowsMilitaryAgeExtension = TRUE
+                        AND COALESCE(pp.militaryMaxAge, 39) >= :age
+                    )
+                )
                 AND (:incomeProofUnavailable = FALSE OR (pp.earnMaxAmt IS NULL AND pp.earnPercent IS NULL))
                 AND (:incomeProofUnavailable = TRUE OR :annualIncome IS NULL OR pp.earnMaxAmt IS NULL OR pp.earnMaxAmt >= :annualIncome)
                 AND (:householdIncomePercent IS NULL OR pp.earnPercent IS NULL OR pp.earnPercent >= :householdIncomePercent)
@@ -30,6 +40,7 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             @Param("annualIncome") Long annualIncome,
             @Param("householdIncomePercent") Integer householdIncomePercent,
             @Param("incomeProofUnavailable") Boolean incomeProofUnavailable,
+            @Param("militaryAgeExtensionRequested") Boolean militaryAgeExtensionRequested,
             @Param("isHomeless") Boolean isHomeless,
             @Param("isHouseholder") Boolean isHouseholder,
             @Param("tenureMonths") Integer tenureMonths,

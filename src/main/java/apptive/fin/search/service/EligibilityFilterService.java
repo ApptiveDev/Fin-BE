@@ -34,6 +34,7 @@ public class EligibilityFilterService {
         Long annualIncome = detail.annualIncome();
         Integer householdIncomePercent = detail.householdIncomePercent();
         Boolean incomeProofUnavailable = annualIncome != null && annualIncome == 0L;
+        Boolean militaryAgeExtensionRequested = keywords.identities().contains(KeywordValueEnum.STATUS_MILITARY);
 
         Boolean isHomeless = detail.isHomeless();
         Boolean isHouseholder = detail.isHouseholder();
@@ -47,7 +48,7 @@ public class EligibilityFilterService {
         Long monthlyDeposit = detail.monthlySavingsGoal();
 
         return productRepository.findEligibleProducts(
-                age, annualIncome, householdIncomePercent, incomeProofUnavailable, isHomeless,
+                age, annualIncome, householdIncomePercent, incomeProofUnavailable, militaryAgeExtensionRequested, isHomeless,
                 isHouseholder,tenureMonths, monthlyDeposit
         );
 

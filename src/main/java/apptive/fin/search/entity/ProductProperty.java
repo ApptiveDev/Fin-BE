@@ -52,6 +52,12 @@ public class ProductProperty {
 
     private Integer minAge;
     private Integer maxAge;
+
+    @Column(nullable = false)
+    private Boolean allowsMilitaryAgeExtension = false;
+
+    private Integer militaryMaxAge;
+
     private Long earnMaxAmt;
     private Integer earnPercent;
     private Integer minTenureMonths;
