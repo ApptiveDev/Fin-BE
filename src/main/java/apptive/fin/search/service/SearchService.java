@@ -71,6 +71,7 @@ public class SearchService {
                 ? govList.stream()
                         .map(p -> rateCalculatorService.calculate(p, request))
                         .filter(r -> !r.isSubscription())
+                        .filter(ProductRateDto::rateComparable)
                         .sorted(Comparator.comparingDouble(ProductRateDto::achievableRate).reversed())
                         .toList()
                 : List.of();

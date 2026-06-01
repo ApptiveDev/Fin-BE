@@ -16,13 +16,14 @@ INSERT INTO product (source_id, type, product_code, product_name, content) VALUE
 
 INSERT INTO product_properties (
     product_id, provider_id, base_rate, max_rate, min_monthly_limit, max_monthly_limit,
+    gov_contribution_type, gov_matching_ratio, gov_monthly_fixed_contribution, gov_contribution_period_months,
     min_age, max_age, min_tenure_months, requires_homeless, requires_householder,
     is_joinable, intr_rate_type, save_trm
 ) VALUES
-((SELECT id FROM product WHERE product_code = 'SEARCH_SAFE_DEPOSIT'), (SELECT id FROM provider WHERE code = 'SEARCH_BANK_A'), 3.45, 3.45, 10, 100, 19, 34, NULL, false, false, true, 'SINGLE_INTEREST', 12),
-((SELECT id FROM product WHERE product_code = 'SEARCH_YOUTH_EMPLOYMENT'), (SELECT id FROM provider WHERE code = 'SEARCH_GOV'), 10.0, 10.0, 12, 50, 15, 34, 6, false, false, true, NULL, 24),
-((SELECT id FROM product WHERE product_code = 'SEARCH_SUBSCRIPTION'), (SELECT id FROM provider WHERE code = 'SEARCH_GOV'), 4.5, 6.0, 1, 70, 19, 34, NULL, true, false, true, NULL, NULL),
-((SELECT id FROM product WHERE product_code = 'SEARCH_YOUTH_SAVING'), (SELECT id FROM provider WHERE code = 'SEARCH_BANK_B'), 3.8, 4.5, 10, 50, 19, 29, NULL, false, false, true, 'SINGLE_INTEREST', 12);
+((SELECT id FROM product WHERE product_code = 'SEARCH_SAFE_DEPOSIT'), (SELECT id FROM provider WHERE code = 'SEARCH_BANK_A'), 3.45, 3.45, 10, 100, NULL, NULL, NULL, NULL, 19, 34, NULL, false, false, true, 'SINGLE_INTEREST', 12),
+((SELECT id FROM product WHERE product_code = 'SEARCH_YOUTH_EMPLOYMENT'), (SELECT id FROM provider WHERE code = 'SEARCH_GOV'), 10.0, 10.0, 12, 50, 'RATIO', 1.0000, NULL, 24, 15, 34, 6, false, false, true, NULL, 24),
+((SELECT id FROM product WHERE product_code = 'SEARCH_SUBSCRIPTION'), (SELECT id FROM provider WHERE code = 'SEARCH_GOV'), 4.5, 6.0, 1, 70, NULL, NULL, NULL, NULL, 19, 34, NULL, true, false, true, NULL, NULL),
+((SELECT id FROM product WHERE product_code = 'SEARCH_YOUTH_SAVING'), (SELECT id FROM provider WHERE code = 'SEARCH_BANK_B'), 3.8, 4.5, 10, 50, NULL, NULL, NULL, NULL, 19, 29, NULL, false, false, true, 'SINGLE_INTEREST', 12);
 
 INSERT INTO product_property_keyword (product_property_id, keyword_code) VALUES
 ((SELECT pp.id FROM product_properties pp JOIN product p ON p.id = pp.product_id WHERE p.product_code = 'SEARCH_YOUTH_SAVING'), 'STATUS_MILITARY'),

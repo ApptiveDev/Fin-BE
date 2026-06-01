@@ -1,5 +1,6 @@
 package apptive.fin.search.entity;
 
+import apptive.fin.search.ContributionType;
 import apptive.fin.search.InterestRateType;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -46,6 +47,18 @@ public class ProductProperty {
 
     @Column(precision = 5, scale = 2)
     private BigDecimal govContributionRate;
+
+    @Enumerated(EnumType.STRING)
+    private ContributionType govContributionType;
+
+    @Column(precision = 8, scale = 4)
+    private BigDecimal govMatchingRatio;
+
+    private Long govMonthlyFixedContribution;
+    private Integer govContributionPeriodMonths;
+
+    @Column(nullable = false)
+    private Boolean excludeFromRateComparison = false;
 
     private Long minMonthlyLimit;
     private Long maxMonthlyLimit;
