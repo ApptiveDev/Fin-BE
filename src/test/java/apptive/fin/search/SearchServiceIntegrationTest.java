@@ -6,6 +6,7 @@ import apptive.fin.search.dto.ProductMatchDto;
 import apptive.fin.search.dto.ProductRateDto;
 import apptive.fin.search.dto.ProductSearchResultDto;
 import apptive.fin.search.dto.SearchRequestDto;
+import apptive.fin.global.error.BusinessException;
 import apptive.fin.search.service.SearchService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +17,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.offset;
 
 @SpringBootTest
@@ -69,22 +71,18 @@ class SearchServiceIntegrationTest {
 
         assertThat(oneYearBankProduct.periodScore()).isCloseTo(57.1429, offset(0.0001));
         assertThat(oneYearBankProduct.totalScore()).isCloseTo(100.0, offset(0.0001));
-        assertThat(adjacentGovProduct.periodScore()).isCloseTo(27.7778, offset(0.0001));
+        assertThat(adjacentGovProduct.periodScore()).isCloseTo(27.5, offset(0.0001));
     }
 
     @Test
-    void 납입한도를_초과하면_가입조건을_충족하는_상품만_남는다() {
-        ProductSearchResultDto result = searchService.search(createRequest(100, List.of()));
+    void 희망납입액이_상품_최소납입액에_미달하면_제외된다() {
+        ProductSearchResultDto result = searchService.search(createRequest(5, List.of()));
 
-        assertThat(result.governmentRanked()).isEmpty();
-        assertThat(matchNames(result.bankRanked()))
-                .containsExactly("e-쎄이프 정기예금");
-        assertThat(rateNames(result.rateRanked()))
-                .containsExactly("e-쎄이프 정기예금");
+        assertThat(matchNames(result.governmentRanked())).hasSize(1);
+        assertThat(result.bankRanked()).isEmpty();
+        assertThat(result.rateRanked()).isEmpty();
 
-        ProductMatchDto bankProduct = result.bankRanked().get(0);
-        assertThat(bankProduct.depositScore()).isCloseTo(100.0, offset(0.0001));
-        assertThat(bankProduct.totalScore()).isCloseTo(100.0, offset(0.0001));
+        assertThat(result.subscriptionProducts()).hasSize(1);
     }
 
     @Test
@@ -142,9 +140,38 @@ class SearchServiceIntegrationTest {
                 .count()).isEqualTo(1);
     }
 
+    @Test
+    void 키워드를_하나도_선택하지_않으면_예외를_던진다() {
+        SearchRequestDto request = new SearchRequestDto(
+                List.of(),
+                new DetailedOptionsDto(
+                        LocalDate.now().minusYears(27),
+                        null,
+                        null,
+                        null,
+                        12,
+                        null,
+                        true,
+                        null,
+                        50L,
+                        null,
+                        List.of()
+                )
+        );
+
+        assertThatThrownBy(() -> searchService.search(request))
+                .isInstanceOf(BusinessException.class)
+                .satisfies(exception -> assertThat(((BusinessException) exception).getErrorCode())
+                        .isEqualTo(SearchErrorCode.KEYWORD_REQUIRED));
+    }
+
     private SearchRequestDto createRequest(long monthlySavingsGoal, List<OptionRequestDto> options) {
+        List<OptionRequestDto> selectedOptions = options.isEmpty()
+                ? List.of(new OptionRequestDto(CategoryIdEnum.REGION.getId(), 2L))
+                : options;
+
         return new SearchRequestDto(
-                options,
+                selectedOptions,
                 new DetailedOptionsDto(
                         LocalDate.now().minusYears(27),
                         null,

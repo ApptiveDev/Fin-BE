@@ -205,7 +205,7 @@ class MatchScoreServiceTest {
     }
 
     @Test
-    void gov_product_with_bank_provider_keeps_bank_condition_weight() {
+    void gov_product_excludes_bank_condition_even_when_provider_is_bank() {
         MatchScoreService matchScoreService = new MatchScoreService(resolveKeywordService);
         ProductProperty property = createProperty(
                 10L,
@@ -232,7 +232,7 @@ class MatchScoreServiceTest {
                 )
         );
 
-        assertThat(result.bankCondScore()).isCloseTo(8.0, org.assertj.core.data.Offset.offset(0.001));
+        assertThat(result.bankCondScore()).isZero();
         assertThat(result.totalScore()).isCloseTo(100.0, org.assertj.core.data.Offset.offset(0.001));
     }
 

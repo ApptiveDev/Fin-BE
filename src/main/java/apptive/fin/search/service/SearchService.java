@@ -1,6 +1,8 @@
 package apptive.fin.search.service;
 
+import apptive.fin.global.error.BusinessException;
 import apptive.fin.search.KeywordValueEnum;
+import apptive.fin.search.SearchErrorCode;
 import apptive.fin.search.dto.ProductMatchDto;
 import apptive.fin.search.dto.ProductRateDto;
 import apptive.fin.search.dto.ProductSearchResultDto;
@@ -30,6 +32,7 @@ public class SearchService {
 
     public ProductSearchResultDto search(SearchRequestDto request) {
         ResolvedKeywords resolvedKeywords = resolveKeywordService.resolveKeywords(request.options());
+        validateKeywordSelected(resolvedKeywords);
 
         List<Product> eligible = eligibilityFilterService.filterEligible(request);
         if (!resolvedKeywords.regions().isEmpty()) {
@@ -73,6 +76,18 @@ public class SearchService {
                 .rateRanked(rateRanked)
                 .subscriptionProducts(subscriptions)
                 .build();
+    }
+
+    private void validateKeywordSelected(ResolvedKeywords keywords) {
+        boolean hasSelectedKeyword = !keywords.regions().isEmpty()
+                || !keywords.identities().isEmpty()
+                || keywords.savingPeriod() != null
+                || !keywords.coreBenefits().isEmpty()
+                || !keywords.bankConditions().isEmpty();
+
+        if (!hasSelectedKeyword) {
+            throw new BusinessException(SearchErrorCode.KEYWORD_REQUIRED);
+        }
     }
 
     private boolean hasMatchingRegion(Product product, List<KeywordValueEnum> selectedRegions) {

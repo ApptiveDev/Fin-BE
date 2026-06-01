@@ -2,7 +2,6 @@ package apptive.fin.search.service;
 
 import apptive.fin.search.KeywordValueEnum;
 import apptive.fin.search.ScoreWeightEnum;
-import apptive.fin.search.BankCode;
 import apptive.fin.search.dto.ProductMatchDto;
 import apptive.fin.search.dto.ResolvedKeywords;
 import apptive.fin.search.dto.SearchRequestDto;
@@ -214,7 +213,7 @@ public class MatchScoreService {
     }
 
     private boolean isGovBankConditionExcluded(boolean isGov, ProductProperty property) {
-        return isGov && (property.getProvider() == null || !BankCode.contains(property.getProvider().getCode()));
+        return isGov;
     }
 
     private int[] periodRange(KeywordValueEnum kw) {

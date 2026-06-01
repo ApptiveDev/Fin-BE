@@ -11,7 +11,7 @@ public enum BankCode {
     HANA("하나은행", "kebhana.com"),
     WOORI("우리은행", "spot.wooribank.com"),
     NH("농협은행", "nhlink.nonghyup.com"),
-    IBK("기업은행", "mybank.ibk.co.kr"),
+    IBK("중소기업은행", "mybank.ibk.co.kr"),
     SC("제일은행", "standardchartered.co.kr"),
     IM("아이엠뱅크", "imbank.co.kr"),
     BUSAN("부산은행", "busanbank.co.kr"),
