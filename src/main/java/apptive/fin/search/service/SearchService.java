@@ -1,5 +1,6 @@
 package apptive.fin.search.service;
 
+import apptive.fin.auth.security.AuthUserDetails;
 import apptive.fin.global.error.BusinessException;
 import apptive.fin.search.KeywordValueEnum;
 import apptive.fin.search.SearchErrorCode;
@@ -8,17 +9,15 @@ import apptive.fin.search.dto.ProductRateDto;
 import apptive.fin.search.dto.ProductSearchResultDto;
 import apptive.fin.search.dto.ResolvedKeywords;
 import apptive.fin.search.dto.SearchRequestDto;
+import apptive.fin.search.dto.TabAvailabilityDto;
 import apptive.fin.search.entity.Product;
 import apptive.fin.search.entity.ProductKeyword;
-import apptive.fin.search.entity.ProductProperty;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +30,10 @@ public class SearchService {
     private final ResolveKeywordService resolveKeywordService;
 
     public ProductSearchResultDto search(SearchRequestDto request) {
+        return search(request, null);
+    }
+
+    public ProductSearchResultDto search(SearchRequestDto request, AuthUserDetails userDetails) {
         ResolvedKeywords resolvedKeywords = resolveKeywordService.resolveKeywords(request.options());
         validateKeywordSelected(resolvedKeywords);
 
@@ -57,25 +60,57 @@ public class SearchService {
                 .sorted(Comparator.comparingDouble(ProductMatchDto::totalScore).reversed())
                 .toList();
 
-        List<ProductRateDto> allRated = Stream.concat(govList.stream(), bankList.stream())
-                .map(p -> rateCalculatorService.calculate(p, request))
-                .toList();
+        boolean tabBEnabled = isTabBEnabled(request, userDetails);
+        TabAvailabilityDto tabs = TabAvailabilityDto.builder()
+                .tabAEnabled(true)
+                .tabBEnabled(tabBEnabled)
+                .tabBDisabledReason(tabBEnabled ? null : "로그인 후 상세 정보를 입력하면 금리순 정렬을 확인할 수 있어요.")
+                .build();
 
-        List<ProductRateDto> rateRanked = allRated.stream()
-                .filter(r -> !r.isSubscription())
-                .sorted(Comparator.comparingDouble(ProductRateDto::achievableRate).reversed())
-                .toList();
+        List<ProductRateDto> governmentRateRanked = tabBEnabled
+                ? govList.stream()
+                        .map(p -> rateCalculatorService.calculate(p, request))
+                        .filter(r -> !r.isSubscription())
+                        .sorted(Comparator.comparingDouble(ProductRateDto::achievableRate).reversed())
+                        .toList()
+                : List.of();
 
-        List<ProductRateDto> subscriptions = allRated.stream()
-                .filter(ProductRateDto::isSubscription)
-                .toList();
+        List<ProductRateDto> bankRateRanked = tabBEnabled
+                ? bankList.stream()
+                        .map(p -> rateCalculatorService.calculate(p, request))
+                        .sorted(Comparator.comparingDouble(ProductRateDto::achievableRate).reversed())
+                        .toList()
+                : List.of();
+
+        List<ProductRateDto> subscriptions = tabBEnabled
+                ? govList.stream()
+                        .map(p -> rateCalculatorService.calculate(p, request))
+                        .filter(ProductRateDto::isSubscription)
+                        .toList()
+                : List.of();
 
         return ProductSearchResultDto.builder()
+                .tabs(tabs)
                 .governmentRanked(govRanked)
                 .bankRanked(bankRanked)
-                .rateRanked(rateRanked)
+                .governmentRateRanked(governmentRateRanked)
+                .bankRateRanked(bankRateRanked)
                 .subscriptionProducts(subscriptions)
                 .build();
+    }
+
+    private boolean isTabBEnabled(SearchRequestDto request, AuthUserDetails userDetails) {
+        if (userDetails == null || request.detailedOptions() == null) {
+            return false;
+        }
+
+        var detail = request.detailedOptions();
+        return detail.birthdate() != null
+                && detail.annualIncome() != null
+                && detail.householdSize() != null
+                && detail.householdIncomePercent() != null
+                && detail.monthlySavingsGoal() != null
+                && detail.selectedInterestRateOptions() != null;
     }
 
     private void validateKeywordSelected(ResolvedKeywords keywords) {

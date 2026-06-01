@@ -1,5 +1,6 @@
 package apptive.fin.search;
 
+import apptive.fin.auth.security.AuthUserDetails;
 import apptive.fin.search.dto.DetailedOptionsDto;
 import apptive.fin.search.dto.OptionRequestDto;
 import apptive.fin.search.dto.ProductMatchDto;
@@ -8,6 +9,7 @@ import apptive.fin.search.dto.ProductSearchResultDto;
 import apptive.fin.search.dto.SearchRequestDto;
 import apptive.fin.global.error.BusinessException;
 import apptive.fin.search.service.SearchService;
+import apptive.fin.user.UserRole;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -36,7 +38,7 @@ class SearchServiceIntegrationTest {
 
     @Test
     void 기본상황이면_정부와_은행_상품을_적합도와_금리순으로_반환한다() {
-        ProductSearchResultDto result = searchService.search(createRequest(50, List.of()));
+        ProductSearchResultDto result = searchService.search(createRequest(50, List.of()), authenticatedUser());
 
         assertThat(matchNames(result.governmentRanked()))
                 .containsExactlyInAnyOrder("청년내일채움공제", "청년우대형 청약통장");
@@ -48,11 +50,13 @@ class SearchServiceIntegrationTest {
         assertThat(result.bankRanked())
                 .allSatisfy(product -> assertThat(product.totalScore()).isCloseTo(100.0, offset(0.0001)));
 
-        assertThat(rateNames(result.rateRanked()))
-                .containsExactly("청년내일채움공제", "청년우대적금", "e-쎄이프 정기예금");
+        assertThat(rateNames(result.governmentRateRanked()))
+                .containsExactly("청년내일채움공제");
+        assertThat(rateNames(result.bankRateRanked()))
+                .containsExactly("청년우대적금", "e-쎄이프 정기예금");
         assertThat(rateNames(result.subscriptionProducts()))
                 .containsExactly("청년우대형 청약통장");
-        assertThat(result.rateRanked())
+        assertThat(result.bankRateRanked())
                 .allSatisfy(product -> {
                     assertThat(product.productPropertyId()).isNotNull();
                     assertThat(product.providerName()).isNotBlank();
@@ -64,7 +68,7 @@ class SearchServiceIntegrationTest {
         ProductSearchResultDto result = searchService.search(createRequest(
                 50,
                 List.of(new OptionRequestDto(CategoryIdEnum.PERIOD.getId(), 24L))
-        ));
+        ), authenticatedUser());
 
         ProductMatchDto oneYearBankProduct = findMatch(result.bankRanked(), "e-쎄이프 정기예금");
         ProductMatchDto adjacentGovProduct = findMatch(result.governmentRanked(), "청년내일채움공제");
@@ -76,11 +80,11 @@ class SearchServiceIntegrationTest {
 
     @Test
     void 희망납입액이_상품_최소납입액에_미달하면_제외된다() {
-        ProductSearchResultDto result = searchService.search(createRequest(5, List.of()));
+        ProductSearchResultDto result = searchService.search(createRequest(5, List.of()), authenticatedUser());
 
         assertThat(matchNames(result.governmentRanked())).hasSize(1);
         assertThat(result.bankRanked()).isEmpty();
-        assertThat(result.rateRanked()).isEmpty();
+        assertThat(result.bankRateRanked()).isEmpty();
 
         assertThat(result.subscriptionProducts()).hasSize(1);
     }
@@ -90,7 +94,7 @@ class SearchServiceIntegrationTest {
         ProductSearchResultDto result = searchService.search(createRequest(
                 50,
                 List.of(new OptionRequestDto(CategoryIdEnum.IDENTITY.getId(), 21L))
-        ));
+        ), authenticatedUser());
 
         assertThat(matchNames(result.bankRanked()))
                 .containsExactly("청년우대적금", "e-쎄이프 정기예금");
@@ -108,19 +112,19 @@ class SearchServiceIntegrationTest {
         ProductSearchResultDto result = searchService.search(createRequest(
                 50,
                 List.of(new OptionRequestDto(CategoryIdEnum.REGION.getId(), 1L))
-        ));
+        ), authenticatedUser());
 
         assertThat(matchNames(result.bankRanked()))
                 .containsExactlyInAnyOrder("e-쎄이프 정기예금", "청년우대적금");
     }
     @Test
     void 동일_상품의_여러_옵션은_하나로_합쳐져서_반환된다() {
-        ProductSearchResultDto result = searchService.search(createRequest(50, List.of()));
+        ProductSearchResultDto result = searchService.search(createRequest(50, List.of()), authenticatedUser());
 
         // 상품명 기준으로 중복 없는지 확인
         List<String> govNames = matchNames(result.governmentRanked());
         List<String> bankNames = matchNames(result.bankRanked());
-        List<String> rateNames = rateNames(result.rateRanked());
+        List<String> rateNames = rateNames(result.bankRateRanked());
 
         // 중복 없이 distinct하게 반환되는지
         assertThat(govNames).doesNotHaveDuplicates();
@@ -163,6 +167,20 @@ class SearchServiceIntegrationTest {
                         .isEqualTo(SearchErrorCode.KEYWORD_REQUIRED));
     }
 
+    @Test
+    void unauthenticated_search_disables_tab_b() {
+        ProductSearchResultDto result = searchService.search(createRequest(50, List.of()));
+
+        assertThat(result.tabs().tabAEnabled()).isTrue();
+        assertThat(result.tabs().tabBEnabled()).isFalse();
+        assertThat(result.tabs().tabBDisabledReason()).isNotBlank();
+        assertThat(result.governmentRanked()).isNotEmpty();
+        assertThat(result.bankRanked()).isNotEmpty();
+        assertThat(result.governmentRateRanked()).isEmpty();
+        assertThat(result.bankRateRanked()).isEmpty();
+        assertThat(result.subscriptionProducts()).isEmpty();
+    }
+
     private SearchRequestDto createRequest(long monthlySavingsGoal, List<OptionRequestDto> options) {
         List<OptionRequestDto> selectedOptions = options.isEmpty()
                 ? List.of(new OptionRequestDto(CategoryIdEnum.REGION.getId(), 2L))
@@ -172,9 +190,9 @@ class SearchServiceIntegrationTest {
                 selectedOptions,
                 new DetailedOptionsDto(
                         LocalDate.now().minusYears(27),
-                        null,
-                        null,
-                        null,
+                        30_000_000L,
+                        3,
+                        100,
                         12,
                         null,
                         true,
@@ -203,5 +221,9 @@ class SearchServiceIntegrationTest {
         return products.stream()
                 .map(ProductRateDto::productName)
                 .toList();
+    }
+
+    private AuthUserDetails authenticatedUser() {
+        return new AuthUserDetails(1L, UserRole.RECOMMENDATION);
     }
 }
