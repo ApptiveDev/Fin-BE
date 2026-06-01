@@ -37,7 +37,7 @@ public class SearchService {
         List<Product> eligible = eligibilityFilterService.filterEligible(request);
         if (!resolvedKeywords.regions().isEmpty()) {
             eligible = eligible.stream()
-                    .filter(product -> hasMatchingRegion(product, resolvedKeywords.regions()))
+                    .filter(product -> isBankProduct(product) || hasMatchingRegion(product, resolvedKeywords.regions()))
                     .toList();
         }
 
@@ -99,5 +99,9 @@ public class SearchService {
 
         return productRegions.isEmpty()
                 || selectedRegions.stream().anyMatch(productRegions::contains);
+    }
+
+    private boolean isBankProduct(Product product) {
+        return product.getSource().getCode().equals("FSS");
     }
 }

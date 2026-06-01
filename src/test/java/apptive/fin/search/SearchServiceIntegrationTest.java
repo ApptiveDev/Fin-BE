@@ -104,16 +104,14 @@ class SearchServiceIntegrationTest {
     }
 
     @Test
-    void 거주지역을_선택하면_상품옵션_키워드의_지역과_비교한다() {
+    void 거주지역을_선택하면_온통청년_상품에만_지역필터를_적용한다() {
         ProductSearchResultDto result = searchService.search(createRequest(
                 50,
                 List.of(new OptionRequestDto(CategoryIdEnum.REGION.getId(), 1L))
         ));
 
         assertThat(matchNames(result.bankRanked()))
-                .containsExactly("e-쎄이프 정기예금");
-        assertThat(matchNames(result.bankRanked()))
-                .doesNotContain("청년우대적금");
+                .containsExactlyInAnyOrder("e-쎄이프 정기예금", "청년우대적금");
     }
     @Test
     void 동일_상품의_여러_옵션은_하나로_합쳐져서_반환된다() {

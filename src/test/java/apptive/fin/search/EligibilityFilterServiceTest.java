@@ -52,7 +52,7 @@ class EligibilityFilterServiceTest {
         );
 
         when(productRepository.findEligibleProducts(
-                any(), any(), any(), any(), any(), any()
+                any(), any(), any(), any(), any(), any(), any(), any()
         )).thenReturn(List.of());
         when(resolveKeywordService.resolveKeywords(request.options()))
                 .thenReturn(emptyKeywords());
@@ -61,6 +61,8 @@ class EligibilityFilterServiceTest {
 
         ArgumentCaptor<Integer> ageCaptor = ArgumentCaptor.forClass(Integer.class);
         ArgumentCaptor<Long> annualIncomeCaptor = ArgumentCaptor.forClass(Long.class);
+        ArgumentCaptor<Integer> householdIncomePercentCaptor = ArgumentCaptor.forClass(Integer.class);
+        ArgumentCaptor<Boolean> incomeProofUnavailableCaptor = ArgumentCaptor.forClass(Boolean.class);
         ArgumentCaptor<Boolean> homelessCaptor = ArgumentCaptor.forClass(Boolean.class);
         ArgumentCaptor<Boolean> householderCaptor = ArgumentCaptor.forClass(Boolean.class);
         ArgumentCaptor<Integer> tenureCaptor = ArgumentCaptor.forClass(Integer.class);
@@ -69,6 +71,8 @@ class EligibilityFilterServiceTest {
         verify(productRepository).findEligibleProducts(
                 ageCaptor.capture(),
                 annualIncomeCaptor.capture(),
+                householdIncomePercentCaptor.capture(),
+                incomeProofUnavailableCaptor.capture(),
                 homelessCaptor.capture(),
                 householderCaptor.capture(),
                 tenureCaptor.capture(),
@@ -77,6 +81,8 @@ class EligibilityFilterServiceTest {
 
         assertThat(ageCaptor.getValue()).isNull();
         assertThat(annualIncomeCaptor.getValue()).isNull();
+        assertThat(householdIncomePercentCaptor.getValue()).isNull();
+        assertThat(incomeProofUnavailableCaptor.getValue()).isFalse();
         assertThat(homelessCaptor.getValue()).isNull();
         assertThat(householderCaptor.getValue()).isNull();
         assertThat(tenureCaptor.getValue()).isNull();
@@ -104,7 +110,7 @@ class EligibilityFilterServiceTest {
         );
 
         when(productRepository.findEligibleProducts(
-                any(), any(), any(), any(), any(), any()
+                any(), any(), any(), any(), any(), any(), any(), any()
         )).thenReturn(List.of());
         when(resolveKeywordService.resolveKeywords(request.options()))
                 .thenReturn(new ResolvedKeywords(
@@ -119,7 +125,7 @@ class EligibilityFilterServiceTest {
 
         ArgumentCaptor<Integer> tenureCaptor = ArgumentCaptor.forClass(Integer.class);
         verify(productRepository).findEligibleProducts(
-                any(), any(), any(), any(), tenureCaptor.capture(), any()
+                any(), any(), any(), any(), any(), any(), tenureCaptor.capture(), any()
         );
 
         assertThat(tenureCaptor.getValue()).isZero();
@@ -146,7 +152,7 @@ class EligibilityFilterServiceTest {
         );
 
         when(productRepository.findEligibleProducts(
-                any(), any(), any(), any(), any(), any()
+                any(), any(), any(), any(), any(), any(), any(), any()
         )).thenReturn(List.of());
         when(resolveKeywordService.resolveKeywords(request.options()))
                 .thenReturn(new ResolvedKeywords(
@@ -161,7 +167,7 @@ class EligibilityFilterServiceTest {
 
         ArgumentCaptor<Integer> tenureCaptor = ArgumentCaptor.forClass(Integer.class);
         verify(productRepository).findEligibleProducts(
-                any(), any(), any(), any(), tenureCaptor.capture(), any()
+                any(), any(), any(), any(), any(), any(), tenureCaptor.capture(), any()
         );
 
         assertThat(tenureCaptor.getValue()).isEqualTo(36);
@@ -175,6 +181,51 @@ class EligibilityFilterServiceTest {
         assertThat(service.filterEligible(request)).isEmpty();
 
         verifyNoInteractions(productRepository, resolveKeywordService);
+    }
+
+    @Test
+    void household_income_percent_and_income_proof_unavailable_are_forwarded() {
+        EligibilityFilterService service = new EligibilityFilterService(productRepository, resolveKeywordService);
+        SearchRequestDto request = new SearchRequestDto(
+                List.of(),
+                new DetailedOptionsDto(
+                        LocalDate.now().minusYears(25),
+                        0L,
+                        3,
+                        120,
+                        null,
+                        null,
+                        null,
+                        null,
+                        300_000L,
+                        null,
+                        List.of()
+                )
+        );
+
+        when(productRepository.findEligibleProducts(
+                any(), any(), any(), any(), any(), any(), any(), any()
+        )).thenReturn(List.of());
+        when(resolveKeywordService.resolveKeywords(request.options()))
+                .thenReturn(emptyKeywords());
+
+        service.filterEligible(request);
+
+        ArgumentCaptor<Integer> householdIncomePercentCaptor = ArgumentCaptor.forClass(Integer.class);
+        ArgumentCaptor<Boolean> incomeProofUnavailableCaptor = ArgumentCaptor.forClass(Boolean.class);
+        verify(productRepository).findEligibleProducts(
+                any(),
+                any(),
+                householdIncomePercentCaptor.capture(),
+                incomeProofUnavailableCaptor.capture(),
+                any(),
+                any(),
+                any(),
+                any()
+        );
+
+        assertThat(householdIncomePercentCaptor.getValue()).isEqualTo(120);
+        assertThat(incomeProofUnavailableCaptor.getValue()).isTrue();
     }
 
     private ResolvedKeywords emptyKeywords() {

@@ -17,7 +17,9 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
             WHERE pp.isJoinable = TRUE
                 AND (:age IS NULL OR pp.minAge IS NULL OR pp.minAge <= :age)
                 AND (:age IS NULL OR pp.maxAge IS NULL OR pp.maxAge >= :age)
-                AND (:annualIncome IS NULL OR pp.earnMaxAmt IS NULL OR pp.earnMaxAmt >= :annualIncome)
+                AND (:incomeProofUnavailable = FALSE OR (pp.earnMaxAmt IS NULL AND pp.earnPercent IS NULL))
+                AND (:incomeProofUnavailable = TRUE OR :annualIncome IS NULL OR pp.earnMaxAmt IS NULL OR pp.earnMaxAmt >= :annualIncome)
+                AND (:householdIncomePercent IS NULL OR pp.earnPercent IS NULL OR pp.earnPercent >= :householdIncomePercent)
                 AND (:isHomeless IS NULL OR pp.requiresHomeless = FALSE OR :isHomeless = TRUE)
                 AND (:isHouseholder IS NULL OR pp.requiresHouseholder = FALSE OR :isHouseholder = TRUE)
                 AND (:tenureMonths IS NULL OR pp.minTenureMonths IS NULL OR pp.minTenureMonths <= :tenureMonths)
@@ -26,6 +28,8 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     List<Product> findEligibleProducts(
             @Param("age") Integer age,
             @Param("annualIncome") Long annualIncome,
+            @Param("householdIncomePercent") Integer householdIncomePercent,
+            @Param("incomeProofUnavailable") Boolean incomeProofUnavailable,
             @Param("isHomeless") Boolean isHomeless,
             @Param("isHouseholder") Boolean isHouseholder,
             @Param("tenureMonths") Integer tenureMonths,
