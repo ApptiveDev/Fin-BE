@@ -96,6 +96,10 @@ public class ProductProperty {
     private List<ProductKeyword> keywords = new ArrayList<>();
 
     @BatchSize(size = 100)
+    @OneToMany(mappedBy = "productProperty", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<ProductRequiredKeyword> requiredKeywords = new ArrayList<>();
+
+    @BatchSize(size = 100)
     @OneToMany(mappedBy = "productProperty", fetch = FetchType.LAZY)
     private List<ProductPreferentialRate> preferentialRates = new ArrayList<>();
 }

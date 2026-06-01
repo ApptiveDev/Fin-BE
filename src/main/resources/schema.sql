@@ -150,6 +150,14 @@ CREATE TABLE product_property_keyword (
     keyword_code VARCHAR(50) NOT NULL
 );
 
+CREATE TABLE product_property_required_keyword (
+    id BIGSERIAL PRIMARY KEY,
+    product_property_id BIGINT NOT NULL REFERENCES product_properties(id) ON DELETE CASCADE,
+    keyword_code VARCHAR(50) NOT NULL,
+    effect VARCHAR(20) NOT NULL DEFAULT 'REQUIRE',
+    confidence VARCHAR(20) NOT NULL DEFAULT 'HIGH'
+);
+
 CREATE TABLE product_preferential_rates (
     id BIGSERIAL PRIMARY KEY,
     product_property_id BIGINT NOT NULL REFERENCES product_properties(id) ON DELETE CASCADE,
