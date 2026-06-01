@@ -236,6 +236,75 @@ class MatchScoreServiceTest {
         assertThat(result.totalScore()).isCloseTo(100.0, org.assertj.core.data.Offset.offset(0.001));
     }
 
+    @Test
+    void bank_first_transaction_history_is_reflected_in_tab_a_when_enabled() {
+        MatchScoreService matchScoreService = new MatchScoreService(resolveKeywordService);
+        ProductProperty property = createProperty(
+                10L,
+                "KB",
+                500_000L,
+                12,
+                KeywordValueEnum.BANK_FIRST_TRANSACTION
+        );
+        setProviderCode(property, "KB");
+        Product product = createProduct("FSS", property);
+
+        ProductMatchDto result = matchScoreService.score(
+                product,
+                createRequest(300_000L, List.of("KB"), List.of()),
+                new ResolvedKeywords(List.of(), List.of(), null, List.of(), List.of()),
+                true
+        );
+
+        assertThat(result.bankCondScore()).isGreaterThan(0.0);
+    }
+
+    @Test
+    void bank_first_transaction_history_is_not_reflected_in_tab_a_when_disabled() {
+        MatchScoreService matchScoreService = new MatchScoreService(resolveKeywordService);
+        ProductProperty property = createProperty(
+                10L,
+                "KB",
+                500_000L,
+                12,
+                KeywordValueEnum.BANK_FIRST_TRANSACTION
+        );
+        setProviderCode(property, "KB");
+        Product product = createProduct("FSS", property);
+
+        ProductMatchDto result = matchScoreService.score(
+                product,
+                createRequest(300_000L, List.of("KB"), List.of()),
+                new ResolvedKeywords(List.of(), List.of(), null, List.of(), List.of()),
+                false
+        );
+
+        assertThat(result.bankCondScore()).isZero();
+    }
+
+    @Test
+    void bank_first_transaction_history_matches_only_selected_provider() {
+        MatchScoreService matchScoreService = new MatchScoreService(resolveKeywordService);
+        ProductProperty property = createProperty(
+                10L,
+                "KB",
+                500_000L,
+                12,
+                KeywordValueEnum.BANK_FIRST_TRANSACTION
+        );
+        setProviderCode(property, "KB");
+        Product product = createProduct("FSS", property);
+
+        ProductMatchDto result = matchScoreService.score(
+                product,
+                createRequest(300_000L, List.of("SHINHAN"), List.of()),
+                new ResolvedKeywords(List.of(), List.of(), null, List.of(), List.of()),
+                true
+        );
+
+        assertThat(result.bankCondScore()).isZero();
+    }
+
     private Product createProduct(String sourceCode, ProductProperty property) {
         ProductSource source = new ProductSource();
         Product product = new Product();
@@ -279,11 +348,20 @@ class MatchScoreServiceTest {
     }
 
     private SearchRequestDto createRequest(Long monthlySavingsGoal) {
+        return createRequest(monthlySavingsGoal, null, null);
+    }
+
+    private SearchRequestDto createRequest(
+            Long monthlySavingsGoal,
+            List<String> neverUsedBanks,
+            List<String> maturedSavingBanks
+    ) {
         return new SearchRequestDto(
                 List.of(),
                 new DetailedOptionsDto(
                         null, null, null, null, null,
-                        null, null, null, monthlySavingsGoal, null, List.of()
+                        null, null, null, monthlySavingsGoal, null,
+                        neverUsedBanks, maturedSavingBanks, List.of()
                 )
         );
     }

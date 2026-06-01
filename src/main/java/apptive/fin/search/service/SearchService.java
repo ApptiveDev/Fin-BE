@@ -51,16 +51,17 @@ public class SearchService {
                 .filter(p -> p.getSource().getCode().equals("FSS"))
                 .toList();
 
+        boolean tabBEnabled = isTabBEnabled(request, userDetails);
+
         List<ProductMatchDto> govRanked = govList.stream()
                 .map(p -> matchScoreService.score(p, request, resolvedKeywords))
                 .sorted(Comparator.comparingDouble(ProductMatchDto::totalScore).reversed())
                 .toList();
         List<ProductMatchDto> bankRanked = bankList.stream()
-                .map(p -> matchScoreService.score(p, request, resolvedKeywords))
+                .map(p -> matchScoreService.score(p, request, resolvedKeywords, tabBEnabled))
                 .sorted(Comparator.comparingDouble(ProductMatchDto::totalScore).reversed())
                 .toList();
 
-        boolean tabBEnabled = isTabBEnabled(request, userDetails);
         TabAvailabilityDto tabs = TabAvailabilityDto.builder()
                 .tabAEnabled(true)
                 .tabBEnabled(tabBEnabled)

@@ -29,6 +29,15 @@ public class MatchScoreService {
     }
 
     public ProductMatchDto score(Product p, SearchRequestDto request, ResolvedKeywords keywords) {
+        return score(p, request, keywords, false);
+    }
+
+    public ProductMatchDto score(
+            Product p,
+            SearchRequestDto request,
+            ResolvedKeywords keywords,
+            boolean includeTransactionHistory
+    ) {
         var detail = request.detailedOptions();
 
         boolean isGov = p.getSource().getCode().equals("ONTONG");
@@ -41,8 +50,10 @@ public class MatchScoreService {
                         keywords.identities(),
                         keywords.bankConditions(),
                         keywords.savingPeriod(),
-                        detail.monthlySavingsGoal(),
-                        isGov
+                        detail != null ? detail.monthlySavingsGoal() : null,
+                        isGov,
+                        request,
+                        includeTransactionHistory
                 ))
                 .max((a, b) -> Double.compare(a.totalScore(), b.totalScore()))
                 .orElseGet(() -> new ProductPropertyScore(null, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0));
@@ -69,16 +80,24 @@ public class MatchScoreService {
             List<KeywordValueEnum> bankConditions,
             KeywordValueEnum savingPeriod,
             Long monthlyDeposit,
-            boolean isGov
+            boolean isGov,
+            SearchRequestDto request,
+            boolean includeTransactionHistory
     ) {
         List<KeywordValueEnum> propertyKeywords = property.getKeywords().stream()
                 .map(ProductKeyword::getKeywordCode)
                 .toList();
 
+        List<KeywordValueEnum> activeBankConditions = activeBankConditions(
+                bankConditions,
+                request,
+                includeTransactionHistory
+        );
+
         Map<String, Double> weights = distributeWeights(
                 coreBenefits,
                 identities,
-                bankConditions,
+                activeBankConditions,
                 savingPeriod,
                 property,
                 isGov
@@ -94,7 +113,7 @@ public class MatchScoreService {
                 * weights.get(weightKey(isGov, ScoreWeightEnum.GOV_DEPOSIT, ScoreWeightEnum.BANK_DEPOSIT));
         double bankCondScore = (isGovBankConditionExcluded(isGov, property)
                 ? 0.0
-                : calcBankCondScore(bankConditions, propertyKeywords))
+                : calcBankCondScore(activeBankConditions, propertyKeywords, property, request))
                 * weights.get(weightKey(isGov, ScoreWeightEnum.GOV_BANK_COND, ScoreWeightEnum.BANK_BANK_COND));
         double totalScore = benefitScore + periodScore + identityScore + depositScore + bankCondScore;
 
@@ -156,10 +175,88 @@ public class MatchScoreService {
         return (double) maxMonthlyLimit / monthlyDeposit;
     }
 
-    private double calcBankCondScore(List<KeywordValueEnum> selected, List<KeywordValueEnum> propertyKeywords) {
+    private double calcBankCondScore(
+            List<KeywordValueEnum> selected,
+            List<KeywordValueEnum> propertyKeywords,
+            ProductProperty property,
+            SearchRequestDto request
+    ) {
         if (selected.isEmpty()) return 0.0;
-        long matched = selected.stream().filter(propertyKeywords::contains).count();
+        long matched = selected.stream()
+                .filter(keyword -> matchesBankCondition(keyword, propertyKeywords, property, request))
+                .count();
         return (double) matched / selected.size();
+    }
+
+    private boolean matchesBankCondition(
+            KeywordValueEnum keyword,
+            List<KeywordValueEnum> propertyKeywords,
+            ProductProperty property,
+            SearchRequestDto request
+    ) {
+        if (!propertyKeywords.contains(keyword)) {
+            return false;
+        }
+
+        if (keyword == BANK_FIRST_TRANSACTION) {
+            List<String> selectedProviders = neverUsedBanks(request);
+            return !hasAny(selectedProviders) || isProviderSelected(property, selectedProviders);
+        }
+
+        if (keyword == BANK_REDEPOSIT) {
+            List<String> selectedProviders = maturedSavingBanks(request);
+            return !hasAny(selectedProviders) || isProviderSelected(property, selectedProviders);
+        }
+
+        return true;
+    }
+
+    private List<KeywordValueEnum> activeBankConditions(
+            List<KeywordValueEnum> selected,
+            SearchRequestDto request,
+            boolean includeTransactionHistory
+    ) {
+        List<KeywordValueEnum> active = new ArrayList<>(selected);
+        if (!includeTransactionHistory) {
+            return active;
+        }
+
+        if (hasAny(neverUsedBanks(request)) && !active.contains(BANK_FIRST_TRANSACTION)) {
+            active.add(BANK_FIRST_TRANSACTION);
+        }
+
+        if (hasAny(maturedSavingBanks(request)) && !active.contains(BANK_REDEPOSIT)) {
+            active.add(BANK_REDEPOSIT);
+        }
+
+        return active;
+    }
+
+    private boolean hasAny(List<String> values) {
+        return values != null && !values.isEmpty();
+    }
+
+    private boolean isProviderSelected(ProductProperty property, List<String> selectedProviders) {
+        if (property == null || property.getProvider() == null || selectedProviders == null) {
+            return false;
+        }
+
+        String providerCode = property.getProvider().getCode();
+        String providerName = property.getProvider().getName();
+        return selectedProviders.stream()
+                .anyMatch(selected -> selected != null && (selected.equals(providerCode) || selected.equals(providerName)));
+    }
+
+    private List<String> neverUsedBanks(SearchRequestDto request) {
+        return request.detailedOptions() != null
+                ? request.detailedOptions().neverUsedBanks()
+                : null;
+    }
+
+    private List<String> maturedSavingBanks(SearchRequestDto request) {
+        return request.detailedOptions() != null
+                ? request.detailedOptions().maturedSavingBanks()
+                : null;
     }
 
     private Map<String, Double> distributeWeights(
