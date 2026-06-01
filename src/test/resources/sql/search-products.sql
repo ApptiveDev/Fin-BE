@@ -11,7 +11,7 @@ INSERT INTO provider (source_id, code, name) VALUES
 INSERT INTO product (source_id, type, product_code, product_name, content) VALUES
 ((SELECT id FROM product_source WHERE code = 'FSS'), 'SAVING', 'SEARCH_SAFE_DEPOSIT', 'e-쎄이프 정기예금', '단리/복리 선택 가능'),
 ((SELECT id FROM product_source WHERE code = 'ONTONG'), 'POLICY', 'SEARCH_YOUTH_EMPLOYMENT', '청년내일채움공제', '중소기업 재직 청년 자산형성 지원'),
-((SELECT id FROM product_source WHERE code = 'ONTONG'), 'POLICY', 'SEARCH_SUBSCRIPTION', '청년우대형 청약통장', '청년 자산형성 주거 상품'),
+((SELECT id FROM product_source WHERE code = 'ONTONG'), 'SUBSCRIPTION', 'SEARCH_SUBSCRIPTION', '청년우대형 청약통장', '청년 자산형성 주거 상품'),
 ((SELECT id FROM product_source WHERE code = 'FSS'), 'SAVING', 'SEARCH_YOUTH_SAVING', '청년우대적금', '만 19~29세 전용 우대 적금');
 
 INSERT INTO product_properties (
@@ -25,6 +25,5 @@ INSERT INTO product_properties (
 ((SELECT id FROM product WHERE product_code = 'SEARCH_YOUTH_SAVING'), (SELECT id FROM provider WHERE code = 'SEARCH_BANK_B'), 3.8, 4.5, 10, 50, 19, 29, NULL, false, false, true, 'SINGLE_INTEREST', 12);
 
 INSERT INTO product_property_keyword (product_property_id, keyword_code) VALUES
-((SELECT pp.id FROM product_properties pp JOIN product p ON p.id = pp.product_id WHERE p.product_code = 'SEARCH_SUBSCRIPTION'), 'INTEREST_SAVINGS'),
 ((SELECT pp.id FROM product_properties pp JOIN product p ON p.id = pp.product_id WHERE p.product_code = 'SEARCH_YOUTH_SAVING'), 'STATUS_MILITARY'),
 ((SELECT pp.id FROM product_properties pp JOIN product p ON p.id = pp.product_id WHERE p.product_code = 'SEARCH_YOUTH_SAVING'), 'REGION_BUSAN');

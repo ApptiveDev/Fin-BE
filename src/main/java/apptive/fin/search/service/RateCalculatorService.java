@@ -1,6 +1,7 @@
 package apptive.fin.search.service;
 
 import apptive.fin.search.KeywordValueEnum;
+import apptive.fin.search.ProductType;
 import apptive.fin.search.dto.ProductRateDto;
 import apptive.fin.search.dto.SearchRequestDto;
 import apptive.fin.search.entity.Product;
@@ -17,8 +18,7 @@ public class RateCalculatorService {
     public ProductRateDto calculate(Product p, SearchRequestDto request) {
         boolean isGov = p.getSource().getCode().equals("ONTONG");
 
-        boolean isSubscription = p.getProperties().stream()
-                .anyMatch(property -> hasKeyword(property,KeywordValueEnum.INTEREST_SAVINGS));
+        boolean isSubscription = p.getType() == ProductType.SUBSCRIPTION;
         if (isSubscription) {
             return ProductRateDto.builder()
                     .productId(p.getId())

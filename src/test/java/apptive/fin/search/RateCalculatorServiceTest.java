@@ -60,7 +60,7 @@ class RateCalculatorServiceTest {
     void 청약상품은_금리비교_대상에서_제외하고_구독상품으로_반환한다() {
         Product product = createProduct("GOV001", "청약상품", "ONTONG");
         ProductProperty property = createProperty(10L, "테스트은행", null, null);
-        addKeyword(property, KeywordValueEnum.INTEREST_SAVINGS);
+        ReflectionTestUtils.setField(product, "type", ProductType.SUBSCRIPTION);
         ReflectionTestUtils.setField(product, "properties", new ArrayList<>(List.of(property)));
 
         ProductRateDto result = rateCalculatorService.calculate(product, createRequest());
@@ -92,6 +92,7 @@ class RateCalculatorServiceTest {
         ReflectionTestUtils.setField(product, "productCode", code);
         ReflectionTestUtils.setField(product, "productName", name);
         ReflectionTestUtils.setField(product, "source", source);
+        ReflectionTestUtils.setField(product, "type", ProductType.SAVING);
         return product;
     }
 

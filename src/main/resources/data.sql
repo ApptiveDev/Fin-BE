@@ -227,7 +227,7 @@ INSERT INTO provider (source_id, code, name) VALUES
 INSERT INTO product (source_id, type, product_code, product_name, content) VALUES
 ((SELECT id FROM product_source WHERE code = 'FSS'), 'SAVING', '240076', 'e-쎄이프 정기예금', '단리/복리 선택 가능'),
 ((SELECT id FROM product_source WHERE code = 'ONTONG'), 'POLICY', 'GOV001', '청년내일채움공제', '중소기업 재직 청년 자산형성 지원'),
-((SELECT id FROM product_source WHERE code = 'ONTONG'), 'POLICY', 'GOV002', '청년우대형 청약통장', '청년 자산형성 주거 상품'),
+((SELECT id FROM product_source WHERE code = 'ONTONG'), 'SUBSCRIPTION', 'GOV002', '청년우대형 청약통장', '청년 자산형성 주거 상품'),
 ((SELECT id FROM product_source WHERE code = 'FSS'), 'SAVING', 'BANK001', '청년우대적금', '만 19~29세 전용 우대 적금');
 
 INSERT INTO product_properties (
