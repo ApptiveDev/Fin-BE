@@ -199,6 +199,8 @@ class SearchServiceIntegrationTest {
                         null,
                         monthlySavingsGoal,
                         null,
+                        List.of(),
+                        List.of(),
                         List.of()
                 )
         );

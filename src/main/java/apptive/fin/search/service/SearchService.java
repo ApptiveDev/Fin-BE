@@ -105,12 +105,8 @@ public class SearchService {
         }
 
         var detail = request.detailedOptions();
-        return detail.birthdate() != null
-                && detail.annualIncome() != null
-                && detail.householdSize() != null
-                && detail.householdIncomePercent() != null
-                && detail.monthlySavingsGoal() != null
-                && detail.selectedInterestRateOptions() != null;
+        return detail.neverUsedBanks() != null
+                && detail.maturedSavingBanks() != null;
     }
 
     private void validateKeywordSelected(ResolvedKeywords keywords) {
