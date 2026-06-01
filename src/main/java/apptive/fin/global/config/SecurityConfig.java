@@ -52,7 +52,6 @@ public class SecurityConfig {
                                 .requestMatchers("/auth/**").permitAll()
                                 .requestMatchers(HttpMethod.POST, "/users").permitAll()
                                 //.anyRequest().permitAll()
-                                .requestMatchers("/search/**").permitAll()
                                 .anyRequest().authenticated()
                 )
                 .oauth2Login(oauth2 -> oauth2
