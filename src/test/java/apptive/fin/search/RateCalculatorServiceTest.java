@@ -2,8 +2,10 @@ package apptive.fin.search;
 
 import apptive.fin.search.dto.DetailedOptionsDto;
 import apptive.fin.search.dto.ProductRateDto;
+import apptive.fin.search.dto.ResolvedKeywords;
 import apptive.fin.search.dto.SearchRequestDto;
 import apptive.fin.search.entity.Product;
+import apptive.fin.search.entity.ProductPreferentialRate;
 import apptive.fin.search.entity.ProductProperty;
 import apptive.fin.search.entity.ProductSource;
 import apptive.fin.search.entity.Provider;
@@ -12,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,62 +25,176 @@ class RateCalculatorServiceTest {
     private final RateCalculatorService rateCalculatorService = new RateCalculatorService();
 
     @Test
-    void 옵션이_여러개이면_최고금리_옵션_하나만_반환한다() {
-        Product product = createProduct("BANK001", "청년우대적금", "FSS");
-        ReflectionTestUtils.setField(product, "properties", new ArrayList<>(List.of(
-                createProperty(10L, "테스트은행", "3.80", "4.50"),
-                createProperty(11L, "테스트은행", "3.50", "4.20")
-        )));
+    void bankProductUsesBaseRateWhenNoPreferentialRateApplies() {
+        Product product = createProduct("BANK001", "basic bank product", "FSS");
+        ProductProperty property = createProperty(10L, "KB", "KB국민은행", "2.75", null);
+        ReflectionTestUtils.setField(product, "properties", new ArrayList<>(List.of(property)));
 
-        ProductRateDto result = rateCalculatorService.calculate(product, createRequest());
+        ProductRateDto result = rateCalculatorService.calculate(product, createRequest(), emptyKeywords());
 
         assertThat(result.productId()).isEqualTo(1L);
-        assertThat(result.productName()).isEqualTo("청년우대적금");
         assertThat(result.productPropertyId()).isEqualTo(10L);
-        assertThat(result.baseRate()).isEqualTo(3.8);
-        assertThat(result.achievableRate()).isEqualTo(4.5);
+        assertThat(result.baseRate()).isEqualTo(2.75);
+        assertThat(result.achievableRate()).isEqualTo(2.75);
         assertThat(result.rateComparable()).isTrue();
         assertThat(result.isSubscription()).isFalse();
     }
 
     @Test
-    void 최고금리가_없으면_기본금리를_사용한다() {
-        Product product = createProduct("BANK002", "기본금리상품", "FSS");
-        ReflectionTestUtils.setField(product, "properties", new ArrayList<>(List.of(
-                createProperty(10L, "테스트은행", "2.75", null)
-        )));
+    void bankProductAddsOnlySelectedStep1PreferentialRates() {
+        Product product = createProduct("BANK002", "preferential bank product", "FSS");
+        ProductProperty property = createProperty(10L, "KB", "KB국민은행", "3.50", "5.00");
+        addPreferentialRates(property,
+                preferentialRate(KeywordValueEnum.BANK_SALARY_TRANSFER, "0.30"),
+                preferentialRate(KeywordValueEnum.BANK_CARD_USAGE, "0.20"));
+        ReflectionTestUtils.setField(product, "properties", new ArrayList<>(List.of(property)));
 
-        ProductRateDto result = rateCalculatorService.calculate(product, createRequest());
+        ProductRateDto result = rateCalculatorService.calculate(
+                product,
+                createRequest(),
+                keywords(List.of(KeywordValueEnum.BANK_SALARY_TRANSFER))
+        );
 
-        assertThat(result.baseRate()).isEqualTo(2.75);
-        assertThat(result.achievableRate()).isEqualTo(2.75);
-        assertThat(result.rateComparable()).isTrue();
+        assertThat(result.baseRate()).isEqualTo(3.5);
+        assertThat(result.achievableRate()).isEqualTo(3.8);
     }
 
     @Test
-    void 청약상품은_금리비교_대상에서_제외하고_청약상품으로_반환한다() {
-        Product product = createProduct("GOV001", "청약상품", "ONTONG");
-        ProductProperty property = createProperty(10L, "테스트은행", null, null);
+    void bankProductAddsOnlineJoinAutomatically() {
+        Product product = createProduct("BANK003", "online bank product", "FSS");
+        ProductProperty property = createProperty(10L, "KB", "KB국민은행", "3.50", "5.00");
+        addPreferentialRates(property, preferentialRate(KeywordValueEnum.BANK_ONLINE_JOIN, "0.10"));
+        ReflectionTestUtils.setField(product, "properties", new ArrayList<>(List.of(property)));
+
+        ProductRateDto result = rateCalculatorService.calculate(product, createRequest(), emptyKeywords());
+
+        assertThat(result.achievableRate()).isEqualTo(3.6);
+    }
+
+    @Test
+    void bankProductAddsFirstTransactionOnlyForNeverUsedProvider() {
+        Product product = createProduct("BANK004", "first transaction product", "FSS");
+        ProductProperty property = createProperty(10L, "KB", "KB국민은행", "3.50", "5.00");
+        addPreferentialRates(property, preferentialRate(KeywordValueEnum.BANK_FIRST_TRANSACTION, "0.50"));
+        ReflectionTestUtils.setField(product, "properties", new ArrayList<>(List.of(property)));
+
+        ProductRateDto result = rateCalculatorService.calculate(
+                product,
+                createRequest(null, null, List.of("KB"), List.of()),
+                emptyKeywords()
+        );
+
+        assertThat(result.achievableRate()).isEqualTo(4.0);
+    }
+
+    @Test
+    void bankProductDoesNotAddFirstTransactionForOtherProvider() {
+        Product product = createProduct("BANK005", "other first transaction product", "FSS");
+        ProductProperty property = createProperty(10L, "KB", "KB국민은행", "3.50", "5.00");
+        addPreferentialRates(property, preferentialRate(KeywordValueEnum.BANK_FIRST_TRANSACTION, "0.50"));
+        ReflectionTestUtils.setField(product, "properties", new ArrayList<>(List.of(property)));
+
+        ProductRateDto result = rateCalculatorService.calculate(
+                product,
+                createRequest(null, null, List.of("SHINHAN"), List.of()),
+                emptyKeywords()
+        );
+
+        assertThat(result.achievableRate()).isEqualTo(3.5);
+    }
+
+    @Test
+    void bankProductAddsRedepositOnlyForMaturedSavingProvider() {
+        Product product = createProduct("BANK006", "redeposit product", "FSS");
+        ProductProperty property = createProperty(10L, "KB", "KB국민은행", "3.50", "5.00");
+        addPreferentialRates(property, preferentialRate(KeywordValueEnum.BANK_REDEPOSIT, "0.40"));
+        ReflectionTestUtils.setField(product, "properties", new ArrayList<>(List.of(property)));
+
+        ProductRateDto result = rateCalculatorService.calculate(
+                product,
+                createRequest(null, null, List.of(), List.of("KB")),
+                emptyKeywords()
+        );
+
+        assertThat(result.achievableRate()).isEqualTo(3.9);
+    }
+
+    @Test
+    void bankProductAddsAgePreferentialRateWhenBirthdateMatches() {
+        Product product = createProduct("BANK007", "age product", "FSS");
+        ProductProperty property = createProperty(10L, "KB", "KB국민은행", "3.50", "5.00");
+        addPreferentialRates(property, preferentialRate(KeywordValueEnum.BANK_AGE, "0.20", 19, 34));
+        ReflectionTestUtils.setField(product, "properties", new ArrayList<>(List.of(property)));
+
+        ProductRateDto result = rateCalculatorService.calculate(
+                product,
+                createRequest(LocalDate.now().minusYears(25), null, List.of(), List.of()),
+                emptyKeywords()
+        );
+
+        assertThat(result.achievableRate()).isEqualTo(3.7);
+    }
+
+    @Test
+    void bankProductCapsAchievableRateAtMaxRate() {
+        Product product = createProduct("BANK008", "capped product", "FSS");
+        ProductProperty property = createProperty(10L, "KB", "KB국민은행", "3.80", "4.00");
+        addPreferentialRates(property,
+                preferentialRate(KeywordValueEnum.BANK_SALARY_TRANSFER, "0.30"),
+                preferentialRate(KeywordValueEnum.BANK_ONLINE_JOIN, "0.10"));
+        ReflectionTestUtils.setField(product, "properties", new ArrayList<>(List.of(property)));
+
+        ProductRateDto result = rateCalculatorService.calculate(
+                product,
+                createRequest(),
+                keywords(List.of(KeywordValueEnum.BANK_SALARY_TRANSFER))
+        );
+
+        assertThat(result.achievableRate()).isEqualTo(4.0);
+    }
+
+    @Test
+    void bankProductSelectsPropertyWithHighestAchievableRate() {
+        Product product = createProduct("BANK009", "multi option product", "FSS");
+        ProductProperty first = createProperty(10L, "KB", "KB국민은행", "3.80", "4.50");
+        ProductProperty second = createProperty(11L, "KB", "KB국민은행", "3.50", "5.00");
+        addPreferentialRates(second, preferentialRate(KeywordValueEnum.BANK_SALARY_TRANSFER, "0.60"));
+        ReflectionTestUtils.setField(product, "properties", new ArrayList<>(List.of(first, second)));
+
+        ProductRateDto result = rateCalculatorService.calculate(
+                product,
+                createRequest(),
+                keywords(List.of(KeywordValueEnum.BANK_SALARY_TRANSFER))
+        );
+
+        assertThat(result.productPropertyId()).isEqualTo(11L);
+        assertThat(result.baseRate()).isEqualTo(3.5);
+        assertThat(result.achievableRate()).isEqualTo(4.1);
+    }
+
+    @Test
+    void subscriptionProductIsReturnedAsIncomparable() {
+        Product product = createProduct("GOV001", "subscription product", "ONTONG");
+        ProductProperty property = createProperty(10L, "GOV", "정책기관", null, null);
         ReflectionTestUtils.setField(product, "type", ProductType.SUBSCRIPTION);
         ReflectionTestUtils.setField(product, "properties", new ArrayList<>(List.of(property)));
 
-        ProductRateDto result = rateCalculatorService.calculate(product, createRequest());
+        ProductRateDto result = rateCalculatorService.calculate(product, createRequest(), emptyKeywords());
 
         assertThat(result.isSubscription()).isTrue();
         assertThat(result.rateComparable()).isFalse();
-        assertThat(result.subscriptionNote()).isEqualTo("청약: 금리 비교 대상 아님");
     }
 
     @Test
-    void 정부_정률상품은_기여금_환산수익률로_계산한다() {
-        Product product = createProduct("GOV002", "정부정률상품", "ONTONG");
-        ProductProperty property = createProperty(10L, "정책기관", "4.00", "4.50");
+    void governmentRatioProductUsesContributionYield() {
+        Product product = createProduct("GOV002", "government ratio product", "ONTONG");
+        ProductProperty property = createProperty(10L, "GOV", "정책기관", "4.00", "4.50");
         ReflectionTestUtils.setField(property, "govContributionType", ContributionType.RATIO);
         ReflectionTestUtils.setField(property, "govMatchingRatio", new BigDecimal("1.0000"));
         ReflectionTestUtils.setField(property, "govContributionPeriodMonths", 24);
         ReflectionTestUtils.setField(product, "properties", new ArrayList<>(List.of(property)));
 
-        ProductRateDto result = rateCalculatorService.calculate(product, createRequest());
+        ProductRateDto result = rateCalculatorService.calculate(product, createRequest(), emptyKeywords());
 
         assertThat(result.baseRate()).isZero();
         assertThat(result.achievableRate()).isEqualTo(50.0);
@@ -86,15 +203,15 @@ class RateCalculatorServiceTest {
     }
 
     @Test
-    void 정부_정액상품은_월납입액_기준_기여금_환산수익률로_계산한다() {
-        Product product = createProduct("GOV003", "정부정액상품", "ONTONG");
-        ProductProperty property = createProperty(10L, "정책기관", null, null);
+    void governmentFixedAmountProductUsesMonthlySavingsGoal() {
+        Product product = createProduct("GOV003", "government fixed product", "ONTONG");
+        ProductProperty property = createProperty(10L, "GOV", "정책기관", null, null);
         ReflectionTestUtils.setField(property, "govContributionType", ContributionType.FIXED_AMOUNT);
         ReflectionTestUtils.setField(property, "govMonthlyFixedContribution", 300_000L);
         ReflectionTestUtils.setField(property, "govContributionPeriodMonths", 36);
         ReflectionTestUtils.setField(product, "properties", new ArrayList<>(List.of(property)));
 
-        ProductRateDto result = rateCalculatorService.calculate(product, createRequest(100_000L));
+        ProductRateDto result = rateCalculatorService.calculate(product, createRequest(100_000L), emptyKeywords());
 
         assertThat(result.achievableRate()).isEqualTo(100.0);
         assertThat(result.rateComparable()).isTrue();
@@ -102,15 +219,15 @@ class RateCalculatorServiceTest {
     }
 
     @Test
-    void 정부_정액상품에_월납입액이_없으면_금리비교에서_제외한다() {
-        Product product = createProduct("GOV004", "계산불가정액상품", "ONTONG");
-        ProductProperty property = createProperty(10L, "정책기관", null, null);
+    void governmentFixedAmountProductWithoutMonthlySavingsGoalIsIncomparable() {
+        Product product = createProduct("GOV004", "government incomparable fixed product", "ONTONG");
+        ProductProperty property = createProperty(10L, "GOV", "정책기관", null, null);
         ReflectionTestUtils.setField(property, "govContributionType", ContributionType.FIXED_AMOUNT);
         ReflectionTestUtils.setField(property, "govMonthlyFixedContribution", 300_000L);
         ReflectionTestUtils.setField(property, "govContributionPeriodMonths", 36);
         ReflectionTestUtils.setField(product, "properties", new ArrayList<>(List.of(property)));
 
-        ProductRateDto result = rateCalculatorService.calculate(product, createRequest());
+        ProductRateDto result = rateCalculatorService.calculate(product, createRequest(), emptyKeywords());
 
         assertThat(result.rateComparable()).isFalse();
         assertThat(result.achievableRate()).isZero();
@@ -118,16 +235,16 @@ class RateCalculatorServiceTest {
     }
 
     @Test
-    void 비교제외_정부상품은_금리비교에서_제외한다() {
-        Product product = createProduct("GOV005", "비교제외상품", "ONTONG");
-        ProductProperty property = createProperty(10L, "정책기관", null, null);
+    void governmentProductExplicitlyExcludedFromRateComparisonIsIncomparable() {
+        Product product = createProduct("GOV005", "excluded government product", "ONTONG");
+        ProductProperty property = createProperty(10L, "GOV", "정책기관", null, null);
         ReflectionTestUtils.setField(property, "excludeFromRateComparison", true);
         ReflectionTestUtils.setField(property, "govContributionType", ContributionType.RATIO);
         ReflectionTestUtils.setField(property, "govMatchingRatio", new BigDecimal("1.0000"));
         ReflectionTestUtils.setField(property, "govContributionPeriodMonths", 24);
         ReflectionTestUtils.setField(product, "properties", new ArrayList<>(List.of(property)));
 
-        ProductRateDto result = rateCalculatorService.calculate(product, createRequest());
+        ProductRateDto result = rateCalculatorService.calculate(product, createRequest(), emptyKeywords());
 
         assertThat(result.rateComparable()).isFalse();
         assertThat(result.isSubscription()).isFalse();
@@ -146,13 +263,15 @@ class RateCalculatorServiceTest {
         return product;
     }
 
-    private ProductProperty createProperty(Long id, String providerName, String baseRate, String maxRate) {
+    private ProductProperty createProperty(Long id, String providerCode, String providerName, String baseRate, String maxRate) {
         ProductProperty property = new ProductProperty();
         Provider provider = new Provider();
+        ReflectionTestUtils.setField(provider, "code", providerCode);
         ReflectionTestUtils.setField(provider, "name", providerName);
         ReflectionTestUtils.setField(property, "id", id);
         ReflectionTestUtils.setField(property, "provider", provider);
         ReflectionTestUtils.setField(property, "keywords", new ArrayList<>());
+        ReflectionTestUtils.setField(property, "preferentialRates", new ArrayList<>());
         if (baseRate != null) {
             ReflectionTestUtils.setField(property, "baseRate", new BigDecimal(baseRate));
         }
@@ -162,14 +281,64 @@ class RateCalculatorServiceTest {
         return property;
     }
 
+    private ProductPreferentialRate preferentialRate(KeywordValueEnum keyword, String rate) {
+        return preferentialRate(keyword, rate, null, null);
+    }
+
+    private ProductPreferentialRate preferentialRate(KeywordValueEnum keyword, String rate, Integer minAge, Integer maxAge) {
+        ProductPreferentialRate preferentialRate = new ProductPreferentialRate();
+        ReflectionTestUtils.setField(preferentialRate, "keywordCode", keyword);
+        ReflectionTestUtils.setField(preferentialRate, "rate", new BigDecimal(rate));
+        ReflectionTestUtils.setField(preferentialRate, "minAge", minAge);
+        ReflectionTestUtils.setField(preferentialRate, "maxAge", maxAge);
+        return preferentialRate;
+    }
+
+    private void addPreferentialRates(ProductProperty property, ProductPreferentialRate... preferentialRates) {
+        List<ProductPreferentialRate> rates = new ArrayList<>(List.of(preferentialRates));
+        rates.forEach(rate -> ReflectionTestUtils.setField(rate, "productProperty", property));
+        ReflectionTestUtils.setField(property, "preferentialRates", rates);
+    }
+
     private SearchRequestDto createRequest() {
         return createRequest(null);
     }
 
     private SearchRequestDto createRequest(Long monthlySavingsGoal) {
+        return createRequest(null, monthlySavingsGoal, List.of(), List.of());
+    }
+
+    private SearchRequestDto createRequest(
+            LocalDate birthdate,
+            Long monthlySavingsGoal,
+            List<String> neverUsedBanks,
+            List<String> maturedSavingBanks
+    ) {
         return new SearchRequestDto(
                 List.of(),
-                new DetailedOptionsDto(null, null, null, null, null, null, null, null, monthlySavingsGoal, null, List.of())
+                new DetailedOptionsDto(
+                        birthdate,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        null,
+                        monthlySavingsGoal,
+                        null,
+                        neverUsedBanks,
+                        maturedSavingBanks,
+                        List.of()
+                )
         );
+    }
+
+    private ResolvedKeywords emptyKeywords() {
+        return keywords(List.of());
+    }
+
+    private ResolvedKeywords keywords(List<KeywordValueEnum> bankConditions) {
+        return new ResolvedKeywords(List.of(), List.of(), null, List.of(), bankConditions);
     }
 }

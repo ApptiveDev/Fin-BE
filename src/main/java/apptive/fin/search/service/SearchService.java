@@ -69,7 +69,7 @@ public class SearchService {
 
         List<ProductRateDto> governmentRateRanked = tabBEnabled
                 ? govList.stream()
-                        .map(p -> rateCalculatorService.calculate(p, request))
+                        .map(p -> rateCalculatorService.calculate(p, request, resolvedKeywords))
                         .filter(r -> !r.isSubscription())
                         .filter(ProductRateDto::rateComparable)
                         .sorted(Comparator.comparingDouble(ProductRateDto::achievableRate).reversed())
@@ -78,14 +78,14 @@ public class SearchService {
 
         List<ProductRateDto> bankRateRanked = tabBEnabled
                 ? bankList.stream()
-                        .map(p -> rateCalculatorService.calculate(p, request))
+                        .map(p -> rateCalculatorService.calculate(p, request, resolvedKeywords))
                         .sorted(Comparator.comparingDouble(ProductRateDto::achievableRate).reversed())
                         .toList()
                 : List.of();
 
         List<ProductRateDto> subscriptions = tabBEnabled
                 ? govList.stream()
-                        .map(p -> rateCalculatorService.calculate(p, request))
+                        .map(p -> rateCalculatorService.calculate(p, request, resolvedKeywords))
                         .filter(ProductRateDto::isSubscription)
                         .toList()
                 : List.of();

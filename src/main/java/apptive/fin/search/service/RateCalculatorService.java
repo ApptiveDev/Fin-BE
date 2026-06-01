@@ -1,16 +1,24 @@
 package apptive.fin.search.service;
 
 import apptive.fin.search.ContributionType;
+import apptive.fin.search.KeywordValueEnum;
 import apptive.fin.search.ProductType;
 import apptive.fin.search.dto.ProductRateDto;
+import apptive.fin.search.dto.ResolvedKeywords;
 import apptive.fin.search.dto.SearchRequestDto;
 import apptive.fin.search.entity.Product;
+import apptive.fin.search.entity.ProductPreferentialRate;
 import apptive.fin.search.entity.ProductProperty;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.Period;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Comparator;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class RateCalculatorService {
@@ -18,6 +26,11 @@ public class RateCalculatorService {
     private static final String ONTONG_SOURCE = "ONTONG";
 
     public ProductRateDto calculate(Product product, SearchRequestDto request) {
+        return calculate(product, request, emptyKeywords());
+    }
+
+    public ProductRateDto calculate(Product product, SearchRequestDto request, ResolvedKeywords keywords) {
+        ResolvedKeywords resolvedKeywords = keywords != null ? keywords : emptyKeywords();
         if (product.getType() == ProductType.SUBSCRIPTION) {
             return subscriptionDto(product);
         }
@@ -26,7 +39,7 @@ public class RateCalculatorService {
             return calculateGovernmentProduct(product, request);
         }
 
-        return calculateBankProduct(product);
+        return calculateBankProduct(product, request, resolvedKeywords);
     }
 
     private ProductRateDto subscriptionDto(Product product) {
@@ -65,14 +78,14 @@ public class RateCalculatorService {
                 .build();
     }
 
-    private ProductRateDto calculateBankProduct(Product product) {
+    private ProductRateDto calculateBankProduct(Product product, SearchRequestDto request, ResolvedKeywords keywords) {
         ProductProperty bestProperty = product.getProperties().stream()
-                .max(Comparator.comparingDouble(this::effectiveRate))
+                .max(Comparator.comparingDouble(property -> achievableBankRate(property, request, keywords)))
                 .orElse(null);
 
         return baseDto(product, bestProperty)
                 .baseRate(baseRate(bestProperty))
-                .achievableRate(effectiveRate(bestProperty))
+                .achievableRate(achievableBankRate(bestProperty, request, keywords))
                 .rateComparable(true)
                 .isSubscription(false)
                 .build();
@@ -153,17 +166,97 @@ public class RateCalculatorService {
                 : 0.0;
     }
 
-    private double effectiveRate(ProductProperty property) {
+    private double achievableBankRate(ProductProperty property, SearchRequestDto request, ResolvedKeywords keywords) {
         if (property == null) {
             return 0.0;
         }
-        if (property.getMaxRate() != null) {
-            return property.getMaxRate().doubleValue();
+
+        double calculatedRate = baseRate(property) + preferentialRateSum(property, request, keywords);
+        if (property.getMaxRate() == null) {
+            return calculatedRate;
         }
-        if (property.getBaseRate() != null) {
-            return property.getBaseRate().doubleValue();
+
+        return Math.min(calculatedRate, property.getMaxRate().doubleValue());
+    }
+
+    private double preferentialRateSum(ProductProperty property, SearchRequestDto request, ResolvedKeywords keywords) {
+        Set<KeywordValueEnum> applicableConditions = applicableBankConditions(property, request, keywords);
+        return property.getPreferentialRates().stream()
+                .filter(rate -> applicableConditions.contains(rate.getKeywordCode()))
+                .filter(rate -> isAgeConditionSatisfied(rate, request))
+                .map(ProductPreferentialRate::getRate)
+                .filter(rate -> rate != null)
+                .mapToDouble(BigDecimal::doubleValue)
+                .sum();
+    }
+
+    private Set<KeywordValueEnum> applicableBankConditions(
+            ProductProperty property,
+            SearchRequestDto request,
+            ResolvedKeywords keywords
+    ) {
+        Set<KeywordValueEnum> conditions = new HashSet<>(keywords.bankConditions());
+        conditions.add(KeywordValueEnum.BANK_ONLINE_JOIN);
+
+        if (isProviderSelected(property, neverUsedBanks(request))) {
+            conditions.add(KeywordValueEnum.BANK_FIRST_TRANSACTION);
         }
-        return 0.0;
+
+        if (isProviderSelected(property, maturedSavingBanks(request))) {
+            conditions.add(KeywordValueEnum.BANK_REDEPOSIT);
+        }
+
+        if (age(request) != null) {
+            conditions.add(KeywordValueEnum.BANK_AGE);
+        }
+
+        return conditions;
+    }
+
+    private boolean isAgeConditionSatisfied(ProductPreferentialRate rate, SearchRequestDto request) {
+        if (rate.getKeywordCode() != KeywordValueEnum.BANK_AGE) {
+            return true;
+        }
+
+        Integer age = age(request);
+        if (age == null) {
+            return false;
+        }
+
+        boolean minSatisfied = rate.getMinAge() == null || rate.getMinAge() <= age;
+        boolean maxSatisfied = rate.getMaxAge() == null || rate.getMaxAge() >= age;
+        return minSatisfied && maxSatisfied;
+    }
+
+    private boolean isProviderSelected(ProductProperty property, List<String> selectedProviders) {
+        if (property == null || property.getProvider() == null || selectedProviders == null) {
+            return false;
+        }
+
+        String providerCode = property.getProvider().getCode();
+        String providerName = property.getProvider().getName();
+        return selectedProviders.stream()
+                .anyMatch(selected -> selected != null && (selected.equals(providerCode) || selected.equals(providerName)));
+    }
+
+    private List<String> neverUsedBanks(SearchRequestDto request) {
+        return request.detailedOptions() != null
+                ? request.detailedOptions().neverUsedBanks()
+                : null;
+    }
+
+    private List<String> maturedSavingBanks(SearchRequestDto request) {
+        return request.detailedOptions() != null
+                ? request.detailedOptions().maturedSavingBanks()
+                : null;
+    }
+
+    private Integer age(SearchRequestDto request) {
+        if (request.detailedOptions() == null || request.detailedOptions().birthdate() == null) {
+            return null;
+        }
+
+        return Period.between(request.detailedOptions().birthdate(), LocalDate.now()).getYears();
     }
 
     private String providerName(ProductProperty property) {
@@ -173,5 +266,9 @@ public class RateCalculatorService {
     }
 
     private record GovYieldScore(ProductProperty property, Double yield) {
+    }
+
+    private ResolvedKeywords emptyKeywords() {
+        return new ResolvedKeywords(List.of(), List.of(), null, List.of(), List.of());
     }
 }

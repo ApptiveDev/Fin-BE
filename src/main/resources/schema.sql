@@ -149,3 +149,13 @@ CREATE TABLE product_property_keyword (
     product_property_id BIGINT NOT NULL REFERENCES product_properties(id) ON DELETE CASCADE,
     keyword_code VARCHAR(50) NOT NULL
 );
+
+CREATE TABLE product_preferential_rates (
+    id BIGSERIAL PRIMARY KEY,
+    product_property_id BIGINT NOT NULL REFERENCES product_properties(id) ON DELETE CASCADE,
+    keyword_code VARCHAR(50) NOT NULL,
+    rate DECIMAL(5,2) NOT NULL,
+    description TEXT,
+    min_age INT,
+    max_age INT
+);

@@ -53,6 +53,8 @@ public enum KeywordValueEnum {
     BANK_AUTO_TRANSFER("BANK_AUTO_TRANSFER"), // 자동이체 우대
     BANK_MARKETING("BANK_MARKETING"), // 마케팅 동의 우대
     BANK_REDEPOSIT("BANK_REDEPOSIT"), // 재예치
+    BANK_ONLINE_JOIN("BANK_ONLINE_JOIN"),
+    BANK_AGE("BANK_AGE"),
     ;
 
     private final String code;
