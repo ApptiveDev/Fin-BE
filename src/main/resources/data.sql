@@ -201,7 +201,7 @@ INSERT INTO category_option (category_id, value, code) VALUES
 (2, '아르바이트/프리랜서', 'STATUS_PART_TIME'),
 (2, '중소기업 재직', 'STATUS_SME_WORKER'),
 (2, '군복무', 'STATUS_MILITARY'),
-(3, '5년 이상', 'TERM_OVER_3_YEARS'),
+(3, '3년 이상', 'TERM_OVER_3_YEARS'),
 (3, '2~3년', 'TERM_2_TO_3_YEARS'),
 (3, '1년 내외', 'TERM_AROUND_1_YEAR'),
 (4, '최고이율 중시', 'BENEFIT_MAX_INTEREST'),
