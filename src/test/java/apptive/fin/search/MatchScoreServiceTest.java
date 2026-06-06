@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.offset;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -119,7 +120,7 @@ class MatchScoreServiceTest {
     }
 
     @Test
-    void identity_not_selected_reallocates_identity_weight_to_active_bank_scores() {
+    void 신분을_선택하지_않으면_신분_배점을_은행상품_유효항목에_재배분한다() {
         MatchScoreService matchScoreService = new MatchScoreService(resolveKeywordService);
         Product product = createProduct("FSS", createProperty(
                 10L,
@@ -147,7 +148,7 @@ class MatchScoreServiceTest {
     }
 
     @Test
-    void bank_unavailable_benefits_are_excluded_and_reallocated() {
+    void 은행상품에_해당하지_않는_혜택은_제외하고_배점을_재배분한다() {
         MatchScoreService matchScoreService = new MatchScoreService(resolveKeywordService);
         Product product = createProduct("FSS", createProperty(
                 10L,
@@ -171,11 +172,133 @@ class MatchScoreServiceTest {
         );
 
         assertThat(result.benefitScore()).isZero();
+        assertThat(result.bankCondScore()).isCloseTo(50.0, offset(0.001));
+        assertThat(result.periodScore()).isCloseTo(25.0, offset(0.001));
+        assertThat(result.depositScore()).isCloseTo(18.75, offset(0.001));
+        assertThat(result.identityScore()).isCloseTo(6.25, offset(0.001));
         assertThat(result.totalScore()).isCloseTo(100.0, org.assertj.core.data.Offset.offset(0.001));
     }
 
     @Test
-    void gov_subscription_excludes_bank_condition_and_reallocates_weight() {
+    void 신분_기간_혜택을_선택하지_않으면_은행조건과_납입에_비례_재배분한다() {
+        MatchScoreService matchScoreService = new MatchScoreService(resolveKeywordService);
+        Product product = createProduct("FSS", createProperty(
+                10L,
+                "test-bank",
+                500_000L,
+                12,
+                KeywordValueEnum.BANK_CARD_USAGE
+        ));
+
+        ProductMatchDto result = matchScoreService.score(
+                product,
+                createRequest(300_000L),
+                new ResolvedKeywords(
+                        List.of(),
+                        List.of(),
+                        null,
+                        List.of(),
+                        List.of(KeywordValueEnum.BANK_CARD_USAGE)
+                )
+        );
+
+        assertThat(result.benefitScore()).isZero();
+        assertThat(result.periodScore()).isZero();
+        assertThat(result.identityScore()).isZero();
+        assertThat(result.bankCondScore()).isCloseTo(72.7273, offset(0.001));
+        assertThat(result.depositScore()).isCloseTo(27.2727, offset(0.001));
+        assertThat(result.totalScore()).isCloseTo(100.0, offset(0.001));
+    }
+
+    @Test
+    void 은행상품은_기간이_인접구간이면_기간점수를_절반만_부여한다() {
+        MatchScoreService matchScoreService = new MatchScoreService(resolveKeywordService);
+        Product product = createProduct("FSS", createProperty(
+                10L,
+                "test-bank",
+                500_000L,
+                24,
+                KeywordValueEnum.BENEFIT_EASY_CONDITION,
+                KeywordValueEnum.STATUS_MILITARY,
+                KeywordValueEnum.BANK_CARD_USAGE
+        ));
+
+        ProductMatchDto result = matchScoreService.score(
+                product,
+                createRequest(300_000L),
+                new ResolvedKeywords(
+                        List.of(),
+                        List.of(KeywordValueEnum.STATUS_MILITARY),
+                        KeywordValueEnum.TERM_AROUND_1_YEAR,
+                        List.of(KeywordValueEnum.BENEFIT_EASY_CONDITION),
+                        List.of(KeywordValueEnum.BANK_CARD_USAGE)
+                )
+        );
+
+        assertThat(result.periodScore()).isCloseTo(10.0, offset(0.001));
+        assertThat(result.totalScore()).isCloseTo(90.0, offset(0.001));
+    }
+
+    @Test
+    void 은행상품은_희망납입액이_한도를_초과하면_비율만큼_납입점수를_감점한다() {
+        MatchScoreService matchScoreService = new MatchScoreService(resolveKeywordService);
+        Product product = createProduct("FSS", createProperty(
+                10L,
+                "test-bank",
+                150_000L,
+                12,
+                KeywordValueEnum.BENEFIT_EASY_CONDITION,
+                KeywordValueEnum.STATUS_MILITARY,
+                KeywordValueEnum.BANK_CARD_USAGE
+        ));
+
+        ProductMatchDto result = matchScoreService.score(
+                product,
+                createRequest(300_000L),
+                new ResolvedKeywords(
+                        List.of(),
+                        List.of(KeywordValueEnum.STATUS_MILITARY),
+                        KeywordValueEnum.TERM_AROUND_1_YEAR,
+                        List.of(KeywordValueEnum.BENEFIT_EASY_CONDITION),
+                        List.of(KeywordValueEnum.BANK_CARD_USAGE)
+                )
+        );
+
+        assertThat(result.depositScore()).isCloseTo(7.5, offset(0.001));
+        assertThat(result.totalScore()).isCloseTo(92.5, offset(0.001));
+    }
+
+    @Test
+    void 은행상품은_은행조건_여러개중_일치한_비율만큼_점수를_부여한다() {
+        MatchScoreService matchScoreService = new MatchScoreService(resolveKeywordService);
+        Product product = createProduct("FSS", createProperty(
+                10L,
+                "test-bank",
+                500_000L,
+                12,
+                KeywordValueEnum.BENEFIT_EASY_CONDITION,
+                KeywordValueEnum.STATUS_MILITARY,
+                KeywordValueEnum.BANK_SALARY_TRANSFER
+        ));
+
+        ProductMatchDto result = matchScoreService.score(
+                product,
+                createRequest(300_000L),
+                new ResolvedKeywords(
+                        List.of(),
+                        List.of(KeywordValueEnum.STATUS_MILITARY),
+                        KeywordValueEnum.TERM_AROUND_1_YEAR,
+                        List.of(KeywordValueEnum.BENEFIT_EASY_CONDITION),
+                        List.of(KeywordValueEnum.BANK_SALARY_TRANSFER, KeywordValueEnum.BANK_CARD_USAGE)
+                )
+        );
+
+        assertThat(result.bankCondScore()).isCloseTo(20.0, offset(0.001));
+        assertThat(result.totalScore()).isCloseTo(80.0, offset(0.001));
+    }
+
+    @Test
+    void 정부상품은_은행조건을_제외하고_배점을_재배분한다() {
         MatchScoreService matchScoreService = new MatchScoreService(resolveKeywordService);
         Product product = createProduct("ONTONG", createProperty(
                 10L,
@@ -205,7 +328,101 @@ class MatchScoreServiceTest {
     }
 
     @Test
-    void gov_product_excludes_bank_condition_even_when_provider_is_bank() {
+    void 정부상품은_MVP_배점을_사용하고_은행조건을_무시한다() {
+        MatchScoreService matchScoreService = new MatchScoreService(resolveKeywordService);
+        Product product = createProduct("ONTONG", createProperty(
+                10L,
+                "policy-provider",
+                500_000L,
+                12,
+                KeywordValueEnum.BENEFIT_GOV_SUBSIDY,
+                KeywordValueEnum.STATUS_MILITARY,
+                KeywordValueEnum.BANK_CARD_USAGE
+        ));
+
+        ProductMatchDto result = matchScoreService.score(
+                product,
+                createRequest(300_000L),
+                new ResolvedKeywords(
+                        List.of(),
+                        List.of(KeywordValueEnum.STATUS_MILITARY),
+                        KeywordValueEnum.TERM_AROUND_1_YEAR,
+                        List.of(KeywordValueEnum.BENEFIT_GOV_SUBSIDY),
+                        List.of(KeywordValueEnum.BANK_CARD_USAGE)
+                )
+        );
+
+        assertThat(result.benefitScore()).isCloseTo(40.0, offset(0.001));
+        assertThat(result.periodScore()).isCloseTo(22.0, offset(0.001));
+        assertThat(result.identityScore()).isCloseTo(20.0, offset(0.001));
+        assertThat(result.depositScore()).isCloseTo(18.0, offset(0.001));
+        assertThat(result.bankCondScore()).isZero();
+        assertThat(result.totalScore()).isCloseTo(100.0, offset(0.001));
+    }
+
+    @Test
+    void 정부상품은_일반_신분_키워드가_일치하면_신분점수를_절반만_부여한다() {
+        MatchScoreService matchScoreService = new MatchScoreService(resolveKeywordService);
+        Product product = createProduct("ONTONG", createProperty(
+                10L,
+                "policy-provider",
+                500_000L,
+                12,
+                KeywordValueEnum.BENEFIT_GOV_SUBSIDY,
+                KeywordValueEnum.STATUS_PART_TIME
+        ));
+
+        ProductMatchDto result = matchScoreService.score(
+                product,
+                createRequest(300_000L),
+                new ResolvedKeywords(
+                        List.of(),
+                        List.of(KeywordValueEnum.STATUS_PART_TIME),
+                        KeywordValueEnum.TERM_AROUND_1_YEAR,
+                        List.of(KeywordValueEnum.BENEFIT_GOV_SUBSIDY),
+                        List.of()
+                )
+        );
+
+        assertThat(result.identityScore()).isCloseTo(10.0, offset(0.001));
+        assertThat(result.totalScore()).isCloseTo(90.0, offset(0.001));
+    }
+
+    @Test
+    void 은행상품은_모든_선택항목이_일치하면_MVP_배점을_그대로_사용한다() {
+        MatchScoreService matchScoreService = new MatchScoreService(resolveKeywordService);
+        Product product = createProduct("FSS", createProperty(
+                10L,
+                "test-bank",
+                500_000L,
+                12,
+                KeywordValueEnum.BENEFIT_EASY_CONDITION,
+                KeywordValueEnum.STATUS_MILITARY,
+                KeywordValueEnum.BANK_CARD_USAGE
+        ));
+
+        ProductMatchDto result = matchScoreService.score(
+                product,
+                createRequest(300_000L),
+                new ResolvedKeywords(
+                        List.of(),
+                        List.of(KeywordValueEnum.STATUS_MILITARY),
+                        KeywordValueEnum.TERM_AROUND_1_YEAR,
+                        List.of(KeywordValueEnum.BENEFIT_EASY_CONDITION),
+                        List.of(KeywordValueEnum.BANK_CARD_USAGE)
+                )
+        );
+
+        assertThat(result.bankCondScore()).isCloseTo(40.0, offset(0.001));
+        assertThat(result.benefitScore()).isCloseTo(20.0, offset(0.001));
+        assertThat(result.periodScore()).isCloseTo(20.0, offset(0.001));
+        assertThat(result.depositScore()).isCloseTo(15.0, offset(0.001));
+        assertThat(result.identityScore()).isCloseTo(5.0, offset(0.001));
+        assertThat(result.totalScore()).isCloseTo(100.0, offset(0.001));
+    }
+
+    @Test
+    void 정부상품은_은행_제공기관이어도_은행조건_점수를_반영하지_않는다() {
         MatchScoreService matchScoreService = new MatchScoreService(resolveKeywordService);
         ProductProperty property = createProperty(
                 10L,
@@ -237,7 +454,7 @@ class MatchScoreServiceTest {
     }
 
     @Test
-    void bank_first_transaction_history_is_reflected_in_tab_a_when_enabled() {
+    void 거래이력_반영이_켜져_있으면_탭A에_첫거래_조건을_반영한다() {
         MatchScoreService matchScoreService = new MatchScoreService(resolveKeywordService);
         ProductProperty property = createProperty(
                 10L,
@@ -260,7 +477,30 @@ class MatchScoreServiceTest {
     }
 
     @Test
-    void bank_first_transaction_history_is_not_reflected_in_tab_a_when_disabled() {
+    void 거래이력_반영이_켜져_있으면_탭A에_재예치_조건을_반영한다() {
+        MatchScoreService matchScoreService = new MatchScoreService(resolveKeywordService);
+        ProductProperty property = createProperty(
+                10L,
+                "KB",
+                500_000L,
+                12,
+                KeywordValueEnum.BANK_REDEPOSIT
+        );
+        setProviderCode(property, "KB");
+        Product product = createProduct("FSS", property);
+
+        ProductMatchDto result = matchScoreService.score(
+                product,
+                createRequest(300_000L, List.of(), List.of("KB")),
+                new ResolvedKeywords(List.of(), List.of(), null, List.of(), List.of()),
+                true
+        );
+
+        assertThat(result.bankCondScore()).isGreaterThan(0.0);
+    }
+
+    @Test
+    void 거래이력_반영이_꺼져_있으면_탭A에_첫거래_조건을_반영하지_않는다() {
         MatchScoreService matchScoreService = new MatchScoreService(resolveKeywordService);
         ProductProperty property = createProperty(
                 10L,
@@ -283,7 +523,7 @@ class MatchScoreServiceTest {
     }
 
     @Test
-    void bank_first_transaction_history_matches_only_selected_provider() {
+    void 첫거래_거래이력은_선택한_은행에만_매칭된다() {
         MatchScoreService matchScoreService = new MatchScoreService(resolveKeywordService);
         ProductProperty property = createProperty(
                 10L,

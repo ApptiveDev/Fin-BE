@@ -25,7 +25,7 @@ class RateCalculatorServiceTest {
     private final RateCalculatorService rateCalculatorService = new RateCalculatorService();
 
     @Test
-    void bankProductUsesBaseRateWhenNoPreferentialRateApplies() {
+    void 은행상품은_적용되는_우대금리가_없으면_기본금리를_사용한다() {
         Product product = createProduct("BANK001", "basic bank product", "FSS");
         ProductProperty property = createProperty(10L, "KB", "KB국민은행", "2.75", null);
         ReflectionTestUtils.setField(product, "properties", new ArrayList<>(List.of(property)));
@@ -41,7 +41,7 @@ class RateCalculatorServiceTest {
     }
 
     @Test
-    void bankProductAddsOnlySelectedStep1PreferentialRates() {
+    void 은행상품은_선택한_1단계_우대금리만_더한다() {
         Product product = createProduct("BANK002", "preferential bank product", "FSS");
         ProductProperty property = createProperty(10L, "KB", "KB국민은행", "3.50", "5.00");
         addPreferentialRates(property,
@@ -60,7 +60,7 @@ class RateCalculatorServiceTest {
     }
 
     @Test
-    void bankProductAddsOnlineJoinAutomatically() {
+    void 은행상품은_비대면가입_우대금리를_자동으로_더한다() {
         Product product = createProduct("BANK003", "online bank product", "FSS");
         ProductProperty property = createProperty(10L, "KB", "KB국민은행", "3.50", "5.00");
         addPreferentialRates(property, preferentialRate(KeywordValueEnum.BANK_ONLINE_JOIN, "0.10"));
@@ -72,7 +72,7 @@ class RateCalculatorServiceTest {
     }
 
     @Test
-    void bankProductAddsFirstTransactionOnlyForNeverUsedProvider() {
+    void 은행상품은_미거래_은행일_때만_첫거래_우대금리를_더한다() {
         Product product = createProduct("BANK004", "first transaction product", "FSS");
         ProductProperty property = createProperty(10L, "KB", "KB국민은행", "3.50", "5.00");
         addPreferentialRates(property, preferentialRate(KeywordValueEnum.BANK_FIRST_TRANSACTION, "0.50"));
@@ -88,7 +88,7 @@ class RateCalculatorServiceTest {
     }
 
     @Test
-    void bankProductDoesNotAddFirstTransactionForOtherProvider() {
+    void 은행상품은_다른_은행의_첫거래_이력을_우대금리에_더하지_않는다() {
         Product product = createProduct("BANK005", "other first transaction product", "FSS");
         ProductProperty property = createProperty(10L, "KB", "KB국민은행", "3.50", "5.00");
         addPreferentialRates(property, preferentialRate(KeywordValueEnum.BANK_FIRST_TRANSACTION, "0.50"));
@@ -104,7 +104,7 @@ class RateCalculatorServiceTest {
     }
 
     @Test
-    void bankProductAddsRedepositOnlyForMaturedSavingProvider() {
+    void 은행상품은_만기이력_은행일_때만_재예치_우대금리를_더한다() {
         Product product = createProduct("BANK006", "redeposit product", "FSS");
         ProductProperty property = createProperty(10L, "KB", "KB국민은행", "3.50", "5.00");
         addPreferentialRates(property, preferentialRate(KeywordValueEnum.BANK_REDEPOSIT, "0.40"));
@@ -120,7 +120,7 @@ class RateCalculatorServiceTest {
     }
 
     @Test
-    void bankProductAddsAgePreferentialRateWhenBirthdateMatches() {
+    void 은행상품은_나이조건이_맞으면_연령_우대금리를_더한다() {
         Product product = createProduct("BANK007", "age product", "FSS");
         ProductProperty property = createProperty(10L, "KB", "KB국민은행", "3.50", "5.00");
         addPreferentialRates(property, preferentialRate(KeywordValueEnum.BANK_AGE, "0.20", 19, 34));
@@ -136,7 +136,7 @@ class RateCalculatorServiceTest {
     }
 
     @Test
-    void bankProductCapsAchievableRateAtMaxRate() {
+    void 은행상품은_달성가능금리를_최고금리로_상한처리한다() {
         Product product = createProduct("BANK008", "capped product", "FSS");
         ProductProperty property = createProperty(10L, "KB", "KB국민은행", "3.80", "4.00");
         addPreferentialRates(property,
@@ -154,7 +154,7 @@ class RateCalculatorServiceTest {
     }
 
     @Test
-    void bankProductSelectsPropertyWithHighestAchievableRate() {
+    void 은행상품은_달성가능금리가_가장_높은_옵션을_선택한다() {
         Product product = createProduct("BANK009", "multi option product", "FSS");
         ProductProperty first = createProperty(10L, "KB", "KB국민은행", "3.80", "4.50");
         ProductProperty second = createProperty(11L, "KB", "KB국민은행", "3.50", "5.00");
@@ -173,7 +173,7 @@ class RateCalculatorServiceTest {
     }
 
     @Test
-    void subscriptionProductIsReturnedAsIncomparable() {
+    void 청약상품은_금리비교_불가로_반환한다() {
         Product product = createProduct("GOV001", "subscription product", "ONTONG");
         ProductProperty property = createProperty(10L, "GOV", "정책기관", null, null);
         ReflectionTestUtils.setField(product, "type", ProductType.SUBSCRIPTION);
@@ -186,7 +186,7 @@ class RateCalculatorServiceTest {
     }
 
     @Test
-    void governmentRatioProductUsesContributionYield() {
+    void 정부_정률상품은_기여금_환산수익률을_사용한다() {
         Product product = createProduct("GOV002", "government ratio product", "ONTONG");
         ProductProperty property = createProperty(10L, "GOV", "정책기관", "4.00", "4.50");
         ReflectionTestUtils.setField(property, "govContributionType", ContributionType.RATIO);
@@ -203,7 +203,7 @@ class RateCalculatorServiceTest {
     }
 
     @Test
-    void governmentRatioProductSupportsPercentMatchingRates() {
+    void 정부_정률상품은_퍼센트형_매칭비율을_지원한다() {
         Product product = createProduct("GOV_PERCENT", "government percent matching product", "ONTONG");
         ProductProperty general = createProperty(10L, "GOV", "정책기관", null, null);
         ProductProperty preferential = createProperty(11L, "GOV", "정책기관", null, null);
@@ -223,7 +223,7 @@ class RateCalculatorServiceTest {
     }
 
     @Test
-    void governmentRatioProductSupportsTenMonthPeriod() {
+    void 정부_정률상품은_10개월_기여기간을_지원한다() {
         Product product = createProduct("GOV_TEN_MONTH", "government ten month product", "ONTONG");
         ProductProperty property = createProperty(10L, "GOV", "정책기관", null, null);
         ReflectionTestUtils.setField(property, "govContributionType", ContributionType.RATIO);
@@ -238,7 +238,7 @@ class RateCalculatorServiceTest {
     }
 
     @Test
-    void governmentRatioProductSupportsOnePointFiveMatchingRatio() {
+    void 정부_정률상품은_1점5배_매칭비율을_지원한다() {
         Product product = createProduct("GOV_RATIO_1_5", "government 1.5 ratio product", "ONTONG");
         ProductProperty property = createProperty(10L, "GOV", "정책기관", null, null);
         ReflectionTestUtils.setField(property, "govContributionType", ContributionType.RATIO);
@@ -253,7 +253,7 @@ class RateCalculatorServiceTest {
     }
 
     @Test
-    void governmentFixedAmountProductUsesMonthlySavingsGoal() {
+    void 정부_정액상품은_희망월납입액으로_수익률을_계산한다() {
         Product product = createProduct("GOV003", "government fixed product", "ONTONG");
         ProductProperty property = createProperty(10L, "GOV", "정책기관", null, null);
         ReflectionTestUtils.setField(property, "govContributionType", ContributionType.FIXED_AMOUNT);
@@ -269,7 +269,7 @@ class RateCalculatorServiceTest {
     }
 
     @Test
-    void governmentFixedAmountProductUsesMaxMonthlyLimitAsEffectiveDeposit() {
+    void 정부_정액상품은_최대월납입한도를_실효납입액으로_사용한다() {
         Product product = createProduct("GOV_FIXED_LIMIT", "government fixed limited product", "ONTONG");
         ProductProperty property = createProperty(10L, "GOV", "정책기관", null, null);
         ReflectionTestUtils.setField(property, "govContributionType", ContributionType.FIXED_AMOUNT);
@@ -285,7 +285,7 @@ class RateCalculatorServiceTest {
     }
 
     @Test
-    void governmentFixedAmountProductWithoutMonthlySavingsGoalIsIncomparable() {
+    void 정부_정액상품은_희망월납입액이_없으면_금리비교_불가로_반환한다() {
         Product product = createProduct("GOV004", "government incomparable fixed product", "ONTONG");
         ProductProperty property = createProperty(10L, "GOV", "정책기관", null, null);
         ReflectionTestUtils.setField(property, "govContributionType", ContributionType.FIXED_AMOUNT);
@@ -301,7 +301,7 @@ class RateCalculatorServiceTest {
     }
 
     @Test
-    void governmentProductExplicitlyExcludedFromRateComparisonIsIncomparable() {
+    void 금리비교_제외_정부상품은_금리비교_불가로_반환한다() {
         Product product = createProduct("GOV005", "excluded government product", "ONTONG");
         ProductProperty property = createProperty(10L, "GOV", "정책기관", null, null);
         ReflectionTestUtils.setField(property, "excludeFromRateComparison", true);

@@ -168,7 +168,7 @@ class SearchServiceIntegrationTest {
     }
 
     @Test
-    void unauthenticated_search_disables_tab_b() {
+    void 비로그인_검색은_탭B를_비활성화한다() {
         ProductSearchResultDto result = searchService.search(createRequest(50, List.of()));
 
         assertThat(result.tabs().tabAEnabled()).isTrue();
