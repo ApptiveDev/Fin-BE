@@ -73,6 +73,43 @@ public class MatchScoreService {
                 .build();
     }
 
+    public ProductMatchDto score(
+            Product product,
+            ProductProperty property,
+            SearchRequestDto request,
+            ResolvedKeywords keywords,
+            boolean includeTransactionHistory
+    ) {
+        var detail = request.detailedOptions();
+        boolean isGov = product.getSource().getCode().equals("ONTONG");
+
+        ProductPropertyScore score = scoreProperty(
+                property,
+                keywords.coreBenefits(),
+                keywords.identities(),
+                keywords.bankConditions(),
+                keywords.savingPeriod(),
+                detail != null ? detail.monthlySavingsGoal() : null,
+                isGov,
+                request,
+                includeTransactionHistory
+        );
+
+        return ProductMatchDto.builder()
+                .productId(product.getId())
+                .productPropertyId(property.getId())
+                .productName(product.getProductName())
+                .providerName(providerName(property))
+                .source(product.getSource().getCode())
+                .totalScore(score.totalScore())
+                .benefitScore(score.benefitScore())
+                .periodScore(score.periodScore())
+                .identityScore(score.identityScore())
+                .depositScore(score.depositScore())
+                .bankCondScore(score.bankCondScore())
+                .build();
+    }
+
     private ProductPropertyScore scoreProperty(
             ProductProperty property,
             List<KeywordValueEnum> coreBenefits,

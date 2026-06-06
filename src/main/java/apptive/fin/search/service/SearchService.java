@@ -4,6 +4,7 @@ import apptive.fin.auth.security.AuthUserDetails;
 import apptive.fin.global.error.BusinessException;
 import apptive.fin.search.KeywordValueEnum;
 import apptive.fin.search.SearchErrorCode;
+import apptive.fin.search.dto.EligibleProductOption;
 import apptive.fin.search.dto.ProductMatchDto;
 import apptive.fin.search.dto.ProductRateDto;
 import apptive.fin.search.dto.ProductSearchResultDto;
@@ -16,8 +17,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -37,30 +41,54 @@ public class SearchService {
         ResolvedKeywords resolvedKeywords = resolveKeywordService.resolveKeywords(request.options());
         validateKeywordSelected(resolvedKeywords);
 
-        List<Product> eligible = eligibilityFilterService.filterEligible(request);
+        List<EligibleProductOption> eligible = eligibilityFilterService.filterEligibleOptions(request);
         if (!resolvedKeywords.regions().isEmpty()) {
             eligible = eligible.stream()
-                    .filter(product -> isBankProduct(product) || hasMatchingRegion(product, resolvedKeywords.regions()))
+                    .filter(option -> isBankProduct(option.product()) || hasMatchingRegion(option, resolvedKeywords.regions()))
                     .toList();
         }
 
-        List<Product> govList = eligible.stream()
-                .filter(p -> p.getSource().getCode().equals("ONTONG"))
+        List<EligibleProductOption> govList = eligible.stream()
+                .filter(option -> option.product().getSource().getCode().equals("ONTONG"))
                 .toList();
-        List<Product> bankList = eligible.stream()
-                .filter(p -> p.getSource().getCode().equals("FSS"))
+        List<EligibleProductOption> bankList = eligible.stream()
+                .filter(option -> option.product().getSource().getCode().equals("FSS"))
                 .toList();
 
         boolean tabBEnabled = isTabBEnabled(request, userDetails);
 
         List<ProductMatchDto> govRanked = govList.stream()
-                .map(p -> matchScoreService.score(p, request, resolvedKeywords))
-                .sorted(Comparator.comparingDouble(ProductMatchDto::totalScore).reversed())
-                .toList();
+                .map(option -> matchScoreService.score(
+                        option.product(),
+                        option.property(),
+                        request,
+                        resolvedKeywords,
+                        false
+                ))
+                .collect(Collectors.collectingAndThen(
+                        Collectors.toMap(
+                                ProductMatchDto::productId,
+                                Function.identity(),
+                                (left, right) -> left.totalScore() >= right.totalScore() ? left : right
+                        ),
+                        map -> sortedByTotalScore(map.values())
+                ));
         List<ProductMatchDto> bankRanked = bankList.stream()
-                .map(p -> matchScoreService.score(p, request, resolvedKeywords, tabBEnabled))
-                .sorted(Comparator.comparingDouble(ProductMatchDto::totalScore).reversed())
-                .toList();
+                .map(option -> matchScoreService.score(
+                        option.product(),
+                        option.property(),
+                        request,
+                        resolvedKeywords,
+                        tabBEnabled
+                ))
+                .collect(Collectors.collectingAndThen(
+                        Collectors.toMap(
+                                ProductMatchDto::productId,
+                                Function.identity(),
+                                (left, right) -> left.totalScore() >= right.totalScore() ? left : right
+                        ),
+                        map -> sortedByTotalScore(map.values())
+                ));
 
         TabAvailabilityDto tabs = TabAvailabilityDto.builder()
                 .tabAEnabled(true)
@@ -70,25 +98,59 @@ public class SearchService {
 
         List<ProductRateDto> governmentRateRanked = tabBEnabled
                 ? govList.stream()
-                        .map(p -> rateCalculatorService.calculate(p, request, resolvedKeywords))
+                        .map(option -> rateCalculatorService.calculate(
+                                option.product(),
+                                option.property(),
+                                request,
+                                resolvedKeywords
+                        ))
                         .filter(r -> !r.isSubscription())
                         .filter(ProductRateDto::rateComparable)
-                        .sorted(Comparator.comparingDouble(ProductRateDto::achievableRate).reversed())
-                        .toList()
+                        .collect(Collectors.collectingAndThen(
+                                Collectors.toMap(
+                                        ProductRateDto::productId,
+                                        Function.identity(),
+                                        (left, right) -> left.achievableRate() >= right.achievableRate() ? left : right
+                                ),
+                                map -> sortedByAchievableRate(map.values())
+                        ))
                 : List.of();
 
         List<ProductRateDto> bankRateRanked = tabBEnabled
                 ? bankList.stream()
-                        .map(p -> rateCalculatorService.calculate(p, request, resolvedKeywords))
-                        .sorted(Comparator.comparingDouble(ProductRateDto::achievableRate).reversed())
-                        .toList()
+                        .map(option -> rateCalculatorService.calculate(
+                                option.product(),
+                                option.property(),
+                                request,
+                                resolvedKeywords
+                        ))
+                        .collect(Collectors.collectingAndThen(
+                                Collectors.toMap(
+                                        ProductRateDto::productId,
+                                        Function.identity(),
+                                        (left, right) -> left.achievableRate() >= right.achievableRate() ? left : right
+                                ),
+                                map -> sortedByAchievableRate(map.values())
+                        ))
                 : List.of();
 
         List<ProductRateDto> subscriptions = tabBEnabled
                 ? govList.stream()
-                        .map(p -> rateCalculatorService.calculate(p, request, resolvedKeywords))
+                        .map(option -> rateCalculatorService.calculate(
+                                option.product(),
+                                option.property(),
+                                request,
+                                resolvedKeywords
+                        ))
                         .filter(ProductRateDto::isSubscription)
-                        .toList()
+                        .collect(Collectors.collectingAndThen(
+                                Collectors.toMap(
+                                        ProductRateDto::productId,
+                                        Function.identity(),
+                                        (left, right) -> left
+                                ),
+                                map -> map.values().stream().toList()
+                        ))
                 : List.of();
 
         return ProductSearchResultDto.builder()
@@ -123,9 +185,20 @@ public class SearchService {
         }
     }
 
-    private boolean hasMatchingRegion(Product product, List<KeywordValueEnum> selectedRegions) {
-        List<KeywordValueEnum> productRegions = product.getProperties().stream()
-                .flatMap(property -> property.getKeywords().stream())
+    private List<ProductMatchDto> sortedByTotalScore(Collection<ProductMatchDto> products) {
+        return products.stream()
+                .sorted(Comparator.comparingDouble(ProductMatchDto::totalScore).reversed())
+                .toList();
+    }
+
+    private List<ProductRateDto> sortedByAchievableRate(Collection<ProductRateDto> products) {
+        return products.stream()
+                .sorted(Comparator.comparingDouble(ProductRateDto::achievableRate).reversed())
+                .toList();
+    }
+
+    private boolean hasMatchingRegion(EligibleProductOption option, List<KeywordValueEnum> selectedRegions) {
+        List<KeywordValueEnum> productRegions = option.property().getKeywords().stream()
                 .map(ProductKeyword::getKeywordCode)
                 .filter(keyword -> keyword.name().startsWith("REGION_"))
                 .toList();

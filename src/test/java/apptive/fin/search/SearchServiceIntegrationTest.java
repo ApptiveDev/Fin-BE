@@ -13,6 +13,7 @@ import apptive.fin.user.UserRole;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.jdbc.Sql;
 
 import java.time.LocalDate;
@@ -35,6 +36,9 @@ class SearchServiceIntegrationTest {
 
     @Autowired
     private SearchService searchService;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @Test
     void 기본상황이면_정부와_은행_상품을_적합도와_금리순으로_반환한다() {
@@ -143,6 +147,16 @@ class SearchServiceIntegrationTest {
     }
 
     @Test
+    void 부적격_옵션은_같은_상품의_금리계산에서_다시_선택되지_않는다() {
+        insertHighYieldSmeOnlyOption();
+
+        ProductSearchResultDto result = searchService.search(createRequest(50, List.of()), authenticatedUser());
+
+        ProductRateDto youthEmployment = findRate(result.governmentRateRanked(), "청년내일채움공제");
+        assertThat(youthEmployment.achievableRate()).isCloseTo(50.0, offset(0.0001));
+    }
+
+    @Test
     void 키워드를_하나도_선택하지_않으면_예외를_던진다() {
         SearchRequestDto request = new SearchRequestDto(
                 List.of(),
@@ -213,6 +227,13 @@ class SearchServiceIntegrationTest {
                 .orElseThrow();
     }
 
+    private ProductRateDto findRate(List<ProductRateDto> products, String productName) {
+        return products.stream()
+                .filter(product -> product.productName().equals(productName))
+                .findFirst()
+                .orElseThrow();
+    }
+
     private List<String> matchNames(List<ProductMatchDto> products) {
         return products.stream()
                 .map(ProductMatchDto::productName)
@@ -227,5 +248,34 @@ class SearchServiceIntegrationTest {
 
     private AuthUserDetails authenticatedUser() {
         return new AuthUserDetails(1L, UserRole.RECOMMENDATION);
+    }
+
+    private void insertHighYieldSmeOnlyOption() {
+        jdbcTemplate.update("""
+                INSERT INTO product_properties (
+                    product_id, provider_id, base_rate, max_rate, min_monthly_limit, max_monthly_limit,
+                    gov_contribution_type, gov_matching_ratio, gov_monthly_fixed_contribution, gov_contribution_period_months,
+                    min_age, max_age, min_tenure_months, requires_homeless, requires_householder,
+                    is_joinable, intr_rate_type, save_trm
+                )
+                VALUES (
+                    (SELECT id FROM product WHERE product_code = 'SEARCH_YOUTH_EMPLOYMENT'),
+                    (SELECT id FROM provider WHERE code = 'SEARCH_GOV'),
+                    10.0, 10.0, 12, 50,
+                    'RATIO', 3.0000, NULL, 24,
+                    15, 34, 6, false, false,
+                    true, NULL, 24
+                )
+                """);
+        jdbcTemplate.update("""
+                INSERT INTO product_property_required_keyword (
+                    product_property_id, keyword_code, effect, confidence
+                )
+                SELECT pp.id, 'STATUS_SME_WORKER', 'REQUIRE', 'HIGH'
+                FROM product_properties pp
+                JOIN product p ON p.id = pp.product_id
+                WHERE p.product_code = 'SEARCH_YOUTH_EMPLOYMENT'
+                  AND pp.gov_matching_ratio = 3.0000
+                """);
     }
 }

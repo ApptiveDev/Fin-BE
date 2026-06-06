@@ -42,6 +42,24 @@ public class RateCalculatorService {
         return calculateBankProduct(product, request, resolvedKeywords);
     }
 
+    public ProductRateDto calculate(
+            Product product,
+            ProductProperty property,
+            SearchRequestDto request,
+            ResolvedKeywords keywords
+    ) {
+        ResolvedKeywords resolvedKeywords = keywords != null ? keywords : emptyKeywords();
+        if (product.getType() == ProductType.SUBSCRIPTION) {
+            return subscriptionDto(product);
+        }
+
+        if (isGovernmentProduct(product)) {
+            return calculateGovernmentProperty(product, property, request);
+        }
+
+        return calculateBankProperty(product, property, request, resolvedKeywords);
+    }
+
     private ProductRateDto subscriptionDto(Product product) {
         return ProductRateDto.builder()
                 .productId(product.getId())
@@ -83,9 +101,39 @@ public class RateCalculatorService {
                 .max(Comparator.comparingDouble(property -> achievableBankRate(property, request, keywords)))
                 .orElse(null);
 
-        return baseDto(product, bestProperty)
-                .baseRate(baseRate(bestProperty))
-                .achievableRate(achievableBankRate(bestProperty, request, keywords))
+        return calculateBankProperty(product, bestProperty, request, keywords);
+    }
+
+    private ProductRateDto calculateGovernmentProperty(
+            Product product,
+            ProductProperty property,
+            SearchRequestDto request
+    ) {
+        Double yield = calculateGovernmentYield(property, request);
+        if (yield == null) {
+            return baseDto(product, property)
+                    .rateComparable(false)
+                    .isSubscription(false)
+                    .build();
+        }
+
+        return baseDto(product, property)
+                .baseRate(0.0)
+                .achievableRate(yield)
+                .rateComparable(true)
+                .isSubscription(false)
+                .build();
+    }
+
+    private ProductRateDto calculateBankProperty(
+            Product product,
+            ProductProperty property,
+            SearchRequestDto request,
+            ResolvedKeywords keywords
+    ) {
+        return baseDto(product, property)
+                .baseRate(baseRate(property))
+                .achievableRate(achievableBankRate(property, request, keywords))
                 .rateComparable(true)
                 .isSubscription(false)
                 .build();
