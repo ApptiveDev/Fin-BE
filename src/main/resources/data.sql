@@ -239,7 +239,6 @@ INSERT INTO provider (source_id, code, name) VALUES
 
 INSERT INTO product (source_id, type, product_code, product_name, content) VALUES
 ((SELECT id FROM product_source WHERE code = 'FSS'), 'SAVING', '240076', 'e-쎄이프 정기예금', '단리/복리 선택 가능'),
-((SELECT id FROM product_source WHERE code = 'ONTONG'), 'POLICY', 'GOV001', '청년내일채움공제', '중소기업 재직 청년 자산형성 지원'),
 ((SELECT id FROM product_source WHERE code = 'ONTONG'), 'SUBSCRIPTION', 'GOV002', '청년우대형 청약통장', '청년 자산형성 주거 상품'),
 ((SELECT id FROM product_source WHERE code = 'ONTONG'), 'POLICY', 'GOV003', '청년내일저축계좌', '신청: 2026.5.4~5.20 | 나이: 만 15~39세 | 대상: 중위소득 50% 이하(차상위 이하) 근로·사업소득 청년 | 월 납입: 10만~50만 원 | 기간: 3년 만기'),
 ((SELECT id FROM product_source WHERE code = 'ONTONG'), 'POLICY', 'GOV004', '청년 자산형성 지원 (청년미래적금)', '신청: 2026.6 출시 예정 (청년도약계좌 대체) | 나이: 만 19~34세(병역 최대 6년 차감) | 일반형: 총급여 6,000만 원 이하 또는 연매출 3억 원 이하 소상공인 + 가구중위 200% 이하 | 우대형: 총급여 3,600만 원 이하 중소기업 재직 또는 연매출 1억 원 이하 소상공인 + 가구중위 150% 이하 | 월 납입: 1천~50만 원 | 기간: 3년 만기 | 기본금리 5% + 기관별 우대 2~3%'),
@@ -254,7 +253,7 @@ INSERT INTO product (source_id, type, product_code, product_name, content) VALUE
 ((SELECT id FROM product_source WHERE code = 'ONTONG'), 'POLICY', 'GOV013', '청년 디딤돌 2배 적금 (강원도)', '신청: 2026.5.21~5.26 | 나이: 만 18~45세 | 대상: 강원 거주 중소기업 재직청년, 중위 150% 이하 | 월 납입: 10만 원 | 기간: 3년'),
 ((SELECT id FROM product_source WHERE code = 'ONTONG'), 'POLICY', 'GOV014', '전북청년 함께 두배적금 (전북)', '신청: 2026.3.3~3.16 | 나이: 만 18~39세 | 대상: 전북 거주 청년(5개월 이상 근로, 주15h 이상), 중위 140% 이하 | 월 납입: 10만 원 | 기간: 2년 만기'),
 ((SELECT id FROM product_source WHERE code = 'ONTONG'), 'POLICY', 'GOV015', '대구 청년희망적금', '신청: 2026.6~7(미정) | 나이: 만 19~39세 | 대상: 대구 거주 근로청년(8개월 이상 근로, 고용보험), 본인 중위 120% 이하·가구 140% 이하 | 월 납입: 10만 원 | 기간: 1년 만기'),
-((SELECT id FROM product_source WHERE code = 'ONTONG'), 'POLICY', 'GOV016', '세종 청년미래적금', '신청: 2026.5.6~5.15 | 나이: 만 19~39세 | 대상: 세종 6개월 이상 거주 근로청년(동일사업장 6개월 이상, 주30h 이상), 중위 120% 이하 | 월 납입: 15만 원 | 기간: 3년'),
+((SELECT id FROM product_source WHERE code = 'ONTONG'), 'POLICY', 'GOV016', '세종 청년 희망적금', '신청: 2026.5.6~5.15 | 나이: 만 19~39세 | 대상: 세종 6개월 이상 거주 근로청년(동일사업장 6개월 이상, 주30h 이상), 중위 120% 이하 | 월 납입: 15만 원 | 기간: 3년'),
 ((SELECT id FROM product_source WHERE code = 'ONTONG'), 'POLICY', 'GOV017', '청년 사랑채움사업 (경북 내 22개 시·군)', '신청: 2026.3.23~4.15 | 나이: 만 19~39세 | 대상: 경북 도내 중소·중견기업 3개월 이상 재직 미혼청년(주30h 이상), 중위 150% 이하 | 월 납입: 20만 원 | 기간: 2년 만기 | 결혼축하금 120만 원은 조건부 별도'),
 ((SELECT id FROM product_source WHERE code = 'ONTONG'), 'POLICY', 'GOV018', '함안정착 청년통장 (함안군)', '신청: 2026.5.8~5.22 | 나이: 만 19~49세 | 대상: 함안군 전입 거주(전 거주지 1년 이상)·지역 중소기업 근로청년 | 월 납입: 20만 원 | 기간: 3년 만기'),
 ((SELECT id FROM product_source WHERE code = 'FSS'), 'SAVING', 'BANK001', '청년우대적금', '만 19~29세 전용 우대 적금');
@@ -268,11 +267,10 @@ INSERT INTO product_properties (
 ) VALUES
 ((SELECT id FROM product WHERE product_code = '240076'), (SELECT id FROM provider WHERE code = '0010363'), 3.45, 3.45, 10, 100, NULL, NULL, NULL, NULL, 19, 34, NULL, NULL, NULL, false, false, true, NULL, 'SINGLE_INTEREST', 12),
 ((SELECT id FROM product WHERE product_code = '240076'), (SELECT id FROM provider WHERE code = '0010363'), 3.45, 3.45, 10, 100, NULL, NULL, NULL, NULL, 19, 34, NULL, NULL, NULL, false, false, true, NULL, 'COMPOUND_INTEREST', 12),
-((SELECT id FROM product WHERE product_code = 'GOV001'), (SELECT id FROM provider WHERE code = 'GOV001'), 10.0, 10.0, 12, 50, 'RATIO', 1.0000, NULL, 24, 15, 34, NULL, NULL, 6, false, false, true, NULL, NULL, NULL),
-((SELECT id FROM product WHERE product_code = 'GOV002'), (SELECT id FROM provider WHERE code = 'GOV001'), 4.5, 6.0, 1, 70, NULL, NULL, NULL, NULL, 19, 34, NULL, NULL, NULL, true, false, true, NULL, NULL, NULL),
+((SELECT id FROM product WHERE product_code = 'GOV002'), (SELECT id FROM provider WHERE code = 'GOV001'), NULL, NULL, 1, 70, NULL, NULL, NULL, NULL, 19, 34, NULL, NULL, NULL, true, false, true, NULL, NULL, NULL),
 ((SELECT id FROM product WHERE product_code = 'GOV003'), (SELECT id FROM provider WHERE code = 'MOHW'), NULL, NULL, 100000, 500000, 'FIXED_AMOUNT', NULL, 300000, 36, 15, 39, NULL, 50, NULL, false, false, true, 'https://www.bokjiro.go.kr/ssis-tbu/twataa/wlfareInfo/moveTWAT52011M.do?wlfareInfoId=WLF00000060', NULL, NULL),
-((SELECT id FROM product WHERE product_code = 'GOV004'), (SELECT id FROM provider WHERE code = 'GOV001'), 5.00, 8.00, 1000, 500000, 'RATIO', 0.0600, NULL, 36, 19, 34, 60000000, 200, NULL, false, false, true, 'https://www.fsc.go.kr/no010101/86767?curPage=7&srchBeginDt=&srchCtgry=&srchEndDt=&srchKey=&srchText=', NULL, 36),
-((SELECT id FROM product WHERE product_code = 'GOV004'), (SELECT id FROM provider WHERE code = 'GOV001'), 5.00, 8.00, 1000, 500000, 'RATIO', 0.1200, NULL, 36, 19, 34, 36000000, 150, NULL, false, false, true, 'https://www.fsc.go.kr/no010101/86767?curPage=7&srchBeginDt=&srchCtgry=&srchEndDt=&srchKey=&srchText=', NULL, 36),
+((SELECT id FROM product WHERE product_code = 'GOV004'), (SELECT id FROM provider WHERE code = 'GOV001'), NULL, NULL, 1000, 500000, 'RATIO', 0.0600, NULL, 36, 19, 34, 60000000, 200, NULL, false, false, true, 'https://www.fsc.go.kr/no010101/86767?curPage=7&srchBeginDt=&srchCtgry=&srchEndDt=&srchKey=&srchText=', NULL, 36),
+((SELECT id FROM product WHERE product_code = 'GOV004'), (SELECT id FROM provider WHERE code = 'GOV001'), NULL, NULL, 1000, 500000, 'RATIO', 0.1200, NULL, 36, 19, 34, 36000000, 150, NULL, false, false, true, 'https://www.fsc.go.kr/no010101/86767?curPage=7&srchBeginDt=&srchCtgry=&srchEndDt=&srchKey=&srchText=', NULL, 36),
 ((SELECT id FROM product WHERE product_code = 'GOV005'), (SELECT id FROM provider WHERE code = 'BUSAN_CITY'), NULL, NULL, 100000, 100000, 'RATIO', 1.0000, NULL, 24, 18, 39, 43068000, NULL, NULL, false, false, true, NULL, NULL, 24),
 ((SELECT id FROM product WHERE product_code = 'GOV005'), (SELECT id FROM provider WHERE code = 'BUSAN_CITY'), NULL, NULL, 100000, 100000, 'RATIO', 1.0000, NULL, 36, 18, 39, 43068000, NULL, NULL, false, false, true, NULL, NULL, 36),
 ((SELECT id FROM product WHERE product_code = 'GOV006'), (SELECT id FROM provider WHERE code = 'GYEONGGI'), NULL, NULL, 100000, 100000, 'RATIO', 1.0000, NULL, 24, 19, 39, NULL, 120, NULL, false, false, true, 'https://account.ggwf.or.kr', NULL, 24),
@@ -305,4 +303,5 @@ UNION ALL SELECT pp.id, 'REGION_JEONBUK' FROM product_properties pp JOIN product
 UNION ALL SELECT pp.id, 'REGION_DAEGU' FROM product_properties pp JOIN product p ON p.id = pp.product_id WHERE p.product_code = 'GOV015'
 UNION ALL SELECT pp.id, 'REGION_SEJONG' FROM product_properties pp JOIN product p ON p.id = pp.product_id WHERE p.product_code = 'GOV016'
 UNION ALL SELECT pp.id, 'REGION_GYEONGBUK' FROM product_properties pp JOIN product p ON p.id = pp.product_id WHERE p.product_code = 'GOV017'
-UNION ALL SELECT pp.id, 'STATUS_SME_WORKER' FROM product_properties pp JOIN product p ON p.id = pp.product_id WHERE p.product_code IN ('GOV013', 'GOV017', 'GOV018');
+UNION ALL SELECT pp.id, 'STATUS_SME_WORKER' FROM product_properties pp JOIN product p ON p.id = pp.product_id WHERE p.product_code IN ('GOV013', 'GOV017', 'GOV018')
+UNION ALL SELECT pp.id, 'STATUS_SME_WORKER' FROM product_properties pp JOIN product p ON p.id = pp.product_id WHERE p.product_code = 'GOV004' AND pp.gov_matching_ratio = 0.1200;
