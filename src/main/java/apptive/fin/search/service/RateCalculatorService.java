@@ -117,7 +117,7 @@ public class RateCalculatorService {
 
         return switch (contributionType) {
             case RATIO -> ratioYield(property.getGovMatchingRatio(), years);
-            case FIXED_AMOUNT -> fixedAmountYield(property.getGovMonthlyFixedContribution(), monthlySavingsGoal(request), years);
+            case FIXED_AMOUNT -> fixedAmountYield(property, monthlySavingsGoal(request), years);
             case NONE -> null;
         };
     }
@@ -130,12 +130,22 @@ public class RateCalculatorService {
         return matchingRatio.doubleValue() / years * 100;
     }
 
-    private Double fixedAmountYield(Long monthlyFixedContribution, Long monthlySavingsGoal, double years) {
+    private Double fixedAmountYield(ProductProperty property, Long monthlySavingsGoal, double years) {
+        Long monthlyFixedContribution = property.getGovMonthlyFixedContribution();
         if (monthlyFixedContribution == null || monthlySavingsGoal == null || monthlySavingsGoal <= 0) {
             return null;
         }
 
-        return ((double) monthlyFixedContribution / monthlySavingsGoal) / years * 100;
+        Long effectiveMonthlyDeposit = effectiveMonthlyDeposit(monthlySavingsGoal, property.getMaxMonthlyLimit());
+        return ((double) monthlyFixedContribution / effectiveMonthlyDeposit) / years * 100;
+    }
+
+    private Long effectiveMonthlyDeposit(Long monthlySavingsGoal, Long maxMonthlyLimit) {
+        if (maxMonthlyLimit == null || maxMonthlyLimit <= 0) {
+            return monthlySavingsGoal;
+        }
+
+        return Math.min(monthlySavingsGoal, maxMonthlyLimit);
     }
 
     private Double contributionYears(ProductProperty property) {

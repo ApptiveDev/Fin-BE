@@ -203,6 +203,56 @@ class RateCalculatorServiceTest {
     }
 
     @Test
+    void governmentRatioProductSupportsPercentMatchingRates() {
+        Product product = createProduct("GOV_PERCENT", "government percent matching product", "ONTONG");
+        ProductProperty general = createProperty(10L, "GOV", "정책기관", null, null);
+        ProductProperty preferential = createProperty(11L, "GOV", "정책기관", null, null);
+        ReflectionTestUtils.setField(general, "govContributionType", ContributionType.RATIO);
+        ReflectionTestUtils.setField(general, "govMatchingRatio", new BigDecimal("0.0600"));
+        ReflectionTestUtils.setField(general, "govContributionPeriodMonths", 36);
+        ReflectionTestUtils.setField(preferential, "govContributionType", ContributionType.RATIO);
+        ReflectionTestUtils.setField(preferential, "govMatchingRatio", new BigDecimal("0.1200"));
+        ReflectionTestUtils.setField(preferential, "govContributionPeriodMonths", 36);
+        ReflectionTestUtils.setField(product, "properties", new ArrayList<>(List.of(general, preferential)));
+
+        ProductRateDto result = rateCalculatorService.calculate(product, createRequest(), emptyKeywords());
+
+        assertThat(result.productPropertyId()).isEqualTo(11L);
+        assertThat(result.achievableRate()).isEqualTo(4.0);
+        assertThat(result.rateComparable()).isTrue();
+    }
+
+    @Test
+    void governmentRatioProductSupportsTenMonthPeriod() {
+        Product product = createProduct("GOV_TEN_MONTH", "government ten month product", "ONTONG");
+        ProductProperty property = createProperty(10L, "GOV", "정책기관", null, null);
+        ReflectionTestUtils.setField(property, "govContributionType", ContributionType.RATIO);
+        ReflectionTestUtils.setField(property, "govMatchingRatio", new BigDecimal("1.0000"));
+        ReflectionTestUtils.setField(property, "govContributionPeriodMonths", 10);
+        ReflectionTestUtils.setField(product, "properties", new ArrayList<>(List.of(property)));
+
+        ProductRateDto result = rateCalculatorService.calculate(product, createRequest(), emptyKeywords());
+
+        assertThat(result.achievableRate()).isEqualTo(120.0);
+        assertThat(result.rateComparable()).isTrue();
+    }
+
+    @Test
+    void governmentRatioProductSupportsOnePointFiveMatchingRatio() {
+        Product product = createProduct("GOV_RATIO_1_5", "government 1.5 ratio product", "ONTONG");
+        ProductProperty property = createProperty(10L, "GOV", "정책기관", null, null);
+        ReflectionTestUtils.setField(property, "govContributionType", ContributionType.RATIO);
+        ReflectionTestUtils.setField(property, "govMatchingRatio", new BigDecimal("1.5000"));
+        ReflectionTestUtils.setField(property, "govContributionPeriodMonths", 36);
+        ReflectionTestUtils.setField(product, "properties", new ArrayList<>(List.of(property)));
+
+        ProductRateDto result = rateCalculatorService.calculate(product, createRequest(), emptyKeywords());
+
+        assertThat(result.achievableRate()).isEqualTo(50.0);
+        assertThat(result.rateComparable()).isTrue();
+    }
+
+    @Test
     void governmentFixedAmountProductUsesMonthlySavingsGoal() {
         Product product = createProduct("GOV003", "government fixed product", "ONTONG");
         ProductProperty property = createProperty(10L, "GOV", "정책기관", null, null);
@@ -216,6 +266,22 @@ class RateCalculatorServiceTest {
         assertThat(result.achievableRate()).isEqualTo(100.0);
         assertThat(result.rateComparable()).isTrue();
         assertThat(result.isSubscription()).isFalse();
+    }
+
+    @Test
+    void governmentFixedAmountProductUsesMaxMonthlyLimitAsEffectiveDeposit() {
+        Product product = createProduct("GOV_FIXED_LIMIT", "government fixed limited product", "ONTONG");
+        ProductProperty property = createProperty(10L, "GOV", "정책기관", null, null);
+        ReflectionTestUtils.setField(property, "govContributionType", ContributionType.FIXED_AMOUNT);
+        ReflectionTestUtils.setField(property, "govMonthlyFixedContribution", 150_000L);
+        ReflectionTestUtils.setField(property, "govContributionPeriodMonths", 36);
+        ReflectionTestUtils.setField(property, "maxMonthlyLimit", 150_000L);
+        ReflectionTestUtils.setField(product, "properties", new ArrayList<>(List.of(property)));
+
+        ProductRateDto result = rateCalculatorService.calculate(product, createRequest(500_000L), emptyKeywords());
+
+        assertThat(result.achievableRate()).isEqualTo(33.33333333333333);
+        assertThat(result.rateComparable()).isTrue();
     }
 
     @Test
