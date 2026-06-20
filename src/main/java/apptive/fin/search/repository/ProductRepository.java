@@ -56,6 +56,13 @@ public interface ProductRepository extends JpaRepository<Product, Long> {
     """)
     List<Product> findByKeywords(@Param("keywords") List<KeywordValueEnum> keywords);
 
-    //
+    // 상품명 검색
+    @Query("""
+           SELECT DISTINCT p FROM Product p
+           LEFT JOIN FETCH p.properties pp
+           WHERE LOWER(p.productName) LIKE LOWER(CONCAT('%',:searchInput,'%'))
+           AND pp.isJoinable = TRUE
+    """)
+    List<Product> findByProductNameContaining(@Param("searchInput") String searchInput);
 
 }

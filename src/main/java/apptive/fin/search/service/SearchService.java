@@ -3,6 +3,13 @@ package apptive.fin.search.service;
 import apptive.fin.auth.security.AuthUserDetails;
 import apptive.fin.global.error.BusinessException;
 import apptive.fin.search.KeywordValueEnum;
+
+import apptive.fin.search.dto.*;
+import apptive.fin.search.entity.Product;
+import apptive.fin.search.entity.ProductKeyword;
+import apptive.fin.search.entity.ProductProperty;
+import apptive.fin.search.repository.ProductRepository;
+
 import apptive.fin.search.SearchErrorCode;
 import apptive.fin.search.dto.EligibleProductOption;
 import apptive.fin.search.dto.ProductMatchDto;
@@ -13,6 +20,7 @@ import apptive.fin.search.dto.SearchRequestDto;
 import apptive.fin.search.dto.TabAvailabilityDto;
 import apptive.fin.search.entity.Product;
 import apptive.fin.search.entity.ProductKeyword;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +40,7 @@ public class SearchService {
     private final MatchScoreService matchScoreService;
     private final RateCalculatorService rateCalculatorService;
     private final ResolveKeywordService resolveKeywordService;
+    private final ProductRepository productRepository;
 
     public ProductSearchResultDto search(SearchRequestDto request) {
         return search(request, null);
@@ -163,6 +172,31 @@ public class SearchService {
                 .build();
     }
 
+    public List<ProductNameSearchDto> searchByName(String searchInput){
+        return productRepository.findByProductNameContaining(searchInput)
+                .stream()
+                .map(p -> {
+                    ProductProperty bestProperty = p.getProperties().stream()
+                            .max(Comparator.comparingDouble(pp ->
+                                    pp.getMaxRate() != null ? pp.getMaxRate().doubleValue(): 0.0 ))
+                            .orElse(null);
+
+                    return ProductNameSearchDto.builder()
+                            .productId(p.getId())
+                            .productName(p.getProductName())
+                            .source(p.getSource().getCode())
+                            .providerName(bestProperty != null && bestProperty.getProvider() != null
+                                    ? bestProperty.getProvider().getName() : null)
+                            .baseRate(bestProperty != null && bestProperty.getBaseRate() != null
+                                    ? bestProperty.getBaseRate().doubleValue() : null)
+                            .maxRate(bestProperty != null && bestProperty.getMaxRate() != null
+                                    ? bestProperty.getMaxRate().doubleValue() : null)
+                            .build();
+                })
+                .toList();
+    }
+
+
     private boolean isTabBEnabled(SearchRequestDto request, AuthUserDetails userDetails) {
         if (userDetails == null || request.detailedOptions() == null) {
             return false;
@@ -199,6 +233,7 @@ public class SearchService {
 
     private boolean hasMatchingRegion(EligibleProductOption option, List<KeywordValueEnum> selectedRegions) {
         List<KeywordValueEnum> productRegions = option.property().getKeywords().stream()
+
                 .map(ProductKeyword::getKeywordCode)
                 .filter(keyword -> keyword.name().startsWith("REGION_"))
                 .toList();
