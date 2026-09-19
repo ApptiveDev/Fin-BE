@@ -19,12 +19,6 @@ repositories {
 }
 
 sourceSets {
-    main {
-        resources {
-            srcDir '../database'
-        }
-    }
-
     reset {
         java {
             srcDir 'src/reset/java'
