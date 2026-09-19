@@ -96,21 +96,6 @@ class SearchRequestPolicyTest {
     }
 
     @Test
-    void 첫거래와_만기거래_이력을_입력하면_개인화를_허용한다() {
-        DetailedOptionsDto transactionHistory = detailedOptions(
-                LocalDate.of(2000, 1, 1), 30_000_000L, 3, 100,
-                50L, List.of(), List.of());
-
-        boolean allowed = policy.canUsePersonalization(
-                request(transactionHistory),
-                completeKeywords(),
-                new AuthUserDetails(1L, UserRole.RECOMMENDATION)
-        );
-
-        assertThat(allowed).isTrue();
-    }
-
-    @Test
     void 약관동의전_사용자는_입력을_완료해도_개인화를_허용하지_않는다() {
         boolean allowed = policy.canUsePersonalization(
                 request(completeDetailedOptions()),
@@ -186,10 +171,14 @@ class SearchRequestPolicyTest {
                         LocalDate.of(2000, 1, 1), 30_000_000L, null, 100, 50L, List.of(), List.of())),
                 Arguments.of("가구 소득", detailedOptions(
                         LocalDate.of(2000, 1, 1), 30_000_000L, 3, null, 50L, List.of(), List.of())),
-                Arguments.of("미거래 은행", detailedOptions(
-                        LocalDate.of(2000, 1, 1), 30_000_000L, 3, 100, 50L, null, List.of())),
-                Arguments.of("만기 거래 은행", detailedOptions(
-                        LocalDate.of(2000, 1, 1), 30_000_000L, 3, 100, 50L, List.of(), null))
+                Arguments.of("미거래 은행(null)", detailedOptions(
+                        LocalDate.of(2000, 1, 1), 30_000_000L, 3, 100, 50L, null, List.of("SHINHAN"))),
+                Arguments.of("미거래 은행(빈 리스트)", detailedOptions(
+                        LocalDate.of(2000, 1, 1), 30_000_000L, 3, 100, 50L, List.of(), List.of("SHINHAN"))),
+                Arguments.of("만기 거래 은행(null)", detailedOptions(
+                        LocalDate.of(2000, 1, 1), 30_000_000L, 3, 100, 50L, List.of("KB"), null)),
+                Arguments.of("만기 거래 은행(빈 리스트)", detailedOptions(
+                        LocalDate.of(2000, 1, 1), 30_000_000L, 3, 100, 50L, List.of("KB"), List.of()))
         );
     }
 
@@ -207,7 +196,7 @@ class SearchRequestPolicyTest {
     private static DetailedOptionsDto completeDetailedOptions() {
         return detailedOptions(
                 LocalDate.of(2000, 1, 1), 30_000_000L, 3, 100,
-                50L, List.of(), List.of());
+                50L, List.of("KB"), List.of("SHINHAN"));
     }
 
     private static DetailedOptionsDto detailedOptions(
