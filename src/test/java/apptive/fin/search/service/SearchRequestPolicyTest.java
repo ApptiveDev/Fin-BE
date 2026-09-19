@@ -129,7 +129,7 @@ class SearchRequestPolicyTest {
     void 단계1_필수값이_하나라도_없으면_개인화를_허용하지_않는다() {
         DetailedOptionsDto withoutMonthlySavingsGoal = detailedOptions(
                 LocalDate.of(2000, 1, 1), 30_000_000L, 3, 100,
-                null, List.of(), List.of());
+                null, List.of("KB"), List.of("SHINHAN"));
         ResolvedKeywords withoutSavingPeriod = new ResolvedKeywords(
                 List.of(), List.of(), null,
                 List.of(), List.of(KeywordValueEnum.BANK_SALARY_TRANSFER));
@@ -164,13 +164,13 @@ class SearchRequestPolicyTest {
     private static Stream<Arguments> missingStep2Fields() {
         return Stream.of(
                 Arguments.of("생년월일", detailedOptions(
-                        null, 30_000_000L, 3, 100, 50L, List.of(), List.of())),
+                        null, 30_000_000L, 3, 100, 50L, List.of("KB"), List.of("SHINHAN"))),
                 Arguments.of("개인 연 소득", detailedOptions(
-                        LocalDate.of(2000, 1, 1), null, 3, 100, 50L, List.of(), List.of())),
+                        LocalDate.of(2000, 1, 1), null, 3, 100, 50L, List.of("KB"), List.of("SHINHAN"))),
                 Arguments.of("가구원 수", detailedOptions(
-                        LocalDate.of(2000, 1, 1), 30_000_000L, null, 100, 50L, List.of(), List.of())),
+                        LocalDate.of(2000, 1, 1), 30_000_000L, null, 100, 50L, List.of("KB"), List.of("SHINHAN"))),
                 Arguments.of("가구 소득", detailedOptions(
-                        LocalDate.of(2000, 1, 1), 30_000_000L, 3, null, 50L, List.of(), List.of())),
+                        LocalDate.of(2000, 1, 1), 30_000_000L, 3, null, 50L, List.of("KB"), List.of("SHINHAN"))),
                 Arguments.of("미거래 은행(null)", detailedOptions(
                         LocalDate.of(2000, 1, 1), 30_000_000L, 3, 100, 50L, null, List.of("SHINHAN"))),
                 Arguments.of("미거래 은행(빈 리스트)", detailedOptions(

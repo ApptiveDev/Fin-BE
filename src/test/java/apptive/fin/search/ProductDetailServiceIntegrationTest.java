@@ -803,8 +803,8 @@ class ProductDetailServiceIntegrationTest extends IntegrationTestSupport {
                         LocalDate.now().minusYears(27),
                         30_000_000L, 3, 100, 12, null, true, null,
                         monthlySavingsGoal,
-                        List.of(),
-                        List.of(),
+                        List.of("TEST_NO_MATCH"),
+                        List.of("TEST_NO_MATCH"),
                         List.of()
                 )
         );
@@ -821,14 +821,14 @@ class ProductDetailServiceIntegrationTest extends IntegrationTestSupport {
         );
     }
 
-    // 거래 이력 2종을 null이 아닌 값으로 채워 개인화 접근 조건과 맞춘다.
+    // 거래 이력 2종을 실제 값으로 채워 개인화 접근 조건과 맞춘다.
     private DetailedOptionsDto detailedOptions(long monthlySavingsGoal) {
         return new DetailedOptionsDto(
                 LocalDate.now().minusYears(27),
                 30_000_000L, 3, 100, 12, null, true, null,
                 monthlySavingsGoal,
-                List.of(),
-                List.of(),
+                List.of("TEST_NO_MATCH"),
+                List.of("TEST_NO_MATCH"),
                 List.of()
         );
     }
