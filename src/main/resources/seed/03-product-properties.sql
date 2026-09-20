@@ -378,6 +378,24 @@ INSERT INTO public.product_properties (id, product_id, provider_id, base_rate, m
 
 
 --
+-- 컬럼 분리(예금 예치한도/적금 월납입한도) 반영: 예금(DEPOSIT) 행의 값을 예금 전용 컬럼으로 이전.
+-- 이 덤프는 구 컬럼(min/max_monthly_limit)으로 적재되므로, 예금 행만 예금 컬럼으로 옮기고 월납입 컬럼을 비운다.
+-- (수집기가 신규 컬럼을 직접 채우도록 갱신된 뒤 재덤프하면 이 블록은 no-op가 된다.)
+--
+UPDATE public.product_properties pp
+SET min_deposit_amount = pp.min_monthly_limit,
+    max_deposit_amount = pp.max_monthly_limit
+FROM public.product p
+WHERE pp.product_id = p.id AND p.type = 'DEPOSIT';
+
+UPDATE public.product_properties pp
+SET min_monthly_limit = NULL,
+    max_monthly_limit = NULL
+FROM public.product p
+WHERE pp.product_id = p.id AND p.type = 'DEPOSIT';
+
+
+--
 -- Name: product_properties_id_seq; Type: SEQUENCE SET; Schema: public; Owner: user
 --
 

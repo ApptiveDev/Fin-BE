@@ -5,6 +5,7 @@ import apptive.fin.search.enums.ContributionType;
 import apptive.fin.search.enums.ExtractionConfidence;
 import apptive.fin.search.enums.InterestRateType;
 import apptive.fin.search.enums.KeywordValueEnum;
+import apptive.fin.search.enums.ProductType;
 import apptive.fin.search.enums.RequiredKeywordEffect;
 import apptive.fin.search.enums.ReserveType;
 import jakarta.persistence.CascadeType;
@@ -69,8 +70,13 @@ public class ProductProperty {
     @Column(nullable = false)
     private Boolean excludeFromRateComparison = false;
 
+    // 적금 전용: 월 최소/최대 납입액
     private Long minMonthlyLimit;
     private Long maxMonthlyLimit;
+
+    // 예금 전용: 최소/최대 예치가능금액
+    private Long minDepositAmount;
+    private Long maxDepositAmount;
 
     private Integer minAge;
     private Integer maxAge;
@@ -119,6 +125,20 @@ public class ProductProperty {
     // 제공자(은행/기관) 이름. provider 미설정 시 null.
     public String providerName() {
         return provider != null ? provider.getName() : null;
+    }
+
+    // 상품 타입에 맞는 금액 하한 (예금=예치금, 적금=월 납입액). 미설정 시 null.
+    public Long resolvedMinLimit() {
+        return isDeposit() ? minDepositAmount : minMonthlyLimit;
+    }
+
+    // 상품 타입에 맞는 금액 상한 (예금=예치금, 적금=월 납입액). 미설정 시 null.
+    public Long resolvedMaxLimit() {
+        return isDeposit() ? maxDepositAmount : maxMonthlyLimit;
+    }
+
+    private boolean isDeposit() {
+        return product != null && product.getType() == ProductType.DEPOSIT;
     }
 
     public boolean isJoinable() {

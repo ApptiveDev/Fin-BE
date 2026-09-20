@@ -43,12 +43,15 @@ public class CalculatorService {
             }
         }
 
-        // 금액 상한 검증 (예금: 예치금, 적금: 월 납입액)
-        if (property.getMaxMonthlyLimit() != null) {
-            BigDecimal maxLimit = BigDecimal.valueOf(property.getMaxMonthlyLimit());
+        // 금액 상한 검증 (예금: 최대예치금, 적금: 월 최대납입액)
+        Long maxAmount = request.productType() == ProductType.DEPOSIT
+                ? property.getMaxDepositAmount()
+                : property.getMaxMonthlyLimit();
+        if (maxAmount != null) {
+            BigDecimal maxLimit = BigDecimal.valueOf(maxAmount);
             if (request.amount().compareTo(maxLimit) > 0) {
                 throw new IllegalArgumentException(
-                        "금액이 상품 최대 한도를 초과합니다. 최대 한도: " + property.getMaxMonthlyLimit() + "원"
+                        "금액이 상품 최대 한도를 초과합니다. 최대 한도: " + maxAmount + "원"
                 );
             }
         }
