@@ -15,8 +15,12 @@ public record ProductCardSummaryDto(
         ProductType productType,
         List<KeywordValueEnum> badgeKeywords,
         List<Integer> saveTrms,
+        // 적금 전용: 월 최소/최대 납입액 (예금이면 null)
         Long minMonthlyLimit,
         Long maxMonthlyLimit,
+        // 예금 전용: 최소/최대 예치가능금액 (적금이면 null)
+        Long minDepositAmount,
+        Long maxDepositAmount,
         Double matchScore,
         Double baseRate,
         Double maxRate,

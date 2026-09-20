@@ -61,7 +61,8 @@ class CalculatorServiceTest {
         dummyProperty = new ProductProperty();
         ReflectionTestUtils.setField(dummyProperty, "saveTrm", 12);
         ReflectionTestUtils.setField(dummyProperty, "maxRate", new BigDecimal("5.00")); // 5%
-        ReflectionTestUtils.setField(dummyProperty, "maxMonthlyLimit", 10000000L); // 1천만원
+        ReflectionTestUtils.setField(dummyProperty, "maxMonthlyLimit", 10000000L); // 적금 월 최대납입 1천만원
+        ReflectionTestUtils.setField(dummyProperty, "maxDepositAmount", 10000000L); // 예금 최대예치 1천만원
     }
 
     @Test
@@ -170,6 +171,46 @@ class CalculatorServiceTest {
                 12, TaxType.GENERAL
         );
         when(productPropertyRepository.findById(1L)).thenReturn(Optional.of(dummyProperty));
+
+        assertThatThrownBy(() -> calculatorService.simulate(request))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("최대 한도");
+    }
+
+    @Test
+    @DisplayName("예금 금액 상한 검증은 maxDepositAmount 기준이며 적금용 maxMonthlyLimit에 영향받지 않는다")
+    void depositLimit_usesDepositColumn() {
+        ProductProperty property = new ProductProperty();
+        ReflectionTestUtils.setField(property, "maxDepositAmount", 10_000_000L); // 예금 예치한도 1천만원
+        ReflectionTestUtils.setField(property, "maxMonthlyLimit", 1_000_000L);   // 적금용, 예금 검증에 무관
+
+        CalculatorRequestDto request = new CalculatorRequestDto(
+                1L, ProductType.DEPOSIT, InterestRateType.SINGLE_INTEREST, null,
+                new BigDecimal("0.04"),
+                new BigDecimal("5000000"), // 예치한도(1천만원) 이내, 월납입한도(1백만원)는 초과
+                12, TaxType.GENERAL
+        );
+        when(productPropertyRepository.findById(1L)).thenReturn(Optional.of(property));
+        when(calculatorFactory.getCalculator(ProductType.DEPOSIT)).thenReturn(rateCalculator);
+        when(rateCalculator.calculate(request)).thenReturn(dummyResponse);
+
+        assertThat(calculatorService.simulate(request)).isEqualTo(dummyResponse);
+    }
+
+    @Test
+    @DisplayName("적금 금액 상한 검증은 maxMonthlyLimit 기준이며 예금용 maxDepositAmount에 영향받지 않는다")
+    void savingLimit_usesMonthlyColumn() {
+        ProductProperty property = new ProductProperty();
+        ReflectionTestUtils.setField(property, "maxMonthlyLimit", 1_000_000L);   // 적금 월납입한도 1백만원
+        ReflectionTestUtils.setField(property, "maxDepositAmount", 10_000_000L); // 예금용, 적금 검증에 무관
+
+        CalculatorRequestDto request = new CalculatorRequestDto(
+                1L, ProductType.SAVING, InterestRateType.SINGLE_INTEREST, ReserveType.FREE,
+                new BigDecimal("0.04"),
+                new BigDecimal("5000000"), // 월납입한도(1백만원) 초과
+                12, TaxType.GENERAL
+        );
+        when(productPropertyRepository.findById(1L)).thenReturn(Optional.of(property));
 
         assertThatThrownBy(() -> calculatorService.simulate(request))
                 .isInstanceOf(IllegalArgumentException.class)

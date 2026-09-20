@@ -17,6 +17,7 @@ import apptive.fin.search.entity.Product;
 import apptive.fin.search.entity.ProductProperty;
 import apptive.fin.search.enums.KeywordValueEnum;
 import apptive.fin.search.enums.ProductApplyStatus;
+import apptive.fin.search.enums.ProductType;
 import apptive.fin.search.repository.ProductPropertyRepository;
 import apptive.fin.search.service.BankMaxInterestPolicy;
 import apptive.fin.search.service.EligibilityFilterService;
@@ -265,14 +266,18 @@ public class MyFinService {
             }
         }
 
-        // 월 납입 범위
-        if (pp.getMinMonthlyLimit() != null || pp.getMaxMonthlyLimit() != null) {
-            sb.append(" · 월 ");
-            if (pp.getMinMonthlyLimit() != null) {
-                sb.append(formatAmount(pp.getMinMonthlyLimit()));
+        // 금액 범위 (예금: 예치 한도, 적금: 월 납입 한도)
+        Long minLimit = pp.resolvedMinLimit();
+        Long maxLimit = pp.resolvedMaxLimit();
+        if (minLimit != null || maxLimit != null) {
+            boolean isDeposit = pp.getProduct() != null
+                    && pp.getProduct().getType() == ProductType.DEPOSIT;
+            sb.append(isDeposit ? " · 예치 " : " · 월 ");
+            if (minLimit != null) {
+                sb.append(formatAmount(minLimit));
             }
-            if (pp.getMaxMonthlyLimit() != null) {
-                sb.append("~").append(formatAmount(pp.getMaxMonthlyLimit()));
+            if (maxLimit != null) {
+                sb.append("~").append(formatAmount(maxLimit));
             }
         }
 

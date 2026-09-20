@@ -179,6 +179,8 @@ public class ProductDetailService {
                 .maxAge(selected != null ? selected.getMaxAge() : null)
                 .minMonthlyLimit(selected != null ? selected.getMinMonthlyLimit() : null)
                 .maxMonthlyLimit(selected != null ? selected.getMaxMonthlyLimit() : null)
+                .minDepositAmount(selected != null ? selected.getMinDepositAmount() : null)
+                .maxDepositAmount(selected != null ? selected.getMaxDepositAmount() : null)
                 .requiresHomeless(selected != null ? selected.getRequiresHomeless() : null)
                 .requiresHouseholder(selected != null ? selected.getRequiresHouseholder() : null)
                 .joinMethod(product.getJoinMethod())

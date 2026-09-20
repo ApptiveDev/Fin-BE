@@ -138,6 +138,8 @@ public class ProductCardSummaryService {
                 saveTrms(productProperties),
                 property.getMinMonthlyLimit(),
                 property.getMaxMonthlyLimit(),
+                property.getMinDepositAmount(),
+                property.getMaxDepositAmount(),
                 matchScore,
                 property.getBaseRate() != null ? property.getBaseRate().doubleValue() : null,
                 property.getMaxRate() != null ? property.getMaxRate().doubleValue() : null,

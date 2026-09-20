@@ -776,6 +776,47 @@ class ProductDetailServiceIntegrationTest extends IntegrationTestSupport {
                         .isEqualTo(SearchErrorCode.PRODUCT_NOT_FOUND));
     }
 
+    @Test
+    void 예금은_예치한도를_deposit필드로_적금은_월납입한도를_monthly필드로_분리해_반환한다() {
+        // 예금 상품: 예치 한도는 deposit 필드에만 담기고 월납입 필드는 null이어야 한다.
+        jdbcTemplate.update("""
+                INSERT INTO product (source_id, type, product_code, product_name, content)
+                VALUES ((SELECT id FROM product_source WHERE code = 'FSS'), 'DEPOSIT',
+                        'DETAIL_DEPOSIT_CAP', 'e-예치한도예금', '')
+                """);
+        jdbcTemplate.update("""
+                INSERT INTO product_properties
+                    (product_id, provider_id, base_rate, max_rate,
+                     min_deposit_amount, max_deposit_amount, is_joinable, save_trm)
+                VALUES ((SELECT id FROM product WHERE product_code = 'DETAIL_DEPOSIT_CAP'),
+                        (SELECT id FROM provider WHERE code = 'SEARCH_BANK_A'),
+                        3.00, 3.00, 1000000, 100000000, true, 12)
+                """);
+
+        ProductDetailResponseDto deposit = productDetailService.getProductDetail(
+                productId("DETAIL_DEPOSIT_CAP"),
+                request(propertyId("DETAIL_DEPOSIT_CAP"), 100L),
+                authenticatedUser());
+
+        assertThat(deposit.productType()).isEqualTo(ProductType.DEPOSIT);
+        assertThat(deposit.minDepositAmount()).isEqualTo(1_000_000L);
+        assertThat(deposit.maxDepositAmount()).isEqualTo(100_000_000L);
+        assertThat(deposit.minMonthlyLimit()).isNull();
+        assertThat(deposit.maxMonthlyLimit()).isNull();
+
+        // 적금 상품: 월납입 한도는 monthly 필드에만 담기고 deposit 필드는 null이어야 한다.
+        ProductDetailResponseDto saving = productDetailService.getProductDetail(
+                productId("SEARCH_YOUTH_SAVING"),
+                request(propertyId("SEARCH_YOUTH_SAVING"), 100L),
+                authenticatedUser());
+
+        assertThat(saving.productType()).isEqualTo(ProductType.SAVING);
+        assertThat(saving.minMonthlyLimit()).isEqualTo(10L);
+        assertThat(saving.maxMonthlyLimit()).isEqualTo(50L);
+        assertThat(saving.minDepositAmount()).isNull();
+        assertThat(saving.maxDepositAmount()).isNull();
+    }
+
     private Long productId(String productCode) {
         return jdbcTemplate.queryForObject(
                 "SELECT id FROM product WHERE product_code = ?", Long.class, productCode);
