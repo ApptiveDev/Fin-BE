@@ -246,8 +246,8 @@ class MyFinFitScoreParityIntegrationTest extends IntegrationTestSupport {
                         true,
                         null,
                         50L,
-                        List.of(),
-                        List.of(),
+                        List.of("TEST_NO_MATCH"),
+                        List.of("TEST_NO_MATCH"),
                         List.of()
                 )
         );

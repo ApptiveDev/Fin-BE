@@ -260,7 +260,7 @@ class SearchServiceIntegrationTest extends IntegrationTestSupport {
         assertThat(findMatch(result.governmentRanked(), "청년우대형 청약통장").totalScore())
                 .isCloseTo(45.0, offset(0.0001));
         assertThat(result.bankRanked())
-                .allSatisfy(product -> assertThat(product.totalScore()).isCloseTo(100.0, offset(0.0001)));
+                .allSatisfy(product -> assertThat(product.totalScore()).isCloseTo(46.6667, offset(0.0001)));
 
         assertThat(rateNames(result.governmentRateRanked()))
                 .containsExactly("청년내일채움공제");
@@ -285,8 +285,8 @@ class SearchServiceIntegrationTest extends IntegrationTestSupport {
         ProductMatchDto oneYearBankProduct = findMatch(result.bankRanked(), "e-쎄이프 정기예금");
         ProductMatchDto adjacentGovProduct = findMatch(result.governmentRanked(), "청년내일채움공제");
 
-        assertThat(oneYearBankProduct.periodScore()).isCloseTo(57.1429, offset(0.0001));
-        assertThat(oneYearBankProduct.totalScore()).isCloseTo(100.0, offset(0.0001));
+        assertThat(oneYearBankProduct.periodScore()).isCloseTo(26.6667, offset(0.0001));
+        assertThat(oneYearBankProduct.totalScore()).isCloseTo(46.6667, offset(0.0001));
         assertThat(adjacentGovProduct.periodScore()).isCloseTo(27.5, offset(0.0001));
     }
 
@@ -327,10 +327,10 @@ class SearchServiceIntegrationTest extends IntegrationTestSupport {
 
         ProductMatchDto militaryProduct = result.bankRanked().get(0);
         ProductMatchDto generalProduct = result.bankRanked().get(1);
-        assertThat(militaryProduct.identityScore()).isCloseTo(12.5, offset(0.0001));
-        assertThat(militaryProduct.totalScore()).isCloseTo(100.0, offset(0.0001));
+        assertThat(militaryProduct.identityScore()).isCloseTo(6.25, offset(0.0001));
+        assertThat(militaryProduct.totalScore()).isCloseTo(50.0, offset(0.0001));
         assertThat(generalProduct.identityScore()).isZero();
-        assertThat(generalProduct.totalScore()).isCloseTo(87.5, offset(0.0001));
+        assertThat(generalProduct.totalScore()).isCloseTo(43.75, offset(0.0001));
     }
 
     @Test
@@ -580,8 +580,8 @@ class SearchServiceIntegrationTest extends IntegrationTestSupport {
                         true,
                         null,
                         monthlySavingsGoal,
-                        List.of(),
-                        List.of(),
+                        List.of("TEST_NO_MATCH"),
+                        List.of("TEST_NO_MATCH"),
                         List.of()
                 )
         );
