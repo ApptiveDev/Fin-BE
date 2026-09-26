@@ -1,5 +1,7 @@
 plugins {
     id 'java'
+    id 'jacoco'
+    id 'pmd'
     id 'org.springframework.boot' version '4.0.3'
     id 'io.spring.dependency-management' version '1.1.7'
 }
@@ -16,6 +18,21 @@ java {
 
 repositories {
     mavenCentral()
+}
+
+jacoco {
+    toolVersion = '0.8.13'
+}
+
+pmd {
+    toolVersion = '7.27.0'
+    ruleSetFiles = files('config/pmd/ruleset.xml')
+    ruleSets = []
+    ignoreFailures = true
+}
+
+configurations {
+    cpdRuntime
 }
 
 sourceSets {
@@ -64,6 +81,9 @@ dependencies {
     testImplementation 'org.testcontainers:testcontainers-postgresql'
 
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    cpdRuntime 'net.sourceforge.pmd:pmd-cli:7.27.0'
+    cpdRuntime 'net.sourceforge.pmd:pmd-java:7.27.0'
 }
 
 tasks.named('test') {
@@ -85,6 +105,66 @@ def integrationTest = tasks.register('integrationTest', Test) {
 
 tasks.named('check') {
     dependsOn integrationTest
+}
+
+// 아래 태스크는 PR 코드 헬스 리포트(.github/workflows/backend-code-health.yml)용이며 빌드를 실패시키지 않는다.
+['pmdTest', 'pmdReset'].each { name ->
+    tasks.named(name) { enabled = false }
+}
+
+tasks.withType(Pmd).configureEach {
+    reports {
+        xml.required = true
+        html.required = false
+    }
+}
+
+def jacocoCombinedReport = tasks.register('jacocoCombinedReport', JacocoReport) {
+    description = 'Generates combined JaCoCo coverage for unit and integration tests.'
+    group = LifecycleBasePlugin.VERIFICATION_GROUP
+    dependsOn tasks.named('test'), integrationTest
+    executionData(
+            layout.buildDirectory.file('jacoco/test.exec'),
+            layout.buildDirectory.file('jacoco/integrationTest.exec'),
+    )
+    sourceDirectories.setFrom(sourceSets.main.allSource.srcDirs)
+    classDirectories.setFrom(sourceSets.main.output)
+    reports {
+        xml.required = true
+        xml.outputLocation = layout.buildDirectory.file('reports/jacoco/combined.xml')
+        html.required = false
+        csv.required = false
+    }
+}
+
+def cpdMain = tasks.register('cpdMain', JavaExec) {
+    description = 'Generates a PMD CPD report for production Java sources.'
+    group = LifecycleBasePlugin.VERIFICATION_GROUP
+    classpath = configurations.cpdRuntime
+    mainClass = 'net.sourceforge.pmd.cli.PmdCli'
+
+    def reportFile = layout.buildDirectory.file('reports/cpd/main.xml')
+    inputs.dir('src/main/java')
+    outputs.file(reportFile)
+    doFirst {
+        reportFile.get().asFile.parentFile.mkdirs()
+    }
+    args(
+            'cpd',
+            '--minimum-tokens', '100',
+            '--language', 'java',
+            '--format', 'xml',
+            '--report-file', reportFile.get().asFile.absolutePath,
+            '--no-fail-on-violation',
+            '--dir', file('src/main/java').absolutePath,
+            '--relativize-paths-with', projectDir.absolutePath,
+    )
+}
+
+tasks.register('codeHealthReports') {
+    description = 'Generates coverage, PMD, and CPD reports for the code health bot.'
+    group = LifecycleBasePlugin.VERIFICATION_GROUP
+    dependsOn jacocoCombinedReport, tasks.named('pmdMain'), cpdMain
 }
 
 tasks.register('resetDb', JavaExec) {
