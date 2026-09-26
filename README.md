@@ -90,3 +90,19 @@ Update : 2026/07/13
 | Calculator | 완료   | 프로필 기반 금리/적합도 재계산, 정부·은행 상품별 수익률 산출 |
 | MyFin | 완료   | 찜 목록 관리 (추가/삭제/조회), 최신순 정렬, 최대 20개 제한 |
 | data | 진행 중 | 금감원, 온통청년 API 데이터 전처리 및 저장 |
+
+## 5. CI
+| 워크플로 | 역할 | 머지 차단 |
+| -------- | ---- | -------- |
+| `backend-ci.yml` | 단위 테스트(`test`), 통합 테스트(`integrationTest`) | O |
+| `backend-code-health.yml` | 커버리지(JaCoCo)·복잡도/버그 패턴(PMD)·중복(CPD)·Code Health(Codelens)를 main 스냅샷과 비교해 PR 코멘트로 게시 | X (정보 제공용) |
+
+- `IntegrationTestSupport`를 상속한 테스트는 `integration` 태그가 붙어 `integrationTest`에서만 실행된다(Docker 필요).
+- main 비교 기준은 main push 때 저장되는 `backend-code-health-main` artifact(30일 보관)다. 없으면 Base가 N/A로 표시된다.
+- 로컬 실행
+  ```bash
+  ./gradlew test              # 단위 테스트
+  ./gradlew integrationTest   # 통합 테스트 (Testcontainers)
+  ./gradlew codeHealthReports # build/reports/{jacoco/combined.xml,pmd/main.xml,cpd/main.xml}
+  python -m unittest discover -s tools/tests  # 리포트 생성기 테스트
+  ```
