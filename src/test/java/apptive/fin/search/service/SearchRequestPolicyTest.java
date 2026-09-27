@@ -125,6 +125,22 @@ class SearchRequestPolicyTest {
         assertThat(allowed).isFalse();
     }
 
+
+    @Test
+    void 첫거래와_만기거래_이력이_null이_아니면_개인화를_허용한다() {
+        DetailedOptionsDto transactionHistory = detailedOptions(
+                LocalDate.of(2000, 1, 1), 30_000_000L, 3, 100,
+                50L, List.of(), List.of());
+
+        boolean allowed = policy.canUsePersonalization(
+                request(transactionHistory),
+                completeKeywords(),
+                new AuthUserDetails(1L, UserRole.RECOMMENDATION)
+        );
+
+        assertThat(allowed).isTrue();
+    }
+
     @Test
     void 단계1_필수값이_하나라도_없으면_개인화를_허용하지_않는다() {
         DetailedOptionsDto withoutMonthlySavingsGoal = detailedOptions(
@@ -173,12 +189,8 @@ class SearchRequestPolicyTest {
                         LocalDate.of(2000, 1, 1), 30_000_000L, 3, null, 50L, List.of("KB"), List.of("SHINHAN"))),
                 Arguments.of("미거래 은행(null)", detailedOptions(
                         LocalDate.of(2000, 1, 1), 30_000_000L, 3, 100, 50L, null, List.of("SHINHAN"))),
-                Arguments.of("미거래 은행(빈 리스트)", detailedOptions(
-                        LocalDate.of(2000, 1, 1), 30_000_000L, 3, 100, 50L, List.of(), List.of("SHINHAN"))),
                 Arguments.of("만기 거래 은행(null)", detailedOptions(
-                        LocalDate.of(2000, 1, 1), 30_000_000L, 3, 100, 50L, List.of("KB"), null)),
-                Arguments.of("만기 거래 은행(빈 리스트)", detailedOptions(
-                        LocalDate.of(2000, 1, 1), 30_000_000L, 3, 100, 50L, List.of("KB"), List.of()))
+                        LocalDate.of(2000, 1, 1), 30_000_000L, 3, 100, 50L, List.of("KB"), null))
         );
     }
 

@@ -43,13 +43,10 @@ public class SearchRequestPolicy {
                 && detail.annualIncome() != null
                 && detail.householdSize() != null
                 && detail.householdIncomePercent() != null
-                && hasSelection(detail.neverUsedBanks())
-                && hasSelection(detail.maturedSavingBanks());
+                && detail.neverUsedBanks() != null
+                && detail.maturedSavingBanks() != null;
     }
 
-    private boolean hasSelection(List<String> banks) {
-        return banks != null && !banks.isEmpty();
-    }
 
     private boolean isStep1Complete(SearchRequestDto request, ResolvedKeywords keywords) {
         return request != null
