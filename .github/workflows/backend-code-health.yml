@@ -1,0 +1,212 @@
+name: Backend Code Health Report
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - "src/**"
+      - "config/**"
+      - "gradle/**"
+      - "build.gradle"
+      - "settings.gradle"
+      - "tools/**"
+      - ".github/workflows/backend-code-health.yml"
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "config/**"
+      - "gradle/**"
+      - "build.gradle"
+      - "settings.gradle"
+      - "tools/**"
+      - ".github/workflows/backend-code-health.yml"
+
+permissions:
+  contents: read
+  actions: read
+  pull-requests: write
+
+concurrency:
+  group: backend-code-health-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  report:
+    name: Informational code health report
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    # backend-ci.yml과 같은 더미 값. 통합 테스트까지 돌려야 합산 커버리지가 나온다.
+    env:
+      GOOGLE_CLIENT_ID: ci-dummy
+      GOOGLE_CLIENT_SECRET: ci-dummy
+      KAKAO_CLIENT_ID: ci-dummy
+      KAKAO_CLIENT_SECRET: ci-dummy
+      JWT_SECRET: ci-dummy-jwt-secret-0123456789abcdef0123456789abcdef0123456789
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Test report generator
+        continue-on-error: true
+        run: python -m unittest discover -s tools/tests -v
+
+      - name: Generate JaCoCo, PMD, and CPD reports
+        continue-on-error: true
+        run: bash ./gradlew codeHealthReports --continue
+
+      - name: Install Codelens v0.1.8
+        continue-on-error: true
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/codelens"
+          curl -fsSL \
+            "https://github.com/DropFan/codelens/releases/download/v0.1.8-rust/codelens-0.1.8-x86_64-unknown-linux-gnu.tar.gz" \
+            -o "$RUNNER_TEMP/codelens.tar.gz"
+          echo "86ca46d4673af523167b1acd45a9e737d67de484b909dee73cc78a322dfd59f1  $RUNNER_TEMP/codelens.tar.gz" \
+            | sha256sum --check --status
+          tar -xzf "$RUNNER_TEMP/codelens.tar.gz" -C "$RUNNER_TEMP/codelens"
+          echo "$RUNNER_TEMP/codelens" >> "$GITHUB_PATH"
+
+      - name: Generate Codelens report
+        continue-on-error: true
+        shell: bash
+        run: |
+          mkdir -p build/quality
+          codelens src/main/java --by-file -f json -O build/quality/codelens.json
+
+      - name: Download base branch snapshot
+        if: always() && github.event_name == 'pull_request'
+        continue-on-error: true
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE_REF: ${{ github.base_ref }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          mkdir -p build/quality/baseline
+          artifact_name="backend-code-health-${BASE_REF}"
+          artifact_id=$(gh api \
+            "repos/${REPOSITORY}/actions/artifacts?name=${artifact_name}&per_page=100" \
+            --jq '.artifacts | map(select(.expired == false)) | sort_by(.created_at) | reverse | .[0].id // empty' \
+            || true)
+
+          if [ -n "$artifact_id" ]; then
+            gh api "repos/${REPOSITORY}/actions/artifacts/${artifact_id}/zip" \
+              > build/quality/baseline.zip
+            unzip -q build/quality/baseline.zip -d build/quality/baseline
+          else
+            echo "::warning::No code health snapshot found for ${BASE_REF}; comparison will show N/A."
+          fi
+
+      - name: Build combined report
+        if: always()
+        continue-on-error: true
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          COMMIT_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          baseline_args=()
+          if [ "$EVENT_NAME" = "pull_request" ]; then
+            baseline_args=(--baseline build/quality/baseline/metrics.json)
+          fi
+
+          python tools/code_health_report.py \
+            --jacoco build/reports/jacoco/combined.xml \
+            --codelens build/quality/codelens.json \
+            --pmd build/reports/pmd/main.xml \
+            --cpd build/reports/cpd/main.xml \
+            "${baseline_args[@]}" \
+            --commit "$COMMIT_SHA" \
+            --metrics-output build/quality/metrics.json \
+            --report-output build/quality/report.md
+
+      - name: Add report to job summary
+        if: always()
+        continue-on-error: true
+        shell: bash
+        run: |
+          if [ -f build/quality/report.md ]; then
+            cat build/quality/report.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "## Backend Code Health Report" >> "$GITHUB_STEP_SUMMARY"
+            echo "Report generation failed. See warnings above." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Create or update PR comment
+        if: always() && github.event_name == 'pull_request'
+        continue-on-error: true
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('fs');
+            const marker = '<!-- backend-code-health-report -->';
+            const fallback = [
+              marker,
+              '## Backend Code Health Report',
+              '',
+              'Report generation failed. Check the workflow warnings for details.',
+              '',
+              `Run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+              '',
+              '> Informational report only — this does not block merging.',
+            ].join('\n');
+            const body = fs.existsSync('build/quality/report.md')
+              ? fs.readFileSync('build/quality/report.md', 'utf8')
+              : fallback;
+
+            try {
+              const comments = await github.paginate(github.rest.issues.listComments, {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                per_page: 100,
+              });
+              const existing = comments.find(comment => comment.body?.startsWith(marker));
+
+              if (existing) {
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: existing.id,
+                  body,
+                });
+              } else {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: context.issue.number,
+                  body,
+                });
+              }
+            } catch (error) {
+              core.warning(`Unable to update the code health comment: ${error.message}`);
+            }
+
+      - name: Save branch snapshot
+        if: always() && github.event_name == 'push' && hashFiles('build/quality/metrics.json') != ''
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-code-health-${{ github.ref_name }}
+          path: build/quality/metrics.json
+          retention-days: 30
+          if-no-files-found: warn
