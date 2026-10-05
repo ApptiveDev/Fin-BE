@@ -74,7 +74,7 @@ public class ProductProperty {
     private Long minMonthlyLimit;
     private Long maxMonthlyLimit;
 
-    // 예금 전용: 최소/최대 예치가능금액
+    // 예금·파킹: 최소/최대 예치가능금액
     private Long minDepositAmount;
     private Long maxDepositAmount;
 
