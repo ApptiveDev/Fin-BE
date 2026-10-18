@@ -149,7 +149,10 @@ public class SearchService {
                                 .map(o -> o.product().getId())
                                 .distinct()
                                 .count()
-                        + parkingProducts.size()  // 파킹통장 포함
+                        + parkingProducts.stream()  // 파킹통장 포함 (옵션이 아닌 상품 단위)
+                                .map(ParkingProductDto::productId)
+                                .distinct()
+                                .count()
                 )
                 .build();
     }
