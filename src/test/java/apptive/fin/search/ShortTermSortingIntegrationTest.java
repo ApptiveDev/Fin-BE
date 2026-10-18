@@ -96,11 +96,9 @@ class ShortTermSortingIntegrationTest extends IntegrationTestSupport {
         // When
         UnifiedSearchResultDto result = searchService.searchUnified(request, userDetails);
 
-        // Then: 예적금 + 파킹 전체 카운트
-        long depositCount = result.depositSavingsProducts() != null ? result.depositSavingsProducts().size() : 0;
-        long parkingCount = result.parkingProducts() != null ? result.parkingProducts().size() : 0;
-
-        assertThat(result.eligibleProductCount()).isEqualTo(depositCount + parkingCount);
+        // Then: 예적금 3개 + 파킹 1개 (파킹 옵션이 2개여도 상품 수는 1개)
+        assertThat(result.parkingProducts()).hasSize(2);
+        assertThat(result.eligibleProductCount()).isEqualTo(4);
     }
 
     // === Helper methods ===

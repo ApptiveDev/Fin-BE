@@ -32,3 +32,13 @@ INSERT INTO product_property_keyword (product_property_id, keyword_code) VALUES
 ((SELECT pp.id FROM product_properties pp JOIN product p ON p.id = pp.product_id WHERE p.product_code = 'SHORT_HIGH_RATE'), 'BANK_SALARY_TRANSFER'),
 ((SELECT pp.id FROM product_properties pp JOIN product p ON p.id = pp.product_id WHERE p.product_code = 'SHORT_MID_RATE'), 'BANK_SALARY_TRANSFER'),
 ((SELECT pp.id FROM product_properties pp JOIN product p ON p.id = pp.product_id WHERE p.product_code = 'SHORT_LOW_RATE'), 'BANK_SALARY_TRANSFER');
+
+-- 파킹통장 (옵션 2개짜리 1개 상품: 상품 수는 1개로 세어야 한다)
+INSERT INTO product (source_id, type, product_code, product_name, content) VALUES
+((SELECT id FROM product_source WHERE code = 'FSS'), 'PARKING', 'SHORT_PARKING', '테스트파킹통장', '수시입출금');
+
+INSERT INTO product_properties (
+    product_id, provider_id, base_rate, max_rate, min_age, max_age, is_joinable, save_trm
+) VALUES
+((SELECT id FROM product WHERE product_code = 'SHORT_PARKING'), (SELECT id FROM provider WHERE code = 'SHORT_BANK_A'), 2.0, 3.0, 17, 100, true, NULL),
+((SELECT id FROM product WHERE product_code = 'SHORT_PARKING'), (SELECT id FROM provider WHERE code = 'SHORT_BANK_A'), 2.0, 2.5, 17, 100, true, NULL);
