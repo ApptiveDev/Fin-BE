@@ -70,12 +70,12 @@ public class ParkingProductService {
 
     /**
      * 예치금 하한 확인.
-     * 상품의 최소 한도보다 예치액이 적으면 제외.
+     * 상품의 최소 예치금(min_deposit_amount, 예금·파킹 공용)보다 예치액이 적으면 제외.
      */
     private boolean isDepositEligible(ProductProperty property, Long depositAmount) {
         return depositAmount == null
-                || property.getMinMonthlyLimit() == null
-                || property.getMinMonthlyLimit() <= depositAmount;
+                || property.getMinDepositAmount() == null
+                || property.getMinDepositAmount() <= depositAmount;
     }
 
     private ParkingProductDto toParkingProductDto(Product product, ProductProperty property) {

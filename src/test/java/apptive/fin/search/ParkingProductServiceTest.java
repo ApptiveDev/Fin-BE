@@ -85,10 +85,10 @@ class ParkingProductServiceTest {
     void 예치금이_최소한도보다_적으면_제외한다() {
         // Given
         Product lowMin = createParkingProduct(1L, "저액최소", "3.50", "4.00");
-        ReflectionTestUtils.setField(lowMin.getProperties().get(0), "minMonthlyLimit", 1_000_000L);
+        ReflectionTestUtils.setField(lowMin.getProperties().get(0), "minDepositAmount", 1_000_000L);
 
         Product highMin = createParkingProduct(2L, "고액최소", "3.80", "4.20");
-        ReflectionTestUtils.setField(highMin.getProperties().get(0), "minMonthlyLimit", 100_000_000L);
+        ReflectionTestUtils.setField(highMin.getProperties().get(0), "minDepositAmount", 100_000_000L);
 
         when(productRepository.findByType(ProductType.PARKING))
                 .thenReturn(List.of(lowMin, highMin));

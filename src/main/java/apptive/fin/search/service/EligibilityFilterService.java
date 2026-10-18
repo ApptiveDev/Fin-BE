@@ -2,6 +2,7 @@ package apptive.fin.search.service;
 
 import apptive.fin.search.enums.ExtractionConfidence;
 import apptive.fin.search.enums.KeywordValueEnum;
+import apptive.fin.search.enums.ProductType;
 import apptive.fin.search.enums.RequiredKeywordEffect;
 import apptive.fin.search.dto.DetailedOptionsDto;
 import apptive.fin.search.dto.EligibleProductOption;
@@ -44,7 +45,7 @@ public class EligibilityFilterService {
                 criteria.isHomeless(),
                 criteria.isHouseholder(),
                 criteria.tenureMonths(),
-                criteria.depositLimit()
+                criteria.monthlyDeposit()
         ).stream()
                 .filter(product -> hasEligibleIdentityProperty(product, keywords.identities()))
                 .toList();
@@ -70,7 +71,7 @@ public class EligibilityFilterService {
                         criteria.isHomeless(),
                         criteria.isHouseholder(),
                         criteria.tenureMonths(),
-                        criteria.depositLimit()
+                        criteria.monthlyDeposit()
                 ).stream()
                 .flatMap(product
                         -> product.getProperties().stream()
@@ -98,11 +99,6 @@ public class EligibilityFilterService {
                 : null;
         boolean isShortTerm = saveTrm != null && (saveTrm == 1 || saveTrm == 3);
 
-        // 예치금 하한 비교용: 단기예치는 depositAmount, 목돈만들기는 monthlySavingsGoal
-        Long depositLimit = isShortTerm
-                ? detail.depositAmount()
-                : detail.monthlySavingsGoal();
-
         return new EligibilityCriteria(
                 age,
                 annualIncome,
@@ -111,7 +107,8 @@ public class EligibilityFilterService {
                 detail.isHomeless(),
                 detail.isHouseholder(),
                 tenureMonths,
-                depositLimit,
+                detail.normalizedMonthlyDeposit(saveTrm),
+                detail.normalizedDepositPrincipal(saveTrm),
                 isShortTerm
         );
     }
@@ -126,7 +123,7 @@ public class EligibilityFilterService {
                 && isIncomeEligible(property, criteria.annualIncome(), criteria.householdIncomePercent(), criteria.incomeProofUnavailable())
                 && isResidenceEligible(property, criteria.isHomeless(), criteria.isHouseholder())
                 && isTenureEligible(property, criteria.tenureMonths())
-                && isDepositLimitEligible(property, criteria.depositLimit())
+                && isAmountEligible(property, criteria.monthlyDeposit(), criteria.depositPrincipal())
                 && isIdentityEligible(property, identities);
     }
 
@@ -187,11 +184,15 @@ public class EligibilityFilterService {
                 || property.getMinTenureMonths() <= tenureMonths;
     }
 
-    // 예치금 하한 조건 확인 (단기: depositAmount, 목돈: monthlySavingsGoal)
-    private boolean isDepositLimitEligible(ProductProperty property, Long depositLimit) {
-        return depositLimit == null
-                || property.getMinMonthlyLimit() == null
-                || property.getMinMonthlyLimit() <= depositLimit;
+    // 금액 하한 조건 확인 (예금: 예치 원금 vs 최소예치금, 그 외: 월 납입액 vs 월 최소납입액)
+    private boolean isAmountEligible(ProductProperty property, Long monthlyDeposit, Long depositPrincipal) {
+        boolean isDeposit = property.getProduct() != null
+                && property.getProduct().getType() == ProductType.DEPOSIT;
+        Long amount = isDeposit ? depositPrincipal : monthlyDeposit;
+        Long minLimit = property.resolvedMinLimit();
+        return amount == null
+                || minLimit == null
+                || minLimit <= amount;
     }
 
     // 상품에 대해 사용자의 현재 신분 기준 가입 가능 여부를 반환하는 함수
@@ -239,7 +240,8 @@ public class EligibilityFilterService {
             Boolean isHomeless,
             Boolean isHouseholder,
             Integer tenureMonths,
-            Long depositLimit,      // 단기: depositAmount, 목돈: monthlySavingsGoal
+            Long monthlyDeposit,    // 월 납입액 (단기: 예치액÷기간, 목돈: monthlySavingsGoal)
+            Long depositPrincipal,  // 예치 원금 (단기: depositAmount, 목돈: 월저축액×기간)
             boolean isShortTerm     // 단기예치 여부
     ) {
     }
