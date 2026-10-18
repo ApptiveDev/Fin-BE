@@ -1198,6 +1198,40 @@ class MatchScoreServiceTest {
         assertThat(adjacent.periodScore()).isGreaterThan(0.0);
     }
 
+    @Test
+    void TOP3는_미선택_축_배점을_남은_축에_비례_재배분한다() {
+        // 기간(34) 정확 매칭, 혜택(33) 미선택 → 혜택 33점을 납입(33)·기간(34)에 33:34로 재배분
+        Product product = createProduct("FSS", createProperty(10L, "test-bank", 500_000L, 12));
+
+        ProductMatchDto withoutBenefit = new MatchScoreService().scoreForTop3(
+                product,
+                product.getProperties().get(0),
+                createRequest(300_000L),
+                new ResolvedKeywords(List.of(), List.of(), KeywordValueEnum.TERM_12_MONTH, List.of(), List.of()),
+                null
+        );
+
+        assertThat(withoutBenefit.benefitScore()).isZero();
+        assertThat(withoutBenefit.periodScore()).isCloseTo(34.0 + 33.0 * 34.0 / 67.0, within(1e-9));
+    }
+
+    @Test
+    void TOP3는_모든_축을_선택하면_기본_배점을_그대로_쓴다() {
+        Product product = createProduct("FSS", createProperty(
+                10L, "test-bank", 500_000L, 12, KeywordValueEnum.BENEFIT_EASY_CONDITION));
+
+        ProductMatchDto result = new MatchScoreService().scoreForTop3(
+                product,
+                product.getProperties().get(0),
+                createRequest(300_000L),
+                new ResolvedKeywords(List.of(), List.of(), KeywordValueEnum.TERM_12_MONTH,
+                        List.of(KeywordValueEnum.BENEFIT_EASY_CONDITION), List.of()),
+                null
+        );
+
+        assertThat(result.periodScore()).isCloseTo(34.0, within(1e-9));
+    }
+
     // 옵션 순서 1→3→6→12→24→36에서 바로 앞뒤 구간은 정확 매칭의 절반, 그 외는 0점. 10개월은 12개월의 인접.
     @ParameterizedTest(name = "{0} 선택, {1}개월 상품 → 정확 매칭 대비 {2}")
     @CsvSource({
