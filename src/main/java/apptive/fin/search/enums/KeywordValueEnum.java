@@ -108,15 +108,4 @@ public enum KeywordValueEnum {
             default -> null;
         };
     }
-
-    /** 단기예치 대분류인지 (1, 3개월). */
-    public boolean isShortTerm() {
-        return this == TERM_1_MONTH || this == TERM_3_MONTH;
-    }
-
-    /** 목돈만들기 대분류인지 (6개월 이상). */
-    public boolean isLongTerm() {
-        Integer trm = toSaveTrm();
-        return trm != null && trm >= 6;
-    }
 }

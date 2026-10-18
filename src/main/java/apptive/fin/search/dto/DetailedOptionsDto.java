@@ -92,18 +92,6 @@ public record DetailedOptionsDto(
     }
 
     /**
-     * 대분류에 따른 유효 금액 반환.
-     * @param isShortTerm 단기예치 여부 (키워드 기반으로 판정)
-     * @return 단기예치면 depositAmount, 목돈만들기면 monthlySavingsGoal
-     */
-    public Long effectiveAmount(boolean isShortTerm) {
-        if (isShortTerm) {
-            return depositAmount;
-        }
-        return monthlySavingsGoal;
-    }
-
-    /**
      * 정규화된 월 납입액 계산.
      * @param saveTrm 저축기간 (키워드에서 추출)
      * @return 단기예치(1,3개월)면 예치액÷기간, 목돈만들기면 monthlySavingsGoal

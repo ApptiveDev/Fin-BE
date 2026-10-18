@@ -405,10 +405,6 @@ public class MatchScoreService {
                 .toList();
     }
 
-    private boolean isGovBankConditionExcluded(boolean isGov) {
-        return isGov;
-    }
-
 
     // 저축기간을 반환
     private int[] periodRange(KeywordValueEnum kw) {

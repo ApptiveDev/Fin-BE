@@ -55,30 +55,6 @@ public record SearchRequestDto(
     }
 
     /**
-     * 단기예치 여부 (키워드 기반 판정).
-     */
-    public boolean isShortTerm(ResolvedKeywords keywords) {
-        Integer saveTrm = getSaveTrm(keywords);
-        return saveTrm != null && (saveTrm == 1 || saveTrm == 3);
-    }
-
-    /**
-     * 목돈만들기 여부 (키워드 기반 판정).
-     */
-    public boolean isLongTerm(ResolvedKeywords keywords) {
-        Integer saveTrm = getSaveTrm(keywords);
-        return saveTrm != null && saveTrm >= 6;
-    }
-
-    /**
-     * 대분류에 따른 유효 금액 반환.
-     */
-    public Long effectiveAmount(ResolvedKeywords keywords) {
-        if (detailedOptions == null) return null;
-        return detailedOptions.effectiveAmount(isShortTerm(keywords));
-    }
-
-    /**
      * 정규화된 월 납입액 (적금 계산용).
      */
     public Long normalizedMonthlyDeposit(ResolvedKeywords keywords) {

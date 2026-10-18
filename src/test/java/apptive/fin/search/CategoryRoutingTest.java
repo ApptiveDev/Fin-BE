@@ -44,25 +44,25 @@ class CategoryRoutingTest {
 
     @Test
     void TERM_1_MONTH_키워드는_단기예치다() {
-        assertThat(ProductCategoryEnum.fromKeyword(KeywordValueEnum.TERM_1_MONTH))
+        assertThat(ProductCategoryEnum.fromSaveTrm(KeywordValueEnum.TERM_1_MONTH.toSaveTrm()))
                 .isEqualTo(ProductCategoryEnum.SHORT_TERM);
     }
 
     @Test
     void TERM_3_MONTH_키워드는_단기예치다() {
-        assertThat(ProductCategoryEnum.fromKeyword(KeywordValueEnum.TERM_3_MONTH))
+        assertThat(ProductCategoryEnum.fromSaveTrm(KeywordValueEnum.TERM_3_MONTH.toSaveTrm()))
                 .isEqualTo(ProductCategoryEnum.SHORT_TERM);
     }
 
     @Test
     void TERM_12_MONTH_키워드는_목돈만들기다() {
-        assertThat(ProductCategoryEnum.fromKeyword(KeywordValueEnum.TERM_12_MONTH))
+        assertThat(ProductCategoryEnum.fromSaveTrm(KeywordValueEnum.TERM_12_MONTH.toSaveTrm()))
                 .isEqualTo(ProductCategoryEnum.LONG_TERM);
     }
 
     @Test
     void 레거시_TERM_AROUND_1_YEAR_키워드는_목돈만들기다() {
-        assertThat(ProductCategoryEnum.fromKeyword(KeywordValueEnum.TERM_AROUND_1_YEAR))
+        assertThat(ProductCategoryEnum.fromSaveTrm(KeywordValueEnum.TERM_AROUND_1_YEAR.toSaveTrm()))
                 .isEqualTo(ProductCategoryEnum.LONG_TERM);
     }
 
@@ -116,11 +116,10 @@ class CategoryRoutingTest {
                 List.of(), List.of()
         );
 
-        assertThat(request.isShortTerm(shortTermKeywords)).isTrue();
-        assertThat(request.isLongTerm(shortTermKeywords)).isFalse();
-
-        assertThat(request.isShortTerm(longTermKeywords)).isFalse();
-        assertThat(request.isLongTerm(longTermKeywords)).isTrue();
+        assertThat(ProductCategoryEnum.fromSaveTrm(request.getSaveTrm(shortTermKeywords)))
+                .isEqualTo(ProductCategoryEnum.SHORT_TERM);
+        assertThat(ProductCategoryEnum.fromSaveTrm(request.getSaveTrm(longTermKeywords)))
+                .isEqualTo(ProductCategoryEnum.LONG_TERM);
 
         assertThat(request.depositAmount()).isEqualTo(1000000L);
     }
