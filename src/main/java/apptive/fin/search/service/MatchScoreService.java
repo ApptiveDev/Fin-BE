@@ -370,6 +370,12 @@ public class MatchScoreService {
             inactive.add(ScoreWeightEnum.BANK_BANK_COND_V2.getKey());
         }
 
+        return redistributeInactive(weights, inactive);
+    }
+
+    // inactive 축의 가중치를 0으로 만들고, 그 합을 활성 축에 기존 비율대로 나눠 더한다.
+    // new_weight = weight + ( removedTotal * (weight / activeTotal) )
+    private Map<String, Double> redistributeInactive(Map<String, Double> weights, List<String> inactive) {
         // inactive 없으면 기본 가중치 바로 반환
         if (inactive.isEmpty()) return weights;
 
@@ -379,8 +385,6 @@ public class MatchScoreService {
         inactive.forEach(k -> weights.put(k, 0.0));
         // 활성화된 점수 총합
         double activeTotal = weights.values().stream().mapToDouble(Double::doubleValue).sum();
-        // active들의 가중치를 비율대로 조정
-        // new_weight = weight + ( removedTotal * (v / activeTotal) )
         if (activeTotal > 0) {
             weights.replaceAll((k, v) -> v > 0 ? v + removedTotal * (v / activeTotal) : 0.0);
         }
@@ -530,18 +534,8 @@ public class MatchScoreService {
             inactive.add("deposit");
         }
 
-        if (inactive.isEmpty()) return weights;
-
         // 미선택 축 제외 후 재분배
-        double removedTotal = inactive.stream().mapToDouble(weights::get).sum();
-        inactive.forEach(k -> weights.put(k, 0.0));
-        double activeTotal = weights.values().stream().mapToDouble(Double::doubleValue).sum();
-
-        if (activeTotal > 0) {
-            weights.replaceAll((k, v) -> v > 0 ? v + removedTotal * (v / activeTotal) : 0.0);
-        }
-
-        return weights;
+        return redistributeInactive(weights, inactive);
     }
 
     private record ProductPropertyScore(
