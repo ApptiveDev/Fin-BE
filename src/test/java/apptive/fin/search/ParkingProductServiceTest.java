@@ -170,7 +170,10 @@ class ParkingProductServiceTest {
         Product parking = createParkingProduct(1L, "테스트파킹", "3.00", "3.50");
         ProductProperty property = parking.getProperties().get(0);
         ReflectionTestUtils.setField(property, "applyUrl", "https://example.com/apply");
-        ReflectionTestUtils.setField(property, "maxMonthlyLimit", 50_000_000L);
+        ReflectionTestUtils.setField(property, "maxDepositAmount", 100_000_000L);
+        ReflectionTestUtils.setField(property, "maxRateApplicableMinAmount", 10_000_000L);
+        ReflectionTestUtils.setField(property, "maxRateApplicableMaxAmount", 50_000_000L);
+        ReflectionTestUtils.setField(property, "interestPaymentMethod", "월지급");
 
         when(productRepository.findByType(ProductType.PARKING))
                 .thenReturn(List.of(parking));
@@ -189,8 +192,10 @@ class ParkingProductServiceTest {
         assertThat(dto.providerCode()).isEqualTo("TEST");
         assertThat(dto.baseRate()).isEqualTo(3.00);
         assertThat(dto.maxRate()).isEqualTo(3.50);
-        assertThat(dto.applicableLimit()).isEqualTo(50_000_000L);
-        assertThat(dto.interestPaymentMethod()).isEqualTo("매일");
+        assertThat(dto.maxDepositAmount()).isEqualTo(100_000_000L);
+        assertThat(dto.maxRateApplicableMinAmount()).isEqualTo(10_000_000L);
+        assertThat(dto.maxRateApplicableMaxAmount()).isEqualTo(50_000_000L);
+        assertThat(dto.interestPaymentMethod()).isEqualTo("월지급");
         assertThat(dto.depositProtection()).isTrue();
         assertThat(dto.applyUrl()).isEqualTo("https://example.com/apply");
     }

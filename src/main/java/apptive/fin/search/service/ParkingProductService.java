@@ -87,8 +87,10 @@ public class ParkingProductService {
                 .providerCode(property.getProvider() != null ? property.getProvider().getCode() : null)
                 .baseRate(toDoubleOrNull(property.getBaseRate()))
                 .maxRate(toDoubleOrNull(property.getMaxRate()))
-                .applicableLimit(property.getMaxMonthlyLimit())  // 최고금리 적용 한도로 사용
-                .interestPaymentMethod(determineInterestPaymentMethod(property))
+                .maxRateApplicableMinAmount(property.getMaxRateApplicableMinAmount())
+                .maxRateApplicableMaxAmount(property.getMaxRateApplicableMaxAmount())
+                .maxDepositAmount(property.getMaxDepositAmount())
+                .interestPaymentMethod(property.getInterestPaymentMethod())
                 .depositProtection(true)  // 은행 상품은 기본 예금자보호
                 .applyUrl(property.getApplyUrl())
                 .officialChannelUrl(null)  // TODO: 공식 채널 URL 필드 추가 시 연동
@@ -110,11 +112,5 @@ public class ParkingProductService {
 
     private Double toDoubleOrNull(BigDecimal value) {
         return value != null ? value.doubleValue() : null;
-    }
-
-    private String determineInterestPaymentMethod(ProductProperty property) {
-        // 파킹통장은 기본적으로 매일 이자 지급
-        // TODO: 실제 이자 지급 방식 데이터가 있으면 그 값 사용
-        return "매일";
     }
 }
