@@ -33,7 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 )
 class LongTermSortingIntegrationTest extends IntegrationTestSupport {
 
-    // V7 migration의 category_option 삽입 순서로 결정되는 옵션 ID
+    // V9 migration의 category_option 삽입 순서로 결정되는 옵션 ID
     private static final Long TERM_12_MONTH_OPTION_ID = 40L;     // TERM_12_MONTH
     private static final Long FIRST_TRANSACTION_OPTION_ID = 31L; // BANK_FIRST_TRANSACTION
 
