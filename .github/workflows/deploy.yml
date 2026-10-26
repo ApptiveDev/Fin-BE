@@ -77,7 +77,7 @@ jobs:
           labels: org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
 
   deploy:
-    name: Deploy to ${{ github.ref_name == 'release' && 'prod' || 'dev' }}
+    name: Deploy
     needs: build
     # 수동 실행도 main·release에서만 배포한다(다른 브랜치가 dev 서버를 덮지 않게).
     if: github.event_name != 'pull_request' && (github.ref_name == 'main' || github.ref_name == 'release')
