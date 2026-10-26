@@ -56,10 +56,12 @@ gcloud iam workload-identity-pools providers create-oidc github --location=globa
   --attribute-mapping="google.subject=assertion.sub,attribute.repository=assertion.repository,attribute.repository_owner=assertion.repository_owner" \
   --attribute-condition="assertion.repository_owner=='ApptiveDev'"
 
-# 배포용 서비스 계정. OS Login(sudo), IAP 터널, VM 조회 권한
+# 배포용 서비스 계정. IAP 터널·VM 조회는 프로젝트, OS Login(sudo)은 배포 대상 VM에만 준다.
 gcloud iam service-accounts create github-deployer --project $P
-for r in roles/compute.osAdminLogin roles/iap.tunnelResourceAccessor roles/compute.viewer; do
+for r in roles/iap.tunnelResourceAccessor roles/compute.viewer; do
   gcloud projects add-iam-policy-binding $P --member=serviceAccount:$SA --role=$r --condition=None; done
+gcloud compute instances add-iam-policy-binding <VM> --zone=<ZONE> --project $P \
+  --member=serviceAccount:$SA --role=roles/compute.osAdminLogin
 gcloud iam service-accounts add-iam-policy-binding $PN-compute@developer.gserviceaccount.com --project $P \
   --member=serviceAccount:$SA --role=roles/iam.serviceAccountUser
 
@@ -68,11 +70,16 @@ for repo in Fin-BE Fin-API; do
   gcloud iam service-accounts add-iam-policy-binding $SA --project $P --role=roles/iam.workloadIdentityUser \
     --member="principalSet://iam.googleapis.com/projects/$PN/locations/global/workloadIdentityPools/github/attribute.repository/ApptiveDev/$repo"; done
 
-# SSH는 IAP 대역에서만
+# SSH는 IAP 대역에서, iap-ssh 태그가 붙은 VM으로만
+gcloud compute instances add-tags <VM> --zone=<ZONE> --project $P --tags=iap-ssh
 gcloud compute firewall-rules create allow-ssh-from-iap --project $P --network=default \
-  --direction=INGRESS --allow=tcp:22 --source-ranges=35.235.240.0/20
+  --direction=INGRESS --allow=tcp:22 --source-ranges=35.235.240.0/20 --target-tags=iap-ssh
+# 도메인이 가리키는 IP가 VM 재시작으로 바뀌지 않게 현재 IP를 고정 IP로 전환
+gcloud compute addresses create <이름> --addresses=<현재 외부 IP> --region=<REGION> --project $P
 gcloud compute instances add-metadata <VM> --zone=<ZONE> --project $P --metadata=enable-oslogin=TRUE
 ```
+
+GCP에는 AWS SSM Run Command처럼 VM이 바깥으로 연결해 명령을 받는 방식이 없어서, IAP 프록시 대역에서 22번으로 들어오는 규칙 하나는 필요하다. 공인 IP의 22번은 그 외 대역에 닫혀 있고, IAM(IAP)과 OS Login을 둘 다 통과해야 접속된다. 워크플로가 등록하는 SSH 키는 1시간 뒤 만료된다(`--ssh-key-expire-after=1h`).
 
 OS Login을 켜면 메타데이터 SSH 키로는 접속할 수 없다. 사람도 `gcloud compute ssh <VM> --zone <ZONE> --tunnel-through-iap`로 접속한다. 배포는 서비스 계정의 OS Login 사용자 홈(`~/fin-be/`)에서 돈다.
 
