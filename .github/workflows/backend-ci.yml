@@ -26,7 +26,7 @@ jobs:
   test:
     name: Unit and integration tests
     runs-on: ubuntu-latest
-    # application-dev.yml이 요구하는 값. CI에는 .env가 없으므로 더미 값을 주입한다(JWT는 32바이트 이상).
+    # application.yml이 요구하는 값. CI에는 .env가 없으므로 더미 값을 주입한다(JWT는 32바이트 이상).
     env:
       GOOGLE_CLIENT_ID: ci-dummy
       GOOGLE_CLIENT_SECRET: ci-dummy
