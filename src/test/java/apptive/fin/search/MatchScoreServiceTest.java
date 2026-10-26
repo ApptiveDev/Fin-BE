@@ -17,6 +17,8 @@ import apptive.fin.provider.entity.Provider;
 import apptive.fin.search.service.MatchScoreService;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
@@ -25,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 import static org.assertj.core.api.Assertions.offset;
 
 /**
@@ -1193,6 +1196,93 @@ class MatchScoreServiceTest {
 
         // 10개월은 12개월의 인접으로 처리 → 기간점수 50%
         assertThat(adjacent.periodScore()).isGreaterThan(0.0);
+    }
+
+    @Test
+    void TOP3는_미선택_축_배점을_남은_축에_비례_재배분한다() {
+        // 기간(34) 정확 매칭, 혜택(33) 미선택 → 혜택 33점을 납입(33)·기간(34)에 33:34로 재배분
+        Product product = createProduct("FSS", createProperty(10L, "test-bank", 500_000L, 12));
+
+        ProductMatchDto withoutBenefit = new MatchScoreService().scoreForTop3(
+                product,
+                product.getProperties().get(0),
+                createRequest(300_000L),
+                new ResolvedKeywords(List.of(), List.of(), KeywordValueEnum.TERM_12_MONTH, List.of(), List.of()),
+                null
+        );
+
+        assertThat(withoutBenefit.benefitScore()).isZero();
+        assertThat(withoutBenefit.periodScore()).isCloseTo(34.0 + 33.0 * 34.0 / 67.0, within(1e-9));
+    }
+
+    @Test
+    void TOP3는_모든_축을_선택하면_기본_배점을_그대로_쓴다() {
+        Product product = createProduct("FSS", createProperty(
+                10L, "test-bank", 500_000L, 12, KeywordValueEnum.BENEFIT_EASY_CONDITION));
+
+        ProductMatchDto result = new MatchScoreService().scoreForTop3(
+                product,
+                product.getProperties().get(0),
+                createRequest(300_000L),
+                new ResolvedKeywords(List.of(), List.of(), KeywordValueEnum.TERM_12_MONTH,
+                        List.of(KeywordValueEnum.BENEFIT_EASY_CONDITION), List.of()),
+                null
+        );
+
+        assertThat(result.periodScore()).isCloseTo(34.0, within(1e-9));
+    }
+
+    // 옵션 순서 1→3→6→12→24→36에서 바로 앞뒤 구간은 정확 매칭의 절반, 그 외는 0점. 10개월은 12개월의 인접.
+    @ParameterizedTest(name = "{0} 선택, {1}개월 상품 → 정확 매칭 대비 {2}")
+    @CsvSource({
+            "TERM_1_MONTH, 3, 0.5",
+            "TERM_1_MONTH, 6, 0.0",
+            "TERM_3_MONTH, 1, 0.5",
+            "TERM_3_MONTH, 6, 0.5",
+            "TERM_3_MONTH, 12, 0.0",
+            "TERM_6_MONTH, 3, 0.5",
+            "TERM_6_MONTH, 12, 0.5",
+            "TERM_6_MONTH, 1, 0.0",
+            "TERM_6_MONTH, 24, 0.0",
+            "TERM_12_MONTH, 6, 0.5",
+            "TERM_12_MONTH, 10, 0.5",
+            "TERM_12_MONTH, 24, 0.5",
+            "TERM_12_MONTH, 3, 0.0",
+            "TERM_12_MONTH, 36, 0.0",
+            "TERM_24_MONTH, 12, 0.5",
+            "TERM_24_MONTH, 36, 0.5",
+            "TERM_24_MONTH, 6, 0.0",
+            "TERM_36_MONTH, 24, 0.5",
+            "TERM_36_MONTH, 12, 0.0"
+    })
+    void 신규_저축기간_키워드는_바로_앞뒤_구간만_절반_배점한다(KeywordValueEnum selected, int saveTrm, double expectedRatio) {
+        double exact = periodScore(selected, selected.toSaveTrm());
+        double actual = periodScore(selected, saveTrm);
+
+        assertThat(exact).isPositive();
+        assertThat(actual / exact).isCloseTo(expectedRatio, within(1e-9));
+    }
+
+    private double periodScore(KeywordValueEnum selected, int saveTrm) {
+        Product product = createProduct("FSS", createProperty(
+                10L,
+                "test-bank",
+                500_000L,
+                saveTrm,
+                KeywordValueEnum.BENEFIT_EASY_CONDITION
+        ));
+        return new MatchScoreService().score(
+                product,
+                product.getProperties().get(0),
+                createRequest(300_000L),
+                new ResolvedKeywords(
+                        List.of(), List.of(),
+                        selected,
+                        List.of(KeywordValueEnum.BENEFIT_EASY_CONDITION),
+                        List.of()
+                ),
+                false
+        ).periodScore();
     }
 
     private Product createProduct(String sourceCode, ProductProperty property) {

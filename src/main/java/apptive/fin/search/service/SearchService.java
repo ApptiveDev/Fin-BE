@@ -149,7 +149,10 @@ public class SearchService {
                                 .map(o -> o.product().getId())
                                 .distinct()
                                 .count()
-                        + parkingProducts.size()  // 파킹통장 포함
+                        + parkingProducts.stream()  // 파킹통장 포함 (옵션이 아닌 상품 단위)
+                                .map(ParkingProductDto::productId)
+                                .distinct()
+                                .count()
                 )
                 .build();
     }
@@ -416,7 +419,7 @@ public class SearchService {
     /**
      * 탭A 동점 규칙: 적합도 → tieBreaker(정부:기여금/은행:실수령액) → 상품명
      */
-    private static Comparator<ProductMatchDto> tabAComparator() {
+    static Comparator<ProductMatchDto> tabAComparator() {
         return Comparator
                 .comparingDouble(ProductMatchDto::totalScore).reversed()
                 .thenComparing((dto) -> dto.tieBreaker() != null ? dto.tieBreaker() : 0L, Comparator.reverseOrder())
@@ -478,7 +481,7 @@ public class SearchService {
     /**
      * 탭B 정부 정렬: 기여금총액 DESC → 환산수익률 DESC → 상품명 ASC
      */
-    private List<ProductRateDto> sortedByGovernmentRate(Collection<ProductRateDto> products) {
+    static List<ProductRateDto> sortedByGovernmentRate(Collection<ProductRateDto> products) {
         return products.stream()
                 .sorted((a, b) -> {
                     // 1순위: 기여금 총액 내림차순
@@ -502,7 +505,7 @@ public class SearchService {
     /**
      * 탭B 은행 정렬: 실수령액 → 최고금리(achievableRate) → 상품명
      */
-    private List<ProductRateDto> sortedByBankRate(Collection<ProductRateDto> products) {
+    static List<ProductRateDto> sortedByBankRate(Collection<ProductRateDto> products) {
         return products.stream()
                 .sorted(Comparator
                         .comparingLong((ProductRateDto dto) -> dto.netReturn() != null ? dto.netReturn() : 0L).reversed()
@@ -512,7 +515,7 @@ public class SearchService {
     }
 
     // 세후 실수령액 기준 내림차순 정렬 (PRD 동점 규칙: 세후실수령액 → 달성가능금리 → 상품명)
-    private List<ProductRateDto> sortedByNetReturn(Collection<ProductRateDto> products) {
+    static List<ProductRateDto> sortedByNetReturn(Collection<ProductRateDto> products) {
         return products.stream()
                 .sorted((a, b) -> {
                     // 1순위: 세후 실수령액 내림차순
@@ -534,7 +537,7 @@ public class SearchService {
     }
 
     // 세후 실수령액 비교 (null-safe)
-    private int compareNetReturn(ProductRateDto left, ProductRateDto right) {
+    static int compareNetReturn(ProductRateDto left, ProductRateDto right) {
         Long leftReturn = left.netReturn() != null ? left.netReturn() : 0L;
         Long rightReturn = right.netReturn() != null ? right.netReturn() : 0L;
         return Long.compare(leftReturn, rightReturn);
@@ -558,22 +561,6 @@ public class SearchService {
                 .saveTrm(dto.saveTrm())
                 .productType(dto.productType())
                 .build();
-    }
-
-    // 달성가능금리 기준 내림차순 정렬 (비로그인 시 사용)
-    private List<ProductRateDto> sortedByAchievableRate(Collection<ProductRateDto> products) {
-        return products.stream()
-                .sorted((a, b) -> {
-                    // 1순위: 달성가능금리 내림차순
-                    int cmp = Double.compare(b.achievableRate(), a.achievableRate());
-                    if (cmp != 0) return cmp;
-
-                    // 2순위: 상품명 오름차순
-                    String aName = a.productName() != null ? a.productName() : "";
-                    String bName = b.productName() != null ? b.productName() : "";
-                    return aName.compareTo(bName);
-                })
-                .toList();
     }
 
     // 상품에서 매칭되는 지역 있는지 확인하는 함수

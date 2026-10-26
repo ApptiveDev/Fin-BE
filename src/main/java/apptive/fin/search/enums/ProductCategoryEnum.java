@@ -33,17 +33,4 @@ public enum ProductCategoryEnum {
         }
         return LONG_TERM;
     }
-
-    /**
-     * KeywordValueEnum으로 대분류 결정.
-     */
-    public static ProductCategoryEnum fromKeyword(KeywordValueEnum keyword) {
-        if (keyword == null) {
-            return LONG_TERM;
-        }
-        if (keyword.isShortTerm()) {
-            return SHORT_TERM;
-        }
-        return LONG_TERM;
-    }
 }
