@@ -34,7 +34,7 @@ import static org.mockito.Mockito.when;
 )
 class ShortTermSortingIntegrationTest extends IntegrationTestSupport {
 
-    // V7 migration의 category_option 삽입 순서로 결정되는 옵션 ID
+    // V9 migration의 category_option 삽입 순서로 결정되는 옵션 ID
     private static final Long TERM_1_MONTH_OPTION_ID = 37L;    // TERM_1_MONTH
     private static final Long SALARY_TRANSFER_OPTION_ID = 32L; // BANK_SALARY_TRANSFER
 
