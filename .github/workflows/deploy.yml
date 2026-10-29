@@ -1,0 +1,146 @@
+name: Deploy
+
+# main → dev 서버, release → 운영 서버. 테스트(backend-ci.yml)를 통과해야 이미지를 만들고 배포한다.
+# GCP 설정과 GitHub Environment 값은 docs/implementation/deployment.md 참고.
+on:
+  push:
+    branches: [main, release]
+    paths-ignore:
+      - "docs/**"
+      - "**.md"
+  # 배포 파일을 바꾸는 PR에서는 이미지 빌드까지만 확인한다(푸시·배포 없음).
+  pull_request:
+    paths:
+      - "Dockerfile"
+      - ".dockerignore"
+      - "deploy/**"
+      - ".github/workflows/deploy.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  # 진행 중인 배포를 중간에 끊지 않는다.
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    uses: ./.github/workflows/backend-ci.yml
+
+  build:
+    name: Build image
+    needs: ci
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.image.outputs.name }}
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v6
+
+      - name: Set up Java 21
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      - name: Build jar
+        run: bash ./gradlew bootJar
+
+      - name: Resolve image name
+        id: image
+        # GHCR 경로는 소문자여야 한다(ApptiveDev/Fin-BE → apptivedev/fin-be).
+        run: echo "name=ghcr.io/${GITHUB_REPOSITORY,,}:${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.image.outputs.name }}
+          # 패키지를 이 레포에 연결해 배포 job의 GITHUB_TOKEN으로 받을 수 있게 한다.
+          labels: org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+
+  deploy:
+    name: Deploy
+    needs: build
+    # 수동 실행도 main·release에서만 배포한다(다른 브랜치가 dev 서버를 덮지 않게).
+    if: github.event_name != 'pull_request' && (github.ref_name == 'main' || github.ref_name == 'release')
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name == 'release' && 'prod' || 'dev' }}
+    permissions:
+      contents: read
+      id-token: write   # GCP OIDC
+      packages: read    # 서버에서 이미지 pull
+    env:
+      GCE_INSTANCE: ${{ vars.GCE_INSTANCE }}
+      GCE_ZONE: ${{ vars.GCE_ZONE }}
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v6
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ vars.GCP_PROJECT }}
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v3
+
+      - name: Write server .env
+        env:
+          # dev 서버는 Swagger를 켜기 위해 dev 프로필을 함께 쓴다.
+          SPRING_PROFILES_ACTIVE: ${{ github.ref_name == 'release' && 'server' || 'dev,server' }}
+          SERVER_NAME: ${{ vars.SERVER_NAME }}
+          FRONTEND_URL: ${{ vars.FRONTEND_URL }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          KAKAO_CLIENT_ID: ${{ secrets.KAKAO_CLIENT_ID }}
+          KAKAO_CLIENT_SECRET: ${{ secrets.KAKAO_CLIENT_SECRET }}
+        run: |
+          umask 077
+          {
+            echo "IMAGE_TAG=${GITHUB_SHA}"
+            for name in SPRING_PROFILES_ACTIVE SERVER_NAME FRONTEND_URL POSTGRES_PASSWORD JWT_SECRET \
+                GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET KAKAO_CLIENT_ID KAKAO_CLIENT_SECRET; do
+              # 작은따옴표로 감싸 compose가 값을 그대로 읽게 한다.
+              printf "%s='%s'\n" "$name" "${!name}"
+            done
+          } > deploy/.env
+
+      - name: Copy deploy files
+        run: |
+          # 러너마다 새 SSH 키가 서비스 계정 OS Login 프로필에 등록되므로 1시간 뒤 만료되게 한다.
+          ssh_opts=(--zone "$GCE_ZONE" --tunnel-through-iap --quiet --ssh-key-expire-after=1h)
+          gcloud compute ssh "$GCE_INSTANCE" "${ssh_opts[@]}" --command "mkdir -p ~/fin-be/nginx/templates"
+          gcloud compute scp "${ssh_opts[@]}" \
+            deploy/docker-compose.yml deploy/.env deploy/remote-deploy.sh "$GCE_INSTANCE":~/fin-be/
+          gcloud compute scp "${ssh_opts[@]}" \
+            deploy/nginx/templates/default.conf.template "$GCE_INSTANCE":~/fin-be/nginx/templates/
+
+      - name: Deploy
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "$GHCR_TOKEN" | gcloud compute ssh "$GCE_INSTANCE" --zone "$GCE_ZONE" --tunnel-through-iap --quiet \
+            --ssh-key-expire-after=1h \
+            --command "bash ~/fin-be/remote-deploy.sh"

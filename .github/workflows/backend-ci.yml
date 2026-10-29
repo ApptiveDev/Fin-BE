@@ -1,23 +1,10 @@
 name: Backend CI
 
 on:
+  # 필수 체크로 걸 수 있도록 모든 PR에서 돈다(paths 필터로 스킵되면 필수 체크가 대기 상태로 남는다).
   pull_request:
-    paths:
-      - "src/**"
-      - "config/**"
-      - "gradle/**"
-      - "build.gradle"
-      - "settings.gradle"
-      - ".github/workflows/backend-ci.yml"
-  push:
-    branches: [main]
-    paths:
-      - "src/**"
-      - "config/**"
-      - "gradle/**"
-      - "build.gradle"
-      - "settings.gradle"
-      - ".github/workflows/backend-ci.yml"
+  # main·release push 때는 deploy.yml이 배포 전에 호출한다.
+  workflow_call:
 
 permissions:
   contents: read

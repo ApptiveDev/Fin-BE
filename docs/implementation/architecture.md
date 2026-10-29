@@ -29,6 +29,7 @@ flowchart LR
 | DB | PostgreSQL 16 (로컬은 `pgvector/pgvector:pg16` 이미지), Flyway 마이그레이션, JPA `ddl-auto: validate` |
 | API 문서 | springdoc-openapi (Swagger UI는 `dev`, `test` 프로필에서만 열림) |
 | 테스트·품질 | JUnit 5, Spring Security Test, Testcontainers(PostgreSQL), JaCoCo, PMD·CPD (GitHub Actions) |
+| 배포 | GHCR 이미지 + GCP VM의 docker compose(nginx, backend, PostgreSQL). [배포](deployment.md) 참고 |
 
 ## 패키지 구조
 
