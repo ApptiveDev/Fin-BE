@@ -45,6 +45,7 @@ Y-Fin. 기획(노션)과 이 저장소의 백엔드 구현을 정리한 문서�
 | [detail-calculator-favorites](implementation/detail-calculator-favorites.md) | 상품 상세와 수치 잠금, 신청 링크, 계산기, 찜, 추천 입력 프로필 |
 | [data-model](implementation/data-model.md) | 마이그레이션 이력, 테이블과 컬럼 의미, 시드 데이터 |
 | [development](implementation/development.md) | 로컬 실행, DB 초기화, 테스트, 작업 규칙 |
+| [deployment](implementation/deployment.md) | main→dev·release→운영 배포, 서버 구성, GCP OIDC·IAP 설정, 롤백 |
 | [plan-vs-implementation](implementation/plan-vs-implementation.md) | 기획과 구현이 다른 부분, 루트 README와 코드 불일치 |
 
 ## 문서 관리

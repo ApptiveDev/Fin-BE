@@ -60,7 +60,8 @@
 
 | 워크플로 | 역할 | 머지 차단 |
 | --- | --- | --- |
-| `backend-ci.yml` | `test`, `integrationTest` | O |
+| `backend-ci.yml` | `test`, `integrationTest`. 모든 PR에서 돌고, 배포 전에 `deploy.yml`이 호출 | O |
+| `deploy.yml` | `main` → dev 서버, `release` → 운영 서버 배포. [배포](deployment.md) 참고 | - |
 | `backend-code-health.yml` | 커버리지·PMD·CPD·Code Health를 main 스냅샷과 비교해 PR 코멘트로 게시 | X |
 
 자세한 내용은 루트 README의 CI 절.
