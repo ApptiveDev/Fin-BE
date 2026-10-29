@@ -1,0 +1,11 @@
+# 배포 서버 공통(deploy/docker-compose.yml). dev 서버는 dev,server, 운영은 server 로 띄운다.
+# DB 접속 정보는 SPRING_DATASOURCE_URL/USERNAME/PASSWORD 환경 변수로 받는다.
+server:
+  forward-headers-strategy: framework   # nginx 뒤에서 https 리다이렉트 URL을 만들기 위해
+
+app:
+  frontend:
+    url: ${FRONTEND_URL}
+  cookie:
+    secure: true
+    same-site: None
