@@ -11,6 +11,7 @@ import org.springframework.web.HttpMediaTypeNotAcceptableException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
@@ -63,6 +64,19 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     protected ResponseEntity<ErrorResponseDto> handleIllegalArgumentException(IllegalArgumentException e) {
         ErrorResponseDto dto = ErrorResponseDto.of(CommonErrorCode.INVALID_INPUT_VALUE, e.getMessage());
+        return ResponseEntity
+                .status(CommonErrorCode.INVALID_INPUT_VALUE.getHttpStatus())
+                .body(dto);
+    }
+
+    // 쿼리 파라미터 형식 오류(예: 날짜가 yyyy-MM-dd가 아님)
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    protected ResponseEntity<ErrorResponseDto> handleMethodArgumentTypeMismatchException(
+            MethodArgumentTypeMismatchException e) {
+        ErrorResponseDto dto = ErrorResponseDto.of(
+                CommonErrorCode.INVALID_INPUT_VALUE,
+                "파라미터 '" + e.getName() + "'의 형식이 올바르지 않습니다."
+        );
         return ResponseEntity
                 .status(CommonErrorCode.INVALID_INPUT_VALUE.getHttpStatus())
                 .body(dto);
