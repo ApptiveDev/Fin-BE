@@ -19,6 +19,7 @@ import java.io.IOException;
 public class OAuth2FailureHandler extends SimpleUrlAuthenticationFailureHandler {
 
     private final AppProperties appProperties;
+    private final FrontendOrigins frontendOrigins;
 
     @Override
     public void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception)
@@ -26,7 +27,7 @@ public class OAuth2FailureHandler extends SimpleUrlAuthenticationFailureHandler 
     {
         getRedirectStrategy().sendRedirect(
                 request, response,
-                appProperties.frontend().url() + appProperties.oAuth2().failureRedirectUrl()
+                frontendOrigins.redirectBase(request) + appProperties.oAuth2().failureRedirectUrl()
         );
     }
 

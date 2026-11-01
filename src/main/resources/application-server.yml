@@ -5,7 +5,7 @@ server:
 
 app:
   frontend:
-    url: ${FRONTEND_URL}
+    urls: ${FRONTEND_URL}   # 쉼표로 여러 개. 첫 주소가 기본 리다이렉트 대상
   cookie:
     secure: true
     same-site: None

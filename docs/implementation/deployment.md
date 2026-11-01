@@ -34,7 +34,7 @@ Fin-BE 레포의 Environment `dev`, `prod`에 둔다.
 | var | `GCP_SERVICE_ACCOUNT` | `github-deployer@<프로젝트>.iam.gserviceaccount.com` |
 | var | `GCE_INSTANCE`, `GCE_ZONE` | VM 이름, 존 |
 | var | `SERVER_NAME` | 도메인. nginx `server_name`과 인증서 경로에 쓴다 |
-| var | `FRONTEND_URL` | 프론트 주소. CORS와 OAuth 로그인 후 리다이렉트에 쓴다 |
+| var | `FRONTEND_URL` | 프론트 주소. 쉼표로 여러 개(예: dev는 `https://fin-fe-test-phi.vercel.app,http://localhost:5173`). 모두 CORS 허용, OAuth 로그인 후에는 로그인을 시작한 주소로, 알 수 없으면 첫 주소로 리다이렉트 |
 | secret | `POSTGRES_PASSWORD` | DB 비밀번호 |
 | secret | `JWT_SECRET`, `GOOGLE_CLIENT_ID/SECRET`, `KAKAO_CLIENT_ID/SECRET` | 앱 시크릿 |
 
