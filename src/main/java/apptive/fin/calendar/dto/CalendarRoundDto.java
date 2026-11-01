@@ -1,5 +1,7 @@
 package apptive.fin.calendar.dto;
 
+import lombok.Builder;
+
 import java.time.LocalDate;
 import java.util.List;
 
@@ -19,6 +21,7 @@ import java.util.List;
  * @param scheduleChanged  최근 7일 안에 신청 기간이 바뀜
  * @param eligibility      비로그인(약관 동의 전 포함)이면 null
  */
+@Builder
 public record CalendarRoundDto(
         CalendarTier tier,
         Long productId,

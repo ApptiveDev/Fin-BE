@@ -63,23 +63,12 @@ public final class PolicyEligibility {
         return regions.size() == SIDO_PREFIXES_BY_REGION.size() ? List.of() : regions;
     }
 
-    /** 2계층: 온통청년 zipCd 원문으로 판정한다. */
-    public static Eligibility judge(
-            Integer minAge,
-            Integer maxAge,
-            String regionCodes,
-            Integer userAge,
-            Set<String> userRegionKeys
-    ) {
-        return judgeByRegionKeys(minAge, maxAge, regionsOf(regionCodes), userAge, userRegionKeys);
-    }
-
     /**
      * @param regions         대상 거주지역 키(REGION_*). 빈 목록이면 지역 제한 없음
      * @param userAge         만 나이. 프로필에 생년월일이 없으면 null
      * @param userRegionKeys  프로필의 거주지역 키(REGION_*). 없으면 빈 집합
      */
-    public static Eligibility judgeByRegionKeys(
+    public static Eligibility judge(
             Integer minAge,
             Integer maxAge,
             List<String> regions,
