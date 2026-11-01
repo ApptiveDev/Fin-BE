@@ -16,6 +16,7 @@
 | V6 | 예금 예치 한도 분리. `min/max_monthly_limit`은 적금 월 납입 한도 전용, 예금은 `min/max_deposit_amount` |
 | V7 | (`main`에 없음) PR #36이 저축기간 개월 옵션(`TERM_1_MONTH` 등)을 추가하는 데 쓴다 |
 | V8 | 파킹 카드용 `max_rate_applicable_min/max_amount`(최고금리 적용 잔액 범위, 하한 초과·상한 이하), `interest_payment_method`(이자지급방식 원문). 예치 한도 `min/max_deposit_amount`는 예금과 파킹이 같이 쓴다 |
+| V10 | B1 캘린더용 `youth_policy`(온통청년 청년정책), `youth_policy_round`(신청 회차), `policy_product_round`(정부상품 신청 회차). V9는 PR #41이 쓴다 |
 
 `spring.flyway.baseline-version: 2`, `baseline-on-migrate: true`로 Flyway 도입 이전에 만든 DB도 V3부터 이어서 적용할 수 있다.
 
@@ -115,6 +116,14 @@ erDiagram
 
 - `product_raw`: 출처·외부 ID별 원본 JSON, 내용 해시, 마지막 수집·정규화 시각, 정규화기 버전
 - `llm_enrichment_cache`: (출처, 외부 ID, 내용 해시, 제공자, 모델, 프롬프트 버전, 스키마 버전) 단위 LLM 응답 캐시와 실패 기록
+
+## 캘린더 테이블 (V10)
+
+수집기가 채우고, 백엔드는 캘린더 조회에만 읽는다. 컬럼 의미와 수집 규칙은 [캘린더](calendar.md)를 본다.
+
+- `youth_policy`: 정책 번호(`policy_no`), 이름, 기관, 설명, 나이 제한, 지역 코드 원문, 신청기간 구분, 활성 여부, 마지막 수집 시각
+- `youth_policy_round`: 정책별 신청 회차(순번, 시작일, 종료일, 일정 변경 시각)
+- `policy_product_round`: 1계층 정부상품(`product`)의 신청 회차(순번, 시작일, 종료일, 근거 링크, 일정 변경 시각). 수집기 `manual-product-rounds.json`이 원천
 
 ## 시드 데이터
 
