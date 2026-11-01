@@ -83,3 +83,5 @@ sequenceDiagram
 | `KAKAO_CLIENT_ID`, `KAKAO_CLIENT_SECRET` | 카카오 OAuth |
 
 로컬에서는 저장소 루트 `.env`(git 미추적)에서 읽는다(`spring.config.import: optional:file:.env[.properties]`). 프론트 주소와 리다이렉트 경로는 `app.frontend.url`, `app.oauth2.*`로 설정한다.
+
+배포 서버는 `server` 프로필(`application-server.yml`)을 함께 켠다(dev 서버 `dev,server`, 운영 `server`). 이 프로필은 리프레시 토큰 쿠키를 `Secure`, `SameSite=None`으로 바꾸고, nginx가 넘긴 `X-Forwarded-*` 헤더로 https 리다이렉트 URL을 만들며, 프론트 주소를 `FRONTEND_URL` 환경 변수로 받는다. 서버 환경 변수는 [배포](deployment.md#github-environment) 참고.

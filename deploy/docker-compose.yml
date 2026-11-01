@@ -1,0 +1,60 @@
+# 배포 서버(dev·prod)용. 로컬 DB는 루트 docker-compose.yml을 쓴다.
+# deploy.yml이 이 파일과 .env, nginx 템플릿을 서버 ~/fin-be/로 복사한 뒤 실행한다. 변수는 같은 폴더 .env에서 읽는다.
+name: fin-be   # 볼륨 이름(fin-be_postgres_data)이 바뀌지 않도록 고정
+
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: fin-nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      SERVER_NAME: ${SERVER_NAME}
+    volumes:
+      # nginx 이미지가 기동 시 *.template의 ${SERVER_NAME}을 치환해 conf.d/에 넣는다.
+      - ./nginx/templates:/etc/nginx/templates:ro
+      # 서버에서 certbot으로 발급한 인증서
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    depends_on:
+      - backend
+
+  backend:
+    image: ghcr.io/apptivedev/fin-be:${IMAGE_TAG}
+    container_name: fin-backend
+    restart: always
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/database
+      SPRING_DATASOURCE_USERNAME: user
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      FRONTEND_URL: ${FRONTEND_URL}
+      JWT_SECRET: ${JWT_SECRET}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      KAKAO_CLIENT_ID: ${KAKAO_CLIENT_ID}
+      KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET}
+    # nginx를 거쳐서만 들어온다
+    expose:
+      - "8080"
+    depends_on:
+      - postgres
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: fin-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: database
+      TZ: Asia/Seoul
+    # 호스트 로컬에만 연다. 수집기(Fin-API)는 IAP SSH 터널로 이 포트에 붙는다.
+    ports:
+      - "127.0.0.1:5678:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
