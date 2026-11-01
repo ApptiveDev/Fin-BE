@@ -44,7 +44,7 @@
 | `GET /calendar/events?from=yyyy-MM-dd&to=yyyy-MM-dd` | 기간(양 끝 포함)에 찍히는 시작·마감 일정. 날짜순, 같은 날은 마감 먼저, 같은 유형이면 1계층 먼저 |
 | `GET /calendar/summary` | 오늘 기준 정보: `openNow`(지금 신청 가능, 마감 가까운 순), `yearRound`(접수 중인 연중 접수), `always`(상시 신청, 2계층만) |
 
-`from`이 `to`보다 늦거나 날짜 형식이 틀리면 400이다. `asOf`는 온통청년 마지막 수집 시각으로, 하단 고지의 데이터 기준일에 쓴다. `roundId`는 계층마다 따로 매겨지므로 `(tier, roundId)`로 구분한다.
+`from`이 `to`보다 늦으면 400 `CA001`(`CalendarErrorCode.INVALID_DATE_RANGE`), 날짜 형식이 틀리거나 빠지면 400 `C003`이다. `asOf`는 온통청년 마지막 수집 시각으로, 하단 고지의 데이터 기준일에 쓴다. `roundId`는 계층마다 따로 매겨지므로 `(tier, roundId)`로 구분한다.
 
 ## 일정 판정
 

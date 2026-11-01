@@ -228,7 +228,8 @@ class CalendarApiIntegrationTest extends IntegrationTestSupport {
         mockMvc.perform(get("/calendar/events")
                         .queryParam("from", TODAY.toString())
                         .queryParam("to", TODAY.minusDays(1).toString()))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("CA001"));
 
         mockMvc.perform(get("/calendar/events")
                         .queryParam("from", "2026-13-01")

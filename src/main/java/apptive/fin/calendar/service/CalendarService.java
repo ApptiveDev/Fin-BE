@@ -1,6 +1,7 @@
 package apptive.fin.calendar.service;
 
 import apptive.fin.auth.security.AuthUserDetails;
+import apptive.fin.calendar.CalendarErrorCode;
 import apptive.fin.calendar.dto.CalendarEventDto;
 import apptive.fin.calendar.dto.CalendarEventsResponseDto;
 import apptive.fin.calendar.dto.CalendarRoundDto;
@@ -12,6 +13,7 @@ import apptive.fin.calendar.repository.YouthPolicyRepository;
 import apptive.fin.calendar.repository.YouthPolicyRoundRepository;
 import apptive.fin.category.entity.CategoryOption;
 import apptive.fin.category.repository.CategoryOptionRepository;
+import apptive.fin.global.error.BusinessException;
 import apptive.fin.global.util.AgeUtil;
 import apptive.fin.user.entity.UserProfile;
 import apptive.fin.user.repository.UserProfileRepository;
@@ -67,7 +69,7 @@ public class CalendarService {
 
     public CalendarEventsResponseDto getEvents(LocalDate from, LocalDate to, AuthUserDetails user) {
         if (from.isAfter(to)) {
-            throw new IllegalArgumentException("from은 to보다 늦을 수 없습니다.");
+            throw new BusinessException(CalendarErrorCode.INVALID_DATE_RANGE);
         }
         LocalDate today = LocalDate.now(KST);
         Instant now = Instant.now();
