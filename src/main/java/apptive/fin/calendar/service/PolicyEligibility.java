@@ -10,7 +10,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * 온통청년 정책(2계층)의 자격 판정. PRD상 2계층은 나이와 거주지역만 본다.
+ * 캘린더 일정의 나이·거주지역 자격 판정. PRD상 2계층(온통청년 정책)은 나이와 거주지역만 본다.
+ * 1계층(Y-Fin 정책상품)도 지금은 같은 두 조건만 본다(PRD는 Y3-2 자격 필터 전체 재사용. plan-vs-implementation 참고).
  * 프로필 값이 비어 판정할 수 없는 조건은 통과시키고 NEEDS_INFO로 알린다.
  */
 public final class PolicyEligibility {
@@ -62,10 +63,7 @@ public final class PolicyEligibility {
         return regions.size() == SIDO_PREFIXES_BY_REGION.size() ? List.of() : regions;
     }
 
-    /**
-     * @param userAge         만 나이. 프로필에 생년월일이 없으면 null
-     * @param userRegionKeys  프로필의 거주지역 키(REGION_*). 없으면 빈 집합
-     */
+    /** 2계층: 온통청년 zipCd 원문으로 판정한다. */
     public static Eligibility judge(
             Integer minAge,
             Integer maxAge,
@@ -73,8 +71,22 @@ public final class PolicyEligibility {
             Integer userAge,
             Set<String> userRegionKeys
     ) {
+        return judgeByRegionKeys(minAge, maxAge, regionsOf(regionCodes), userAge, userRegionKeys);
+    }
+
+    /**
+     * @param regions         대상 거주지역 키(REGION_*). 빈 목록이면 지역 제한 없음
+     * @param userAge         만 나이. 프로필에 생년월일이 없으면 null
+     * @param userRegionKeys  프로필의 거주지역 키(REGION_*). 없으면 빈 집합
+     */
+    public static Eligibility judgeByRegionKeys(
+            Integer minAge,
+            Integer maxAge,
+            List<String> regions,
+            Integer userAge,
+            Set<String> userRegionKeys
+    ) {
         boolean ageRestricted = minAge != null || maxAge != null;
-        List<String> regions = regionsOf(regionCodes);
         boolean regionRestricted = !regions.isEmpty();
 
         boolean ageMissing = ageRestricted && userAge == null;

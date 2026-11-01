@@ -36,7 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * 수집기가 쓰는 youth_policy 테이블(V10)에 정책을 넣고 캘린더 API 응답을 확인한다.
+ * 수집기가 쓰는 youth_policy, policy_product_round 테이블(V10)에 데이터를 넣고 캘린더 API 응답을 확인한다.
  * 날짜는 실행일(KST) 기준 상대값으로 넣는다.
  */
 class CalendarApiIntegrationTest extends IntegrationTestSupport {
@@ -59,6 +59,10 @@ class CalendarApiIntegrationTest extends IntegrationTestSupport {
                 .apply(springSecurity())
                 .build();
         deletePolicies();
+        jdbcTemplate.update("""
+                INSERT INTO provider (source_id, code, name)
+                VALUES ((SELECT id FROM product_source WHERE code = 'ONTONG'), 'CAL_PROVIDER', '캘린더 기관')
+                """);
     }
 
     @AfterEach
@@ -175,6 +179,51 @@ class CalendarApiIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
+    void 정책상품_회차는_1계층으로_나오고_같은_날_같은_유형이면_먼저다() throws Exception {
+        // 옵션마다 나이가 다르면 가장 넓은 범위(19~39)를 쓴다.
+        long product = insertProduct("CAL_POLICY_1", "하나 청년통장", true, "REGION_BUSAN",
+                new Integer[]{19, 34}, new Integer[]{19, 39});
+        long round = insertProductRound(product, 1, TODAY.plusDays(2), TODAY.plusDays(10));
+        // 이름은 앞서지만 2계층이라 같은 날 마감 중 뒤에 온다.
+        insertRound(insertPolicy("P-1", "가나 청년정책", "PERIOD", true, null, null, null), 1,
+                TODAY.minusDays(3), TODAY.plusDays(10), null);
+
+        mockMvc.perform(get("/calendar/events")
+                        .queryParam("from", TODAY.toString())
+                        .queryParam("to", TODAY.plusDays(30).toString()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.events[*].round.name").value(contains("하나 청년통장", "하나 청년통장", "가나 청년정책")))
+                .andExpect(jsonPath("$.events[*].type").value(contains("START", "END", "END")))
+                .andExpect(jsonPath("$.events[1].round.tier").value("POLICY_PRODUCT"))
+                .andExpect(jsonPath("$.events[1].round.productId").value(product))
+                .andExpect(jsonPath("$.events[1].round.roundId").value(round))
+                .andExpect(jsonPath("$.events[1].round.policyId").value(nullValue()))
+                .andExpect(jsonPath("$.events[1].round.externalUrl").value(nullValue()))
+                .andExpect(jsonPath("$.events[1].round.institution").value("캘린더 기관"))
+                .andExpect(jsonPath("$.events[1].round.minAge").value(19))
+                .andExpect(jsonPath("$.events[1].round.maxAge").value(39))
+                .andExpect(jsonPath("$.events[1].round.regions").value(contains("REGION_BUSAN")))
+                .andExpect(jsonPath("$.events[2].round.tier").value("YOUTH_POLICY"));
+    }
+
+    @Test
+    void 가입_가능한_옵션이_없는_정책상품은_빠지고_로그인하면_자격을_판정한다() throws Exception {
+        insertProductRound(insertProduct("CAL_POLICY_1", "부산 통장", true, "REGION_BUSAN", new Integer[]{19, 34}),
+                1, TODAY.minusDays(1), TODAY.plusDays(1));
+        insertProductRound(insertProduct("CAL_POLICY_2", "서울 통장", true, "REGION_SEOUL", new Integer[]{19, 34}),
+                1, TODAY.minusDays(1), TODAY.plusDays(2));
+        insertProductRound(insertProduct("CAL_POLICY_3", "판매 종료 통장", false, null, new Integer[]{19, 34}),
+                1, TODAY.minusDays(1), TODAY.plusDays(3));
+        Long userId = createUserWithProfile(TODAY.minusYears(25), "REGION_BUSAN");
+
+        mockMvc.perform(get("/calendar/summary").with(user(new AuthUserDetails(userId, UserRole.RECOMMENDATION))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.openNow[*].name").value(contains("부산 통장", "서울 통장")))
+                .andExpect(jsonPath("$.openNow[*].tier").value(contains("POLICY_PRODUCT", "POLICY_PRODUCT")))
+                .andExpect(jsonPath("$.openNow[*].eligibility").value(contains("ELIGIBLE", "INELIGIBLE")));
+    }
+
+    @Test
     void 잘못된_기간은_400이다() throws Exception {
         mockMvc.perform(get("/calendar/events")
                         .queryParam("from", TODAY.toString())
@@ -211,8 +260,43 @@ class CalendarApiIntegrationTest extends IntegrationTestSupport {
                 scheduleChangedAt == null ? null : Timestamp.from(scheduleChangedAt));
     }
 
+    // 정부상품(source ONTONG)과 옵션 하나씩. ageRanges마다 옵션을 하나 만든다.
+    private long insertProduct(String code, String name, boolean joinable, String regionKeyword, Integer[]... ageRanges) {
+        long productId = jdbcTemplate.queryForObject("""
+                        INSERT INTO product (source_id, type, product_code, product_name, content)
+                        VALUES ((SELECT id FROM product_source WHERE code = 'ONTONG'), 'SAVING', ?, ?, '')
+                        RETURNING id
+                        """, Long.class, code, name);
+        for (Integer[] ages : ageRanges) {
+            long propertyId = jdbcTemplate.queryForObject("""
+                            INSERT INTO product_properties
+                                (product_id, provider_id, min_age, max_age, is_joinable, requires_homeless,
+                                 requires_householder, allows_military_age_extension, exclude_from_rate_comparison)
+                            VALUES (?, (SELECT id FROM provider WHERE code = 'CAL_PROVIDER'), ?, ?, ?, false, false, false, false)
+                            RETURNING id
+                            """, Long.class, productId, ages[0], ages[1], joinable);
+            if (regionKeyword != null) {
+                jdbcTemplate.update(
+                        "INSERT INTO product_property_keyword (product_property_id, keyword_code) VALUES (?, ?)",
+                        propertyId, regionKeyword);
+            }
+        }
+        return productId;
+    }
+
+    private long insertProductRound(long productId, int roundNo, LocalDate start, LocalDate end) {
+        return jdbcTemplate.queryForObject("""
+                        INSERT INTO policy_product_round (product_id, round_no, apply_start_date, apply_end_date, created_at)
+                        VALUES (?, ?, ?, ?, now())
+                        RETURNING id
+                        """, Long.class, productId, roundNo, Date.valueOf(start), Date.valueOf(end));
+    }
+
     private void deletePolicies() {
         jdbcTemplate.update("DELETE FROM youth_policy");
+        // 상품을 지우면 옵션, 키워드, 회차가 함께 지워진다(ON DELETE CASCADE).
+        jdbcTemplate.update("DELETE FROM product WHERE product_code LIKE 'CAL_%'");
+        jdbcTemplate.update("DELETE FROM provider WHERE code = 'CAL_PROVIDER'");
     }
 
     private Long createUserWithProfile(LocalDate birthdate, String regionCode) {
