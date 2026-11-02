@@ -29,3 +29,22 @@ INSERT INTO product_properties (
 ((SELECT id FROM product WHERE product_code = 'TEST_INCOME_NONE'), (SELECT id FROM provider WHERE code = 'TEST_BANK'), 3.00, 3.50, 10, 100, 19, 99, false, NULL, NULL, NULL, NULL, false, false, true, 'SINGLE_INTEREST', 12),
 ((SELECT id FROM product WHERE product_code = 'TEST_INCOME_PERCENT'), (SELECT id FROM provider WHERE code = 'TEST_GOV'), 4.00, 4.00, 10, 100, 19, 99, false, NULL, NULL, 120, NULL, false, false, true, NULL, NULL),
 ((SELECT id FROM product WHERE product_code = 'TEST_MONTHLY_MIN'), (SELECT id FROM provider WHERE code = 'TEST_BANK'), 3.00, 3.50, 100000, 1000000, 19, 99, false, NULL, NULL, NULL, NULL, false, false, true, 'SINGLE_INTEREST', 12);
+
+
+-- 예치금 하한 경계: 예금은 min_deposit_amount(예치 총액), 적금은 min_monthly_limit(월 납입액)
+INSERT INTO product (source_id, type, product_code, product_name, content) VALUES
+((SELECT id FROM product_source WHERE code = 'FSS'), 'DEPOSIT', 'TEST_DEPOSIT_MIN_3M', '최소예치금 단기 예금', '최소 100만원 예치'),
+((SELECT id FROM product_source WHERE code = 'FSS'), 'SAVING', 'TEST_SAVING_MIN_3M', '최소납입액 단기 적금', '월 최소 10만원 납입'),
+((SELECT id FROM product_source WHERE code = 'FSS'), 'DEPOSIT', 'TEST_DEPOSIT_MIN_12M', '최소예치금 목돈 예금', '최소 120만원 예치');
+
+INSERT INTO product_properties (
+    product_id, provider_id, base_rate, max_rate,
+    min_monthly_limit, max_monthly_limit, min_deposit_amount, max_deposit_amount,
+    min_age, max_age, allows_military_age_extension, military_max_age,
+    earn_max_amt, earn_percent,
+    min_tenure_months, requires_homeless, requires_householder,
+    is_joinable, intr_rate_type, save_trm
+) VALUES
+((SELECT id FROM product WHERE product_code = 'TEST_DEPOSIT_MIN_3M'), (SELECT id FROM provider WHERE code = 'TEST_BANK'), 3.00, 3.50, NULL, NULL, 1000000, NULL, 19, 99, false, NULL, NULL, NULL, NULL, false, false, true, 'SINGLE_INTEREST', 3),
+((SELECT id FROM product WHERE product_code = 'TEST_SAVING_MIN_3M'), (SELECT id FROM provider WHERE code = 'TEST_BANK'), 3.00, 3.50, 100000, 1000000, NULL, NULL, 19, 99, false, NULL, NULL, NULL, NULL, false, false, true, 'SINGLE_INTEREST', 3),
+((SELECT id FROM product WHERE product_code = 'TEST_DEPOSIT_MIN_12M'), (SELECT id FROM provider WHERE code = 'TEST_BANK'), 3.00, 3.50, NULL, NULL, 1200000, NULL, 19, 99, false, NULL, NULL, NULL, NULL, false, false, true, 'SINGLE_INTEREST', 12);

@@ -1,8 +1,10 @@
 package apptive.fin.search;
 
 import apptive.fin.search.enums.CategoryIdEnum;
+import apptive.fin.search.enums.KeywordValueEnum;
 import apptive.fin.search.dto.DetailedOptionsDto;
 import apptive.fin.search.dto.OptionRequestDto;
+import apptive.fin.search.dto.ResolvedKeywords;
 import apptive.fin.search.dto.SearchRequestDto;
 import apptive.fin.search.entity.Product;
 import apptive.fin.search.service.EligibilityFilterService;
@@ -141,6 +143,64 @@ class EligibilityBoundaryIntegrationTest extends IntegrationTestSupport {
         List<Product> result = filter(monthlyDepositRequest(99_999L));
 
         assertThat(productCodes(result)).doesNotContain("TEST_MONTHLY_MIN");
+    }
+
+    // ===== 5. 예치금 하한 (예금=예치 총액, 적금=월 납입액) =====
+
+    @Test
+    void 단기_예금은_예치액이_최소예치금과_같으면_포함된다() {
+        assertThat(optionCodes(depositAmountRequest(1_000_000L), KeywordValueEnum.TERM_3_MONTH))
+                .contains("TEST_DEPOSIT_MIN_3M");
+    }
+
+    @Test
+    void 단기_예금은_예치액이_최소예치금보다_적으면_제외된다() {
+        assertThat(optionCodes(depositAmountRequest(999_999L), KeywordValueEnum.TERM_3_MONTH))
+                .doesNotContain("TEST_DEPOSIT_MIN_3M");
+    }
+
+    @Test
+    void 단기_적금은_예치액을_기간으로_나눈_월납입액이_최소납입액과_같으면_포함된다() {
+        // 30만원 ÷ 3개월 = 월 10만원
+        assertThat(optionCodes(depositAmountRequest(300_000L), KeywordValueEnum.TERM_3_MONTH))
+                .contains("TEST_SAVING_MIN_3M");
+    }
+
+    @Test
+    void 단기_적금은_예치액을_기간으로_나눈_월납입액이_최소납입액보다_적으면_제외된다() {
+        // 29만원 ÷ 3개월 ≈ 월 9.6만원 (예치 총액 29만원은 월 최소 10만원보다 크지만 월 기준으로는 미달)
+        assertThat(optionCodes(depositAmountRequest(290_000L), KeywordValueEnum.TERM_3_MONTH))
+                .doesNotContain("TEST_SAVING_MIN_3M");
+    }
+
+    @Test
+    void 목돈_예금은_월저축액에_기간을_곱한_원금이_최소예치금보다_적으면_제외된다() {
+        // 월 9만원 × 12개월 = 108만원 < 최소 120만원
+        assertThat(optionCodes(monthlyDepositRequest(90_000L), KeywordValueEnum.TERM_12_MONTH))
+                .doesNotContain("TEST_DEPOSIT_MIN_12M");
+        // 월 10만원 × 12개월 = 120만원
+        assertThat(optionCodes(monthlyDepositRequest(100_000L), KeywordValueEnum.TERM_12_MONTH))
+                .contains("TEST_DEPOSIT_MIN_12M");
+    }
+
+    private List<String> optionCodes(SearchRequestDto request, KeywordValueEnum savingPeriod) {
+        ResolvedKeywords keywords = new ResolvedKeywords(List.of(), List.of(), savingPeriod, List.of(), List.of());
+        return eligibilityFilterService.filterEligibleOptions(request, keywords).stream()
+                .map(option -> option.product().getProductCode())
+                .toList();
+    }
+
+    private SearchRequestDto depositAmountRequest(long depositAmount) {
+        return new SearchRequestDto(
+                List.of(),
+                new DetailedOptionsDto(
+                        birthdateForAge(30),
+                        null, null, null, null, null, null, null,
+                        null,
+                        depositAmount,
+                        null, null, List.of()
+                )
+        );
     }
 
     private List<Product> filter(SearchRequestDto request) {

@@ -2,6 +2,7 @@ package apptive.fin.search.service;
 
 import apptive.fin.search.enums.ExtractionConfidence;
 import apptive.fin.search.enums.KeywordValueEnum;
+import apptive.fin.search.enums.ProductType;
 import apptive.fin.search.enums.RequiredKeywordEffect;
 import apptive.fin.search.dto.DetailedOptionsDto;
 import apptive.fin.search.dto.EligibleProductOption;
@@ -35,7 +36,7 @@ public class EligibilityFilterService {
         ResolvedKeywords keywords = resolveKeywordService.resolveKeywords(request.options());
         EligibilityCriteria criteria = eligibilityCriteria(detail, keywords); // 사용자의 가입 기준 정리
 				
-        // 가입가능한 상품 반환	
+        // 가입가능한 상품 반환
         return productRepository.findEligibleProducts(
                 criteria.age(),
                 criteria.annualIncome(),
@@ -92,6 +93,12 @@ public class EligibilityFilterService {
                 ? Integer.valueOf(0)
                 : detail.tenureMonths();
 
+        // 단기예치 여부 판단 (키워드에서만 추출)
+        Integer saveTrm = keywords.savingPeriod() != null
+                ? keywords.savingPeriod().toSaveTrm()
+                : null;
+        boolean isShortTerm = saveTrm != null && (saveTrm == 1 || saveTrm == 3);
+
         return new EligibilityCriteria(
                 age,
                 annualIncome,
@@ -100,7 +107,9 @@ public class EligibilityFilterService {
                 detail.isHomeless(),
                 detail.isHouseholder(),
                 tenureMonths,
-                detail.monthlySavingsGoal()
+                detail.normalizedMonthlyDeposit(saveTrm),
+                detail.normalizedDepositPrincipal(saveTrm),
+                isShortTerm
         );
     }
     // ProductProperty의 자격요건에 사용자의 조건이 부합하는지 검사하는 함수
@@ -110,16 +119,20 @@ public class EligibilityFilterService {
             List<KeywordValueEnum> identities
     ) {
         return Boolean.TRUE.equals(property.getIsJoinable())
-                && isAgeEligible(property, criteria.age())
+                && isAgeEligible(property, criteria.age(), criteria.isShortTerm())
                 && isIncomeEligible(property, criteria.annualIncome(), criteria.householdIncomePercent(), criteria.incomeProofUnavailable())
                 && isResidenceEligible(property, criteria.isHomeless(), criteria.isHouseholder())
                 && isTenureEligible(property, criteria.tenureMonths())
-                && isMonthlyDepositEligible(property, criteria.monthlyDeposit())
+                && isAmountEligible(property, criteria.monthlyDeposit(), criteria.depositPrincipal())
                 && isIdentityEligible(property, identities);
     }
 
     // 나이 조건 확인
-    private boolean isAgeEligible(ProductProperty property, Integer age) {
+    private boolean isAgeEligible(ProductProperty property, Integer age, boolean isShortTerm) {
+        // 단기예치: 미성년(만 17세 미만) 일괄 제외
+        if (isShortTerm && age != null && age < 17) {
+            return false;
+        }
         if (age == null) {
             return true;
         }
@@ -171,11 +184,15 @@ public class EligibilityFilterService {
                 || property.getMinTenureMonths() <= tenureMonths;
     }
 
-    // 월저축희망액 조건 확인
-    private boolean isMonthlyDepositEligible(ProductProperty property, Long monthlyDeposit) {
-        return monthlyDeposit == null
-                || property.getMinMonthlyLimit() == null
-                || property.getMinMonthlyLimit() <= monthlyDeposit;
+    // 금액 하한 조건 확인 (예금: 예치 원금 vs 최소예치금, 그 외: 월 납입액 vs 월 최소납입액)
+    private boolean isAmountEligible(ProductProperty property, Long monthlyDeposit, Long depositPrincipal) {
+        boolean isDeposit = property.getProduct() != null
+                && property.getProduct().getType() == ProductType.DEPOSIT;
+        Long amount = isDeposit ? depositPrincipal : monthlyDeposit;
+        Long minLimit = property.resolvedMinLimit();
+        return amount == null
+                || minLimit == null
+                || minLimit <= amount;
     }
 
     // 상품에 대해 사용자의 현재 신분 기준 가입 가능 여부를 반환하는 함수
@@ -223,7 +240,9 @@ public class EligibilityFilterService {
             Boolean isHomeless,
             Boolean isHouseholder,
             Integer tenureMonths,
-            Long monthlyDeposit
+            Long monthlyDeposit,    // 월 납입액 (단기: 예치액÷기간, 목돈: monthlySavingsGoal)
+            Long depositPrincipal,  // 예치 원금 (단기: depositAmount, 목돈: 월저축액×기간)
+            boolean isShortTerm     // 단기예치 여부
     ) {
     }
 }

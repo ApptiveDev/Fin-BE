@@ -78,6 +78,13 @@ public class ProductProperty {
     private Long minDepositAmount;
     private Long maxDepositAmount;
 
+    // 파킹: 최고금리가 적용되는 잔액 범위 (하한 초과 ~ 상한 이하, 원). 둘 다 null이면 범위 정보 없음
+    private Long maxRateApplicableMinAmount;
+    private Long maxRateApplicableMaxAmount;
+
+    // 공시의 이자지급방식 원문 (예: "월지급", "수시지급,월지급")
+    private String interestPaymentMethod;
+
     private Integer minAge;
     private Integer maxAge;
 
