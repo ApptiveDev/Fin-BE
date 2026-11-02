@@ -26,6 +26,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     private final AuthService authService;
     private final RefreshTokenCookieProvider refreshTokenCookieProvider;
     private final AppProperties appProperties;
+    private final FrontendOrigins frontendOrigins;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
@@ -39,7 +40,7 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
         getRedirectStrategy().sendRedirect(
                 request, response,
-                appProperties.frontend().url() + appProperties.oAuth2().successRedirectUrl()
+                frontendOrigins.redirectBase(request) + appProperties.oAuth2().successRedirectUrl()
         );
     }
 

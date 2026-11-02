@@ -1,5 +1,6 @@
 package apptive.fin.global.config;
 
+import apptive.fin.auth.oauth.FrontendOrigins;
 import apptive.fin.auth.oauth.OAuth2FailureHandler;
 import apptive.fin.auth.oauth.OAuth2SuccessHandler;
 import apptive.fin.auth.oauth.OAuth2UserService;
@@ -8,6 +9,8 @@ import apptive.fin.auth.security.BusinessAuthenticationEntryPoint;
 import apptive.fin.auth.security.JwtAuthFilter;
 import apptive.fin.auth.util.JwtUtil;
 import apptive.fin.global.properties.AppProperties;
+import jakarta.servlet.Filter;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,6 +24,7 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.client.web.OAuth2AuthorizationRequestRedirectFilter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -50,6 +54,7 @@ public class SecurityConfig {
     private final BusinessAuthenticationEntryPoint businessAuthenticationEntryPoint;
     private final BusinessAccessDeniedHandler businessAccessDeniedHandler;
     private final AppProperties appProperties;
+    private final FrontendOrigins frontendOrigins;
     private final Environment environment;
 
     @Bean
@@ -85,18 +90,29 @@ public class SecurityConfig {
                         .authenticationEntryPoint(businessAuthenticationEntryPoint)
                         .accessDeniedHandler(businessAccessDeniedHandler)
                 )
+                .addFilterBefore(rememberLoginOriginFilter(), OAuth2AuthorizationRequestRedirectFilter.class)
                 .addFilterBefore(new JwtAuthFilter(jwtUtil), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
+    }
+
+    // OAuth 로그인 시작 요청에서 프론트 출처를 기억해 두었다가, 성공·실패 핸들러가 그곳으로 돌려보낸다.
+    private Filter rememberLoginOriginFilter() {
+        String loginStartPrefix = OAuth2AuthorizationRequestRedirectFilter.DEFAULT_AUTHORIZATION_REQUEST_BASE_URI + "/";
+        return (request, response, chain) -> {
+            HttpServletRequest httpRequest = (HttpServletRequest) request;
+            if (httpRequest.getRequestURI().startsWith(loginStartPrefix)) {
+                frontendOrigins.rememberLoginOrigin(httpRequest);
+            }
+            chain.doFilter(request, response);
+        };
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(List.of(
-                appProperties.frontend().url()
-        ));
+        configuration.setAllowedOrigins(appProperties.frontend().urls());
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("Authorization", "Set-Cookie"));
