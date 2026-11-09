@@ -32,4 +32,25 @@ class FlywayMigrationIntegrationTest extends IntegrationTestSupport {
                 String.class
         )).isEqualTo("product_raw");
     }
+
+    @Test
+    void 개인정보_수집_이용_동의는_v2_0만_현재_버전이다() {
+        List<String> currentVersions = jdbcTemplate.queryForList(
+                "SELECT tv.major_version || '.' || tv.minor_version FROM term_versions tv "
+                        + "JOIN terms t ON t.id = tv.term_id "
+                        + "WHERE t.code = 'PRIVACY_POLICY' AND tv.is_current = TRUE",
+                String.class
+        );
+        String content = jdbcTemplate.queryForObject(
+                "SELECT tv.content FROM term_versions tv JOIN terms t ON t.id = tv.term_id "
+                        + "WHERE t.code = 'PRIVACY_POLICY' AND tv.is_current = TRUE",
+                String.class
+        );
+
+        assertThat(currentVersions).containsExactly("2.0");
+        assertThat(content)
+                .startsWith("'Y-Fin.'은 「개인정보 보호법」")
+                .contains("\n| 알림 정보 | 신청한 일정 알림 메일 발송, 알림 받을 이메일 인증 | 알림 해지 또는 회원 탈퇴 시까지 |\n")
+                .doesNotContain("\\n", "\r");
+    }
 }
