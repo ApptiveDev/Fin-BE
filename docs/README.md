@@ -25,7 +25,7 @@ Y-Fin. 기획(노션)과 이 저장소의 백엔드 구현을 정리한 문서�
 | [y4-product-detail](planning/y4-product-detail.md) | 상품 상세, 수익률 계산기, 아웃링크 | 구현 |
 | [y5-mypage](planning/y5-mypage.md) | 찜해둔 Fin., 개인정보 | 구현 |
 | [a1-a3-product-expansion](planning/a1-a3-product-expansion.md) | 정보입력 확장, 파킹통장, 단기 예적금 | 구현 중 (PR #36, #37) |
-| [b1-government-calendar](planning/b1-government-calendar.md) | 정부상품 캘린더 | 기획 |
+| [b1-government-calendar](planning/b1-government-calendar.md) | 정부상품 캘린더 | 구현 중 (1·2계층 조회 API) |
 | [b2-notification](planning/b2-notification.md) | 마감·시작·만기 알림, 내 가입 상품 | 기획 |
 
 ## 구현 (`implementation/`)
@@ -44,6 +44,7 @@ Y-Fin. 기획(노션)과 이 저장소의 백엔드 구현을 정리한 문서�
 | [recommendation-engine](implementation/recommendation-engine.md) | 입력 해소, 자격 필터, 적합도, 수익률·달성 가능 금리, 응답 구조 |
 | [detail-calculator-favorites](implementation/detail-calculator-favorites.md) | 상품 상세와 수치 잠금, 신청 링크, 계산기, 찜, 추천 입력 프로필 |
 | [data-model](implementation/data-model.md) | 마이그레이션 이력, 테이블과 컬럼 의미, 시드 데이터 |
+| [calendar](implementation/calendar.md) | B1 캘린더: 1·2계층 데이터, 일정·자격 판정, 조회 API |
 | [development](implementation/development.md) | 로컬 실행, DB 초기화, 테스트, 작업 규칙 |
 | [deployment](implementation/deployment.md) | main→dev·release→운영 배포, 서버 구성, GCP OIDC·IAP 설정, 롤백 |
 | [plan-vs-implementation](implementation/plan-vs-implementation.md) | 기획과 구현이 다른 부분, 루트 README와 코드 불일치 |

@@ -71,6 +71,12 @@
 | 찜 여부 확인  | GET    | `/favorites/{productPropertyId}/status` |
 | 찜 개수 조회  | GET    | `/favorites/count` |
 
+### /calendar
+| 기능 | Method | API Path |
+| -------- | ------ | -------- |
+| 기간 내 시작·마감 일정 | GET | `/calendar/events?from=&to=` |
+| 오늘 기준 신청 가능·연중·상시 | GET | `/calendar/summary` |
+
 ### /calculator
 | 기능              | Method | API Path |
 |-----------------|--------|----------|
