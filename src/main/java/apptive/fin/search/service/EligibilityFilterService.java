@@ -94,7 +94,7 @@ public class EligibilityFilterService {
                 .contains(KeywordValueEnum.STATUS_UNEMPLOYED)
                 ? Integer.valueOf(0)
                 : detail.tenureMonths();
-        ProductCategoryEnum category = request.productCategory(keywords);
+        ProductCategoryEnum category = request.category(keywords);
 
         return new EligibilityCriteria(
                 age,

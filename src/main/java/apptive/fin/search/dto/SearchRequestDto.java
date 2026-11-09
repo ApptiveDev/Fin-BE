@@ -10,15 +10,15 @@ import java.util.List;
 public record SearchRequestDto(
         @NotNull List<@Valid OptionRequestDto> options,
         @NotNull DetailedOptionsDto detailedOptions,
-        ProductCategoryEnum productCategory  // 대분류. 결과 화면에서 전환할 때만 보낸다. 없으면 저축기간으로 정한다.
+        ProductCategoryEnum category  // 대분류(응답의 category와 같은 값). 결과 화면에서 전환할 때만 보낸다. 없으면 저축기간으로 정한다.
 ) {
     public SearchRequestDto(List<OptionRequestDto> options, DetailedOptionsDto detailedOptions) {
         this(options, detailedOptions, null);
     }
 
-    public ProductCategoryEnum productCategory(ResolvedKeywords keywords) {
-        if (productCategory != null) {
-            return productCategory;
+    public ProductCategoryEnum category(ResolvedKeywords keywords) {
+        if (category != null) {
+            return category;
         }
         return ProductCategoryEnum.fromSaveTrm(getSaveTrm(keywords));
     }
@@ -70,12 +70,12 @@ public record SearchRequestDto(
     // 적금 계산용 월 납입액 (상품 기간 기준)
     public Long monthlyDepositFor(ResolvedKeywords keywords, Integer productSaveTrm) {
         if (detailedOptions == null) return null;
-        return detailedOptions.monthlyDepositFor(productCategory(keywords), productSaveTrm);
+        return detailedOptions.monthlyDepositFor(category(keywords), productSaveTrm);
     }
 
     // 예금 계산용 예치 원금 (상품 기간 기준)
     public Long depositPrincipalFor(ResolvedKeywords keywords, Integer productSaveTrm) {
         if (detailedOptions == null) return null;
-        return detailedOptions.depositPrincipalFor(productCategory(keywords), productSaveTrm);
+        return detailedOptions.depositPrincipalFor(category(keywords), productSaveTrm);
     }
 }

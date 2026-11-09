@@ -118,25 +118,25 @@ class CategoryRoutingTest {
     }
 
     @Test
-    void 요청_JSON의_productCategory를_읽는다() {
+    void 요청_JSON의_category를_읽는다() {
         String json = """
-                {"options": [], "detailedOptions": {"depositAmount": 1000000}, "productCategory": "SHORT_TERM"}
+                {"options": [], "detailedOptions": {"depositAmount": 1000000}, "category": "SHORT_TERM"}
                 """;
 
         SearchRequestDto request = JsonMapper.builder().build().readValue(json, SearchRequestDto.class);
 
-        assertThat(request.productCategory()).isEqualTo(ProductCategoryEnum.SHORT_TERM);
+        assertThat(request.category()).isEqualTo(ProductCategoryEnum.SHORT_TERM);
     }
 
     @Test
-    void 요청_JSON에_productCategory가_없으면_null이다() {
+    void 요청_JSON에_category가_없으면_null이다() {
         String json = """
                 {"options": [], "detailedOptions": {"depositAmount": 1000000}}
                 """;
 
         SearchRequestDto request = JsonMapper.builder().build().readValue(json, SearchRequestDto.class);
 
-        assertThat(request.productCategory()).isNull();
+        assertThat(request.category()).isNull();
     }
 
     @Test
@@ -145,7 +145,7 @@ class CategoryRoutingTest {
         ResolvedKeywords threeMonths = new ResolvedKeywords(
                 List.of(), List.of(), KeywordValueEnum.TERM_3_MONTH, List.of(), List.of());
 
-        assertThat(request.productCategory(threeMonths)).isEqualTo(ProductCategoryEnum.LONG_TERM);
+        assertThat(request.category(threeMonths)).isEqualTo(ProductCategoryEnum.LONG_TERM);
     }
 
     @Test
@@ -154,7 +154,7 @@ class CategoryRoutingTest {
         ResolvedKeywords threeMonths = new ResolvedKeywords(
                 List.of(), List.of(), KeywordValueEnum.TERM_3_MONTH, List.of(), List.of());
 
-        assertThat(request.productCategory(threeMonths)).isEqualTo(ProductCategoryEnum.SHORT_TERM);
+        assertThat(request.category(threeMonths)).isEqualTo(ProductCategoryEnum.SHORT_TERM);
     }
 
     @Test

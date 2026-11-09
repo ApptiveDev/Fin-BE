@@ -196,9 +196,9 @@
 PR #36이 바꾸는 것:
 
 - **대분류 라우팅**: 저축기간 1·3개월이면 단기예치(`SHORT_TERM`), 그 외 목돈만들기(`LONG_TERM`)(`ProductCategoryEnum.fromSaveTrm`). 허용 저축기간은 1, 3, 6, 12, 24, 36개월이고 그 밖의 값은 `INVALID_SAVING_PERIOD`.
-- **대분류 전환**: 요청 body의 `productCategory`(`SHORT_TERM`/`LONG_TERM`, 선택)가 있으면 저축기간보다 우선한다. 결과 화면 세그먼트 전환용이다. 이때 대분류와 맞지 않는 저축기간(예: 목돈 + 3개월)은 고르지 않은 것으로 보고, 적합도의 저축 기간 축과 단기 예적금의 기간 필터에서 뺀다. 저축기간은 대분류를 정하는 데만 필수라서 `productCategory`가 있으면 없어도 된다. 입력 폼의 질문 그룹(`options[].categoryId`)과 구분하려고 요청과 응답 모두 `productCategory`라는 이름을 쓴다(응답은 원래 `category`였다).
+- **대분류 전환**: 요청 body의 `category`(`SHORT_TERM`/`LONG_TERM`, 선택)가 있으면 저축기간보다 우선한다. 결과 화면 세그먼트 전환용이다. 이때 대분류와 맞지 않는 저축기간(예: 목돈 + 3개월)은 고르지 않은 것으로 보고, 적합도의 저축 기간 축과 단기 예적금의 기간 필터에서 뺀다. 저축기간은 대분류를 정하는 데만 필수라서 `category`가 있으면 없어도 된다. 응답의 `category`와 같은 이름·값이다(입력 폼 질문 그룹 `options[].categoryId`와는 별개).
 - **입력**: V7 마이그레이션으로 개월 단위 저축기간 옵션(`TERM_1_MONTH`, `TERM_3_MONTH`, `TERM_6_MONTH`, `TERM_12_MONTH`, `TERM_24_MONTH`, `TERM_36_MONTH`)을 추가하고 기존 범위형 옵션은 남긴다. 단기예치는 예치액(`depositAmount`) 필수, 은행 조건은 선택.
-- **응답**: `POST /search/products`가 `UnifiedSearchResultDto`를 반환한다. `productCategory`, 탭 상태(목돈 탭 A 적합도순, 탭 B 실수령액순 / 단기 탭 C 예적금 실수령액순, 탭 D 파킹통장 최고금리순), 목돈 결과(정부·은행 랭킹, TOP3, 금리 랭킹, 청약), 단기 결과(파킹, 예적금), 대분류 전환 시 필요한 금액 입력 여부.
+- **응답**: `POST /search/products`가 `UnifiedSearchResultDto`를 반환한다. `category`, 탭 상태(목돈 탭 A 적합도순, 탭 B 실수령액순 / 단기 탭 C 예적금 실수령액순, 탭 D 파킹통장 최고금리순), 목돈 결과(정부·은행 랭킹, TOP3, 금리 랭킹, 청약), 단기 결과(파킹, 예적금), 대분류 전환 시 필요한 금액 입력 여부.
 - **탭 A 배점 V2** (4축, 고특성 30점, 균등 20점)
 
   | 항목 | 정부 | 은행 |

@@ -76,7 +76,7 @@ class CategorySwitchIntegrationTest extends IntegrationTestSupport {
 
         UnifiedSearchResultDto result = searchService.searchUnified(request, loggedInUser());
 
-        assertThat(result.productCategory()).isEqualTo(ProductCategoryEnum.LONG_TERM);
+        assertThat(result.category()).isEqualTo(ProductCategoryEnum.LONG_TERM);
         assertThat(result.bankRanked())
                 .isNotEmpty()
                 .allSatisfy(dto -> assertThat(dto.periodScore()).isZero());

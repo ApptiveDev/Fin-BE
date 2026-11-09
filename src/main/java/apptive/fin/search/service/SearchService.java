@@ -48,7 +48,7 @@ public class SearchService {
      */
     public UnifiedSearchResultDto searchUnified(SearchRequestDto request, AuthUserDetails userDetails) {
         ResolvedKeywords requestedKeywords = resolveKeywordService.resolveKeywords(request.options());
-        ProductCategoryEnum category = request.productCategory(requestedKeywords);
+        ProductCategoryEnum category = request.category(requestedKeywords);
         ResolvedKeywords resolvedKeywords = withoutMismatchedPeriod(requestedKeywords, category);
 
         if (category == ProductCategoryEnum.SHORT_TERM) {

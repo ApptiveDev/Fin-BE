@@ -46,7 +46,7 @@ public class SearchRequestPolicy {
 
     // 대분류를 정할 입력(명시한 대분류 또는 저축기간)이 있는지
     private boolean hasCategoryInput(SearchRequestDto request, ResolvedKeywords keywords) {
-        return request.productCategory() != null || request.getSaveTrm(keywords) != null;
+        return request.category() != null || request.getSaveTrm(keywords) != null;
     }
 
     /** 첫거래/만기예적금 은행은 최소 1개 이상 선택해야 입력을 완료한 것으로 본다. 빈 목록과 null은 둘 다 미입력으로 본다. */

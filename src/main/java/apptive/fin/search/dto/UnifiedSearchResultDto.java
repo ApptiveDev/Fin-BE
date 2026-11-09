@@ -7,12 +7,12 @@ import java.util.List;
 
 /**
  * 통합 검색 결과 (대분류 라우팅 지원).
- * productCategory 필드로 현재 대분류를 표시하고, 해당 대분류의 결과만 채워짐.
+ * category 필드로 현재 대분류를 표시하고, 해당 대분류의 결과만 채워짐.
  */
 @Builder
 public record UnifiedSearchResultDto(
         // 현재 대분류
-        ProductCategoryEnum productCategory,
+        ProductCategoryEnum category,
 
         // 탭 활성화 상태
         TabAvailabilityDto tabs,
@@ -43,7 +43,7 @@ public record UnifiedSearchResultDto(
      */
     public static UnifiedSearchResultDto fromLongTerm(ProductSearchResultDto result) {
         return UnifiedSearchResultDto.builder()
-                .productCategory(ProductCategoryEnum.LONG_TERM)
+                .category(ProductCategoryEnum.LONG_TERM)
                 .tabs(result.tabs())
                 .governmentRanked(result.governmentRanked())
                 .bankRanked(result.bankRanked())
@@ -64,7 +64,7 @@ public record UnifiedSearchResultDto(
      */
     public static UnifiedSearchResultDto fromShortTerm(ShortTermResultDto result) {
         return UnifiedSearchResultDto.builder()
-                .productCategory(ProductCategoryEnum.SHORT_TERM)
+                .category(ProductCategoryEnum.SHORT_TERM)
                 .tabs(result.tabs())
                 .parkingProducts(result.parkingProducts())
                 .depositSavingsProducts(result.depositSavingsProducts())
