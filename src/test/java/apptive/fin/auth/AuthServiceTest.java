@@ -24,6 +24,8 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.when;
@@ -70,7 +72,7 @@ class AuthServiceTest {
     }
 
     @Test
-    void 리프레시_요청이_성공하면_이전_토큰을_비활성화하고_새_토큰을_재발급한다() {
+    void 리프레시_요청이_성공하면_이전_토큰을_삭제하고_새_토큰을_재발급한다() {
         byte[] oldRawToken = new byte[]{9, 8, 7, 6};
         byte[] newRawToken = new byte[]{1, 2, 3, 4};
         String encodedOldToken = Base64.getEncoder().encodeToString(oldRawToken);
@@ -83,7 +85,7 @@ class AuthServiceTest {
 
         when(jwtUtil.hashToken(oldRawToken)).thenReturn("old-hash");
         when(refreshTokenRepository.findByTokenHash("old-hash")).thenReturn(Optional.of(storedToken));
-        when(refreshTokenRepository.deactivateIfActive("old-hash")).thenReturn(1);
+        when(refreshTokenRepository.deleteByTokenHashIfExists("old-hash")).thenReturn(1);
         when(jwtUtil.generateAccessToken("1", UserRole.ADMIN, true)).thenReturn("new-access-token");
         when(jwtUtil.generateRefreshToken()).thenReturn(newRawToken);
         when(jwtUtil.hashToken(newRawToken)).thenReturn("new-hash");
@@ -92,12 +94,30 @@ class AuthServiceTest {
 
         LoginResponseDto response = authService.refresh(encodedOldToken);
 
-        verify(refreshTokenRepository).deactivateIfActive("old-hash");
+        verify(refreshTokenRepository).deleteByTokenHashIfExists("old-hash");
         verify(refreshTokenRepository).save(refreshTokenCaptor.capture());
 
         assertThat(response.accessToken()).isEqualTo("new-access-token");
         assertThat(response.refreshToken()).isEqualTo(Base64.getEncoder().encodeToString(newRawToken));
         assertThat(refreshTokenCaptor.getValue().getTokenHash()).isEqualTo("new-hash");
+    }
+
+    @Test
+    void 조회_후_다른_요청이_먼저_토큰을_지웠으면_재발급은_인증_실패다() {
+        byte[] rawToken = new byte[]{9, 8, 7, 6};
+        String encodedToken = Base64.getEncoder().encodeToString(rawToken);
+        RefreshToken storedToken = RefreshToken.builder()
+                .tokenHash("raced-hash")
+                .expiresAt(Instant.now().plusSeconds(300))
+                .user(createUser(1L, UserRole.BEFORE_AGREED))
+                .build();
+
+        when(jwtUtil.hashToken(rawToken)).thenReturn("raced-hash");
+        when(refreshTokenRepository.findByTokenHash("raced-hash")).thenReturn(Optional.of(storedToken));
+        when(refreshTokenRepository.deleteByTokenHashIfExists("raced-hash")).thenReturn(0);
+
+        assertUnauthorized(() -> authService.refresh(encodedToken));
+        verify(refreshTokenRepository, never()).save(any());
     }
 
     @Test
@@ -158,7 +178,7 @@ class AuthServiceTest {
 
         authService.logout(encodedToken);
 
-        verify(refreshTokenRepository).deleteByTokenHash("hashed-token");
+        verify(refreshTokenRepository).deleteByTokenHashIfExists("hashed-token");
     }
 
     @Test

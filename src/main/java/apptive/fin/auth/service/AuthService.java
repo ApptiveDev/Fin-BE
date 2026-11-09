@@ -40,7 +40,8 @@ public class AuthService {
 
             User user = refreshToken.getUser();
 
-            if (refreshTokenRepository.deactivateIfActive(hashedToken) < 1) {
+            // 회전: 쓴 토큰은 지운다. 같은 토큰으로 겹친 요청은 하나만 1행을 지우고 나머지는 401
+            if (refreshTokenRepository.deleteByTokenHashIfExists(hashedToken) < 1) {
                 throw new BusinessException(AuthErrorCode.UNAUTHORIZED);
             }
 
@@ -82,7 +83,7 @@ public class AuthService {
         try {
             byte[] rawToken = Base64.getDecoder().decode(refreshToken);
             String hashedToken = jwtUtil.hashToken(rawToken);
-            refreshTokenRepository.deleteByTokenHash(hashedToken);
+            refreshTokenRepository.deleteByTokenHashIfExists(hashedToken);
         }
         catch (IllegalArgumentException e) {
             throw new BusinessException(AuthErrorCode.UNAUTHORIZED);
