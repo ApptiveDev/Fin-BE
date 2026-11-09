@@ -2,11 +2,19 @@
 # deploy.yml이 이 파일과 .env, nginx 템플릿을 서버 ~/fin-be/로 복사한 뒤 실행한다. 변수는 같은 폴더 .env에서 읽는다.
 name: fin-be   # 볼륨 이름(fin-be_postgres_data)이 바뀌지 않도록 고정
 
+# 컨테이너 로그(json-file)는 기본값이 무제한이라 크기를 묶는다. 컨테이너당 최대 30MB.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   nginx:
     image: nginx:alpine
     container_name: fin-nginx
     restart: always
+    logging: *logging
     ports:
       - "80:80"
       - "443:443"
@@ -24,6 +32,7 @@ services:
     image: ghcr.io/apptivedev/fin-be:${IMAGE_TAG}
     container_name: fin-backend
     restart: always
+    logging: *logging
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE}
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/database
@@ -45,6 +54,7 @@ services:
     image: pgvector/pgvector:pg16
     container_name: fin-postgres
     restart: always
+    logging: *logging
     environment:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}

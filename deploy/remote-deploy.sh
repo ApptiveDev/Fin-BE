@@ -16,7 +16,8 @@ sudo docker compose restart nginx
 for _ in $(seq 1 40); do
   if sudo docker compose exec -T nginx \
       wget -q -O /dev/null --no-check-certificate https://127.0.0.1/api/categories; then
-    sudo docker image prune -f
+    # 이미지는 SHA 태그가 붙어 -f(태그 없는 이미지만)로는 안 지워진다. 실행 중인 컨테이너가 쓰는 것만 남긴다.
+    sudo docker image prune -af
     exit 0
   fi
   sleep 5
