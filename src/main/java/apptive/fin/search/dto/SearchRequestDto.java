@@ -1,5 +1,6 @@
 package apptive.fin.search.dto;
 
+import apptive.fin.search.enums.ProductCategoryEnum;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 
@@ -8,8 +9,20 @@ import java.util.List;
 
 public record SearchRequestDto(
         @NotNull List<@Valid OptionRequestDto> options,
-        @NotNull DetailedOptionsDto detailedOptions
+        @NotNull DetailedOptionsDto detailedOptions,
+        ProductCategoryEnum productCategory  // 대분류. 결과 화면에서 전환할 때만 보낸다. 없으면 저축기간으로 정한다.
 ) {
+    public SearchRequestDto(List<OptionRequestDto> options, DetailedOptionsDto detailedOptions) {
+        this(options, detailedOptions, null);
+    }
+
+    public ProductCategoryEnum productCategory(ResolvedKeywords keywords) {
+        if (productCategory != null) {
+            return productCategory;
+        }
+        return ProductCategoryEnum.fromSaveTrm(getSaveTrm(keywords));
+    }
+
     // 상세옵션 널세이프 위임 접근자. detailedOptions가 없으면 null.
     public Integer age(LocalDate today) {
         return detailedOptions != null ? detailedOptions.age(today) : null;
@@ -54,19 +67,15 @@ public record SearchRequestDto(
         return null;
     }
 
-    /**
-     * 정규화된 월 납입액 (적금 계산용).
-     */
-    public Long normalizedMonthlyDeposit(ResolvedKeywords keywords) {
+    // 적금 계산용 월 납입액 (상품 기간 기준)
+    public Long monthlyDepositFor(ResolvedKeywords keywords, Integer productSaveTrm) {
         if (detailedOptions == null) return null;
-        return detailedOptions.normalizedMonthlyDeposit(getSaveTrm(keywords));
+        return detailedOptions.monthlyDepositFor(productCategory(keywords), productSaveTrm);
     }
 
-    /**
-     * 정규화된 예치 원금 (예금 계산용).
-     */
-    public Long normalizedDepositPrincipal(ResolvedKeywords keywords) {
+    // 예금 계산용 예치 원금 (상품 기간 기준)
+    public Long depositPrincipalFor(ResolvedKeywords keywords, Integer productSaveTrm) {
         if (detailedOptions == null) return null;
-        return detailedOptions.normalizedDepositPrincipal(getSaveTrm(keywords));
+        return detailedOptions.depositPrincipalFor(productCategory(keywords), productSaveTrm);
     }
 }

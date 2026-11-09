@@ -831,8 +831,9 @@ class RateCalculatorServiceTest {
                 List.of(),
                 new DetailedOptionsDto(
                         null, null, null, null, null,
-                        null, null, null, null,
-                        1_000_000L,
+                        null, null, null,
+                        100_000L,  // 목돈만들기 월 저축 가능액
+                        null,
                         null, null, List.of()
                 )
         );
@@ -850,7 +851,7 @@ class RateCalculatorServiceTest {
         );
 
         assertThat(result.netReturn()).isNotNull();
-        assertThat(result.principal()).isEqualTo(1_000_000L);
+        assertThat(result.principal()).isEqualTo(1_200_000L);  // 월 10만 × 상품 기간 12개월
         assertThat(result.saveTrm()).isEqualTo(12);
         assertThat(result.productType()).isEqualTo("DEPOSIT");
     }

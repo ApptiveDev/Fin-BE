@@ -2,6 +2,7 @@ package apptive.fin.search.service;
 
 import apptive.fin.search.enums.ExtractionConfidence;
 import apptive.fin.search.enums.KeywordValueEnum;
+import apptive.fin.search.enums.ProductCategoryEnum;
 import apptive.fin.search.enums.ProductType;
 import apptive.fin.search.enums.RequiredKeywordEffect;
 import apptive.fin.search.dto.DetailedOptionsDto;
@@ -34,7 +35,7 @@ public class EligibilityFilterService {
 				
         // 키워드 Resolve
         ResolvedKeywords keywords = resolveKeywordService.resolveKeywords(request.options());
-        EligibilityCriteria criteria = eligibilityCriteria(detail, keywords); // 사용자의 가입 기준 정리
+        EligibilityCriteria criteria = eligibilityCriteria(request, keywords); // 사용자의 가입 기준 정리
 				
         // 가입가능한 상품 반환
         return productRepository.findEligibleProducts(
@@ -45,7 +46,7 @@ public class EligibilityFilterService {
                 criteria.isHomeless(),
                 criteria.isHouseholder(),
                 criteria.tenureMonths(),
-                criteria.monthlyDeposit()
+                criteria.queryMonthlyDeposit()
         ).stream()
                 .filter(product -> hasEligibleIdentityProperty(product, keywords.identities()))
                 .toList();
@@ -60,7 +61,7 @@ public class EligibilityFilterService {
     ) {
         DetailedOptionsDto detail = request.detailedOptions();
         if (detail == null) return List.of(); // 상세옵션 선택안하면 빈 리스트
-        EligibilityCriteria criteria = eligibilityCriteria(detail, keywords);  // 사용자의 가입 기준 정리
+        EligibilityCriteria criteria = eligibilityCriteria(request, keywords);  // 사용자의 가입 기준 정리
         
         // 가입가능한 상품 옵션(product, productProperty) 반환
         return productRepository.findEligibleProducts(
@@ -71,7 +72,7 @@ public class EligibilityFilterService {
                         criteria.isHomeless(),
                         criteria.isHouseholder(),
                         criteria.tenureMonths(),
-                        criteria.monthlyDeposit()
+                        criteria.queryMonthlyDeposit()
                 ).stream()
                 .flatMap(product
                         -> product.getProperties().stream()
@@ -83,21 +84,17 @@ public class EligibilityFilterService {
 
     // 사용자의 상품 가입기준을 정리하는 메서드
     private EligibilityCriteria eligibilityCriteria(
-            DetailedOptionsDto detail,
+            SearchRequestDto request,
             ResolvedKeywords keywords
     ) {
+        DetailedOptionsDto detail = request.detailedOptions();
         Integer age = detail.age();
         Long annualIncome = detail.annualIncome();
         Integer tenureMonths = new HashSet<>(keywords.identities())
                 .contains(KeywordValueEnum.STATUS_UNEMPLOYED)
                 ? Integer.valueOf(0)
                 : detail.tenureMonths();
-
-        // 단기예치 여부 판단 (키워드에서만 추출)
-        Integer saveTrm = keywords.savingPeriod() != null
-                ? keywords.savingPeriod().toSaveTrm()
-                : null;
-        boolean isShortTerm = saveTrm != null && (saveTrm == 1 || saveTrm == 3);
+        ProductCategoryEnum category = request.productCategory(keywords);
 
         return new EligibilityCriteria(
                 age,
@@ -107,9 +104,10 @@ public class EligibilityFilterService {
                 detail.isHomeless(),
                 detail.isHouseholder(),
                 tenureMonths,
-                detail.normalizedMonthlyDeposit(saveTrm),
-                detail.normalizedDepositPrincipal(saveTrm),
-                isShortTerm
+                // 단기예치 월 납입액은 상품 기간마다 달라 쿼리에서 거르지 않고 isAmountEligible에서 상품별로 확인한다.
+                category == ProductCategoryEnum.LONG_TERM ? detail.monthlySavingsGoal() : null,
+                detail,
+                category
         );
     }
     // ProductProperty의 자격요건에 사용자의 조건이 부합하는지 검사하는 함수
@@ -119,11 +117,11 @@ public class EligibilityFilterService {
             List<KeywordValueEnum> identities
     ) {
         return Boolean.TRUE.equals(property.getIsJoinable())
-                && isAgeEligible(property, criteria.age(), criteria.isShortTerm())
+                && isAgeEligible(property, criteria.age(), criteria.category() == ProductCategoryEnum.SHORT_TERM)
                 && isIncomeEligible(property, criteria.annualIncome(), criteria.householdIncomePercent(), criteria.incomeProofUnavailable())
                 && isResidenceEligible(property, criteria.isHomeless(), criteria.isHouseholder())
                 && isTenureEligible(property, criteria.tenureMonths())
-                && isAmountEligible(property, criteria.monthlyDeposit(), criteria.depositPrincipal())
+                && isAmountEligible(property, criteria.detail(), criteria.category())
                 && isIdentityEligible(property, identities);
     }
 
@@ -185,10 +183,12 @@ public class EligibilityFilterService {
     }
 
     // 금액 하한 조건 확인 (예금: 예치 원금 vs 최소예치금, 그 외: 월 납입액 vs 월 최소납입액)
-    private boolean isAmountEligible(ProductProperty property, Long monthlyDeposit, Long depositPrincipal) {
+    private boolean isAmountEligible(ProductProperty property, DetailedOptionsDto detail, ProductCategoryEnum category) {
         boolean isDeposit = property.getProduct() != null
                 && property.getProduct().getType() == ProductType.DEPOSIT;
-        Long amount = isDeposit ? depositPrincipal : monthlyDeposit;
+        Long amount = isDeposit
+                ? detail.depositPrincipalFor(category, property.getSaveTrm())
+                : detail.monthlyDepositFor(category, property.getSaveTrm());
         Long minLimit = property.resolvedMinLimit();
         return amount == null
                 || minLimit == null
@@ -240,9 +240,9 @@ public class EligibilityFilterService {
             Boolean isHomeless,
             Boolean isHouseholder,
             Integer tenureMonths,
-            Long monthlyDeposit,    // 월 납입액 (단기: 예치액÷기간, 목돈: monthlySavingsGoal)
-            Long depositPrincipal,  // 예치 원금 (단기: depositAmount, 목돈: 월저축액×기간)
-            boolean isShortTerm     // 단기예치 여부
+            Long queryMonthlyDeposit,  // 쿼리의 월 최소납입액 비교용 (목돈만들기만)
+            DetailedOptionsDto detail,
+            ProductCategoryEnum category
     ) {
     }
 }

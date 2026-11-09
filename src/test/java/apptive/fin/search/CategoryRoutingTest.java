@@ -6,6 +6,7 @@ import apptive.fin.search.dto.SearchRequestDto;
 import apptive.fin.search.enums.KeywordValueEnum;
 import apptive.fin.search.enums.ProductCategoryEnum;
 import org.junit.jupiter.api.Test;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.util.List;
 
@@ -67,7 +68,7 @@ class CategoryRoutingTest {
     }
 
     @Test
-    void 단기예치_정규화_월납입액은_예치액을_기간으로_나눈다() {
+    void 단기예치_정규화_월납입액은_예치액을_상품기간으로_나눈다() {
         DetailedOptionsDto dto = new DetailedOptionsDto(
                 null, null, null, null, null,
                 null, null, null,
@@ -75,12 +76,12 @@ class CategoryRoutingTest {
                 null, null, List.of()
         );
 
-        // 저축기간 3개월: 300만 / 3 = 100만
-        assertThat(dto.normalizedMonthlyDeposit(3)).isEqualTo(1000000L);
+        // 상품 기간 3개월: 300만 / 3 = 100만
+        assertThat(dto.monthlyDepositFor(ProductCategoryEnum.SHORT_TERM, 3)).isEqualTo(1000000L);
     }
 
     @Test
-    void 목돈만들기_정규화_예치원금은_월저축액에_기간을_곱한다() {
+    void 목돈만들기_정규화_예치원금은_월저축액에_상품기간을_곱한다() {
         DetailedOptionsDto dto = new DetailedOptionsDto(
                 null, null, null, null, null,
                 null, null, null,
@@ -88,8 +89,72 @@ class CategoryRoutingTest {
                 null, null, List.of()
         );
 
-        // 저축기간 12개월: 50만 × 12 = 600만
-        assertThat(dto.normalizedDepositPrincipal(12)).isEqualTo(6000000L);
+        // 상품 기간 12개월: 50만 × 12 = 600만
+        assertThat(dto.depositPrincipalFor(ProductCategoryEnum.LONG_TERM, 12)).isEqualTo(6000000L);
+    }
+
+    @Test
+    void 목돈만들기_월납입액은_상품기간이_짧고_예치액이_있어도_월저축액이다() {
+        DetailedOptionsDto dto = new DetailedOptionsDto(
+                null, null, null, null, null,
+                null, null, null,
+                500000L, 3000000L,  // monthlySavingsGoal=50만, depositAmount=300만
+                null, null, List.of()
+        );
+
+        assertThat(dto.monthlyDepositFor(ProductCategoryEnum.LONG_TERM, 3)).isEqualTo(500000L);
+    }
+
+    @Test
+    void 단기예치_예치원금은_상품기간이_길어도_예치액이다() {
+        DetailedOptionsDto dto = new DetailedOptionsDto(
+                null, null, null, null, null,
+                null, null, null,
+                500000L, 3000000L,  // monthlySavingsGoal=50만, depositAmount=300만
+                null, null, List.of()
+        );
+
+        assertThat(dto.depositPrincipalFor(ProductCategoryEnum.SHORT_TERM, 12)).isEqualTo(3000000L);
+    }
+
+    @Test
+    void 요청_JSON의_productCategory를_읽는다() {
+        String json = """
+                {"options": [], "detailedOptions": {"depositAmount": 1000000}, "productCategory": "SHORT_TERM"}
+                """;
+
+        SearchRequestDto request = JsonMapper.builder().build().readValue(json, SearchRequestDto.class);
+
+        assertThat(request.productCategory()).isEqualTo(ProductCategoryEnum.SHORT_TERM);
+    }
+
+    @Test
+    void 요청_JSON에_productCategory가_없으면_null이다() {
+        String json = """
+                {"options": [], "detailedOptions": {"depositAmount": 1000000}}
+                """;
+
+        SearchRequestDto request = JsonMapper.builder().build().readValue(json, SearchRequestDto.class);
+
+        assertThat(request.productCategory()).isNull();
+    }
+
+    @Test
+    void 요청에_대분류를_명시하면_저축기간보다_우선한다() {
+        SearchRequestDto request = new SearchRequestDto(List.of(), null, ProductCategoryEnum.LONG_TERM);
+        ResolvedKeywords threeMonths = new ResolvedKeywords(
+                List.of(), List.of(), KeywordValueEnum.TERM_3_MONTH, List.of(), List.of());
+
+        assertThat(request.productCategory(threeMonths)).isEqualTo(ProductCategoryEnum.LONG_TERM);
+    }
+
+    @Test
+    void 요청에_대분류가_없으면_저축기간으로_정한다() {
+        SearchRequestDto request = new SearchRequestDto(List.of(), null);
+        ResolvedKeywords threeMonths = new ResolvedKeywords(
+                List.of(), List.of(), KeywordValueEnum.TERM_3_MONTH, List.of(), List.of());
+
+        assertThat(request.productCategory(threeMonths)).isEqualTo(ProductCategoryEnum.SHORT_TERM);
     }
 
     @Test

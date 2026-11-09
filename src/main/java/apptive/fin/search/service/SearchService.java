@@ -44,11 +44,12 @@ public class SearchService {
 
     /**
      * 통합 검색 (대분류 라우팅).
-     * savingPeriod 키워드에 따라 대분류를 결정하고 해당 파이프라인 실행.
+     * 요청의 대분류(없으면 저축기간)로 파이프라인을 고른다.
      */
     public UnifiedSearchResultDto searchUnified(SearchRequestDto request, AuthUserDetails userDetails) {
-        ResolvedKeywords resolvedKeywords = resolveKeywordService.resolveKeywords(request.options());
-        ProductCategoryEnum category = determineCategory(request, resolvedKeywords);
+        ResolvedKeywords requestedKeywords = resolveKeywordService.resolveKeywords(request.options());
+        ProductCategoryEnum category = request.productCategory(requestedKeywords);
+        ResolvedKeywords resolvedKeywords = withoutMismatchedPeriod(requestedKeywords, category);
 
         if (category == ProductCategoryEnum.SHORT_TERM) {
             ShortTermResultDto shortTermResult = searchShortTerm(request, userDetails, resolvedKeywords);
@@ -63,17 +64,19 @@ public class SearchService {
         return searchUnified(request, null);
     }
 
-    /**
-     * 대분류 결정 로직.
-     * savingPeriod 키워드에서 저축기간 추출.
-     * 기본값: LONG_TERM (목돈만들기)
-     */
-    private ProductCategoryEnum determineCategory(SearchRequestDto request, ResolvedKeywords resolvedKeywords) {
-        Integer saveTrm = request.getSaveTrm(resolvedKeywords);
-        if (saveTrm != null) {
-            return ProductCategoryEnum.fromSaveTrm(saveTrm);
+    // 대분류와 맞지 않는 저축기간은 고르지 않은 것으로 본다 (적합도 기간 축, 단기 기간 필터에서 빠진다).
+    private ResolvedKeywords withoutMismatchedPeriod(ResolvedKeywords keywords, ProductCategoryEnum category) {
+        KeywordValueEnum period = keywords.savingPeriod();
+        if (period == null || ProductCategoryEnum.fromSaveTrm(period.toSaveTrm()) == category) {
+            return keywords;
         }
-        return ProductCategoryEnum.LONG_TERM;
+        return new ResolvedKeywords(
+                keywords.regions(),
+                keywords.identities(),
+                null,
+                keywords.coreBenefits(),
+                keywords.bankConditions()
+        );
     }
 
     /**

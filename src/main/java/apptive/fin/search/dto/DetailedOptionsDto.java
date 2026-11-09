@@ -1,6 +1,7 @@
 package apptive.fin.search.dto;
 
 import apptive.fin.global.util.AgeUtil;
+import apptive.fin.search.enums.ProductCategoryEnum;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -92,28 +93,28 @@ public record DetailedOptionsDto(
     }
 
     /**
-     * 정규화된 월 납입액 계산.
-     * @param saveTrm 저축기간 (키워드에서 추출)
-     * @return 단기예치(1,3개월)면 예치액÷기간, 목돈만들기면 monthlySavingsGoal
+     * 적금 상품 하나에 넣을 월 납입액.
+     * 단기예치는 예치액을 상품 기간으로 나누고, 목돈만들기는 월 저축 가능액을 그대로 쓴다. 계산할 수 없으면 null.
      */
-    public Long normalizedMonthlyDeposit(Integer saveTrm) {
-        boolean isShortTerm = saveTrm != null && (saveTrm == 1 || saveTrm == 3);
-        if (isShortTerm && depositAmount != null && saveTrm > 0) {
-            return depositAmount / saveTrm;
+    public Long monthlyDepositFor(ProductCategoryEnum category, Integer productSaveTrm) {
+        if (category == ProductCategoryEnum.SHORT_TERM) {
+            return depositAmount != null && productSaveTrm != null && productSaveTrm > 0
+                    ? depositAmount / productSaveTrm
+                    : null;
         }
         return monthlySavingsGoal;
     }
 
     /**
-     * 정규화된 예치 원금 계산.
-     * @param saveTrm 저축기간 (키워드에서 추출)
-     * @return 목돈만들기(6개월 이상)면 월저축액×기간, 단기예치면 depositAmount
+     * 예금 상품 하나에 넣을 예치 원금.
+     * 단기예치는 예치액을 그대로 쓰고, 목돈만들기는 월 저축 가능액에 상품 기간을 곱한다. 계산할 수 없으면 null.
      */
-    public Long normalizedDepositPrincipal(Integer saveTrm) {
-        boolean isLongTerm = saveTrm != null && saveTrm >= 6;
-        if (isLongTerm && monthlySavingsGoal != null) {
-            return monthlySavingsGoal * saveTrm;
+    public Long depositPrincipalFor(ProductCategoryEnum category, Integer productSaveTrm) {
+        if (category == ProductCategoryEnum.SHORT_TERM) {
+            return depositAmount;
         }
-        return depositAmount;
+        return monthlySavingsGoal != null && productSaveTrm != null
+                ? monthlySavingsGoal * productSaveTrm
+                : null;
     }
 }
