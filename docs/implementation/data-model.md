@@ -96,7 +96,7 @@ erDiagram
 | 테이블 | 내용 |
 | --- | --- |
 | `users` | OAuth 제공자와 ID, 이름, 이메일, `user_role` |
-| `refresh_tokens` | 토큰 SHA-256 해시, 활성 여부, 만료 |
+| `refresh_tokens` | 토큰 SHA-256 해시, 만료. 회전·로그아웃 때 행을 지우고, 만료된 행은 매일 일괄 삭제한다. `is_active`는 회전을 삭제로 바꾸면서 항상 true인 컬럼 |
 | `user_profiles` | 추천 입력 저장값(Y5-2). 생년월일, 연 소득, 가구원 수·소득 %, 근속, 첫 직장, 무주택·세대주, 월 납입 희망액, 거래 이력 은행 코드 목록, 1단계 선택 옵션 ID 목록(`selected_option_ids`). 목록 컬럼은 JSON 문자열(`LongListJsonConverter`, `StringListJsonConverter`). `main_banks`는 롤백용으로 남긴 미사용 컬럼 |
 | `user_term_agreements` | 약관 버전별 동의 여부·시각 |
 | `my_fin` | 찜. (사용자, 옵션) 유니크 |

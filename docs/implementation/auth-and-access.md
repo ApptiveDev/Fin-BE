@@ -29,8 +29,11 @@ sequenceDiagram
 | 액세스 토큰 | JWT (HMAC). `sub` = 사용자 ID, `role`, `required_terms_agreement` 클레임 | 프론트 메모리, `Authorization: Bearer` 헤더 | `jwt.expiration` 600초 |
 | 리프레시 토큰 | 무작위 바이트의 Base64 | `refresh_token` HttpOnly 쿠키. DB에는 SHA-256 해시만 저장 | `jwt.refresh_expiration` 86400초 |
 
-- `/auth/refresh`는 리프레시 토큰을 **회전**한다. 기존 토큰을 비활성화(`deactivateIfActive`, 조건부 업데이트라 동시 요청 중 하나만 성공)하고 새 토큰을 쿠키로 내려준다. 이미 쓴 토큰을 다시 보내면 401.
-- `/auth/logout`은 토큰 행을 지우고 `maxAge=0` 쿠키를 내려준다.
+- `/auth/refresh`는 리프레시 토큰을 **회전**한다. 기존 토큰 행을 지우고 새 토큰을 쿠키로 내려준다. 이미 쓴 토큰을 다시 보내면 401.
+  - 삭제는 벌크 DELETE(`deleteByTokenHashIfExists`)로 하고 지운 행 수를 본다. 같은 토큰으로 요청이 겹치면 하나만 1행을 지우고 나머지는 0행이라 401이다. 엔티티 삭제(`delete(entity)`, 파생 `deleteBy...`)는 0행일 때 Hibernate가 예외를 던져 500이 나므로 쓰지 않는다(`RefreshTokenConcurrencyIntegrationTest`).
+  - 쓴 토큰을 남기지 않으므로 재사용 탐지(쓴 토큰이 다시 오면 그 사용자의 토큰 전체 폐기)는 없다. 넣으려면 회전 시 삭제 대신 남겨 둬야 한다.
+- `/auth/logout`은 같은 벌크 DELETE로 토큰 행을 지우고 `maxAge=0` 쿠키를 내려준다.
+- 로그아웃 없이 떠난 세션의 토큰은 회전으로 지워지지 않는다. `RefreshTokenCleanupScheduler`가 매일 04:00(KST)에 만료된 행을 일괄 삭제한다. 같은 삭제를 여러 번 해도 결과가 같아 인스턴스가 여럿이어도 락이 필요 없다.
 - 쿠키 `Secure`, `SameSite`는 `app.cookie.*` 설정을 따른다(로컬은 `false`, `Lax`).
 
 ## 역할 (`UserRole`)
