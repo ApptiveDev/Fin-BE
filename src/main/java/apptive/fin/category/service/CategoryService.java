@@ -20,6 +20,24 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class CategoryService {
 
+    private static final Set<String> HIDDEN_OPTION_CODES = Set.of(
+            "TERM_OVER_3_YEARS",
+            "TERM_2_TO_3_YEARS",
+            "TERM_AROUND_1_YEAR",
+            "BANK_FIRST_TRANSACTION",
+            "BANK_REDEPOSIT"
+    );
+
+    private static final Map<String, String> DISPLAY_VALUE_MAP = Map.of(
+            "STATUS_UNEMPLOYED", "무소득(학생)",
+            "STATUS_PART_TIME", "알바/프리랜서",
+            "BENEFIT_MAX_INTEREST", "최고이율 중심",
+            "BANK_AUTO_TRANSFER", "자동이체 우대",
+            "BANK_CARD_USAGE", "카드실적 우대",
+            "BANK_SALARY_TRANSFER", "급여이체 우대",
+            "BANK_MARKETING", "마케팅동의 OK"
+    );
+
     private final CategoryRepository categoryRepository;
 
     public List<CategoryResponseDto> getCategories() {
@@ -27,6 +45,7 @@ public class CategoryService {
 
         Map<Long, List<CategoryFlatDto>> grouped =
                 flats.stream()
+                        .filter(f -> !HIDDEN_OPTION_CODES.contains(f.optionCode()))
                         .collect(Collectors.groupingBy(
                                 CategoryFlatDto::categoryId,
                                 LinkedHashMap::new,
@@ -42,7 +61,7 @@ public class CategoryService {
                     List<OptionDto> options = list.stream()
                             .map(f -> new OptionDto(
                                     f.optionId(),
-                                    f.optionValue()
+                                    DISPLAY_VALUE_MAP.getOrDefault(f.optionCode(), f.optionValue())
                             ))
                             .toList();
                     return new CategoryResponseDto(categoryId, categoryName, options);
