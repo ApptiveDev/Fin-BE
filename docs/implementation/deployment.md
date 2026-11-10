@@ -21,6 +21,8 @@
 - `backend`: 위 이미지. Flyway가 기동 때 마이그레이션을 적용한다. 배포 때 DB를 초기화하지 않는다.
 - `postgres`: 볼륨 `fin-be_postgres_data`. 포트는 서버 로컬(`127.0.0.1:5678`)에만 열고, 수집기(Fin-API)는 IAP SSH 터널로 접근한다.
 
+컨테이너 로그는 컨테이너당 10MB × 3개까지만 남긴다. 배포가 성공하면 실행 중인 컨테이너가 쓰지 않는 이미지를 지운다(SHA 이미지가 배포마다 약 200MB씩 쌓이기 때문).
+
 루트 `docker-compose.yml`은 로컬 개발 DB용이라 배포와 무관하다.
 
 ## GitHub Environment
@@ -92,7 +94,7 @@ OS Login을 켜면 메타데이터 SSH 키로는 접속할 수 없다. 사람도
 
 ## 롤백
 
-문제 커밋을 `main`(또는 `release`)에서 revert하면 일반 배포로 이전 코드가 나간다. 급할 때는 서버 `~/fin-be/.env`의 `IMAGE_TAG`를 이전 SHA로 바꾸고 `sudo docker compose up -d && sudo docker compose restart nginx`. 이미지는 GHCR에 SHA별로 남아 있다. 이미 적용된 Flyway 마이그레이션은 되돌리지 않으므로, 스키마를 바꾼 배포는 새 마이그레이션으로 고친다.
+문제 커밋을 `main`(또는 `release`)에서 revert하면 일반 배포로 이전 코드가 나간다. 급할 때는 Actions에서 마지막으로 정상이던 커밋의 `Deploy` 실행을 다시 실행(re-run)한다. 재실행은 그 실행의 SHA로 배포하므로 GHCR에 남아 있는 이전 이미지를 받아 띄운다. 서버에는 배포가 끝날 때 실행 중인 이미지만 남기므로(디스크 용량 때문), 서버에서 `IMAGE_TAG`만 바꿔 `up -d`하려면 GHCR 패키지가 비공개라 `read:packages` 권한 토큰으로 `docker login ghcr.io`부터 해야 한다. 이미 적용된 Flyway 마이그레이션은 되돌리지 않으므로, 스키마를 바꾼 배포는 새 마이그레이션으로 고친다.
 
 ## 문제 확인
 
