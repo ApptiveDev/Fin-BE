@@ -28,7 +28,7 @@ class CategoryServiceTest {
         List<CategoryFlatDto> mockData = List.of(
                 new CategoryFlatDto(1L, "거주지역", 1L, "서울", "REGION_SEOUL"),
                 new CategoryFlatDto(1L, "거주지역", 2L, "부산", "REGION_BUSAN"),
-                new CategoryFlatDto(2L, "현재신분", 3L, "미취업자", "STATUS_UNEMPLOYED")
+                new CategoryFlatDto(2L, "현재신분", 3L, "미취업", "STATUS_UNEMPLOYED")
         );
 
         given(categoryRepository.findAllWithOptions()).willReturn(mockData);
@@ -46,7 +46,7 @@ class CategoryServiceTest {
         assertThat(category1.options().get(0).optionValue()).isEqualTo("서울");
         assertThat(category1.options().get(1).optionValue()).isEqualTo("부산");
 
-        // 두 번째 카테고리 검증 - 라벨 매핑 적용
+        // 두 번째 카테고리 검증
         CategoryResponseDto category2 = result.get(1);
         assertThat(category2.categoryId()).isEqualTo(2L);
         assertThat(category2.categoryName()).isEqualTo("현재신분");
@@ -75,21 +75,17 @@ class CategoryServiceTest {
     }
 
     @Test
-    void 라벨_매핑_적용_성공() {
+    void 상품관심사_카테고리는_숨긴다() {
         List<CategoryFlatDto> mockData = List.of(
-                new CategoryFlatDto(6L, "우대거래", 1L, "자동이체 가능", "BANK_AUTO_TRANSFER"),
-                new CategoryFlatDto(6L, "우대거래", 2L, "마케팅 동의", "BANK_MARKETING"),
-                new CategoryFlatDto(6L, "우대거래", 3L, "첫거래 고객", "BANK_FIRST_TRANSACTION")
+                new CategoryFlatDto(4L, "핵심 혜택", 1L, "비과세", "BENEFIT_TAX_FREE"),
+                new CategoryFlatDto(5L, "상품관심사", 2L, "저축", "INTEREST_SAVINGS"),
+                new CategoryFlatDto(5L, "상품관심사", 3L, "대출", "INTEREST_LOAN")
         );
 
         given(categoryRepository.findAllWithOptions()).willReturn(mockData);
 
         List<CategoryResponseDto> result = categoryService.getCategories();
 
-        assertThat(result).hasSize(1);
-        CategoryResponseDto category = result.get(0);
-        assertThat(category.options()).hasSize(2);
-        assertThat(category.options().get(0).optionValue()).isEqualTo("자동이체 우대");
-        assertThat(category.options().get(1).optionValue()).isEqualTo("마케팅동의 OK");
+        assertThat(result).extracting(CategoryResponseDto::categoryId).containsExactly(4L);
     }
 }

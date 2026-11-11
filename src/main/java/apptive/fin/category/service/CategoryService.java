@@ -20,6 +20,8 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class CategoryService {
 
+    // 숨김 옵션은 저장된 선택(selected_option_ids)과 레거시 매칭 로직이 남아 있어 DB에서 지우지 않고 응답에서만 뺀다.
+    // 첫거래 고객, 재예치는 거래이력 입력(neverUsedBanks, maturedSavingBanks)으로 자동 활성화된다.
     private static final Set<String> HIDDEN_OPTION_CODES = Set.of(
             "TERM_OVER_3_YEARS",
             "TERM_2_TO_3_YEARS",
@@ -28,23 +30,9 @@ public class CategoryService {
             "BANK_REDEPOSIT"
     );
 
-    private static final Map<String, String> DISPLAY_VALUE_MAP = Map.of(
-            "STATUS_UNEMPLOYED", "미취업",
-            "STATUS_PART_TIME", "알바/프리랜서",
-            "BENEFIT_MAX_INTEREST", "최고이율 중심",
-            "BANK_AUTO_TRANSFER", "자동이체 우대",
-            "BANK_CARD_USAGE", "카드실적 우대",
-            "BANK_SALARY_TRANSFER", "급여이체 우대",
-            "BANK_MARKETING", "마케팅동의 OK"
-    );
-
-    private static final Map<String, String> CATEGORY_NAME_MAP = Map.of(
-            "우대거래", "은행 우대 조건",
-            "혜택선택", "핵심 혜택"
-    );
-
-    private static final Set<String> HIDDEN_CATEGORIES = Set.of(
-            "상품관심사"
+    // 상품관심사는 다시 쓸 수 있어 행을 남겨 둔다.
+    private static final Set<Long> HIDDEN_CATEGORY_IDS = Set.of(
+            CategoryIdEnum.INTEREST.getId()
     );
 
     private final CategoryRepository categoryRepository;
@@ -54,7 +42,7 @@ public class CategoryService {
 
         Map<Long, List<CategoryFlatDto>> grouped =
                 flats.stream()
-                        .filter(f -> !HIDDEN_CATEGORIES.contains(f.categoryName()))
+                        .filter(f -> !HIDDEN_CATEGORY_IDS.contains(f.categoryId()))
                         .filter(f -> !HIDDEN_OPTION_CODES.contains(f.optionCode()))
                         .collect(Collectors.groupingBy(
                                 CategoryFlatDto::categoryId,
@@ -66,13 +54,12 @@ public class CategoryService {
                     if (list.isEmpty()) return null;
 
                     Long categoryId = list.get(0).categoryId();
-                    String categoryName = CATEGORY_NAME_MAP.getOrDefault(
-                            list.get(0).categoryName(), list.get(0).categoryName());
+                    String categoryName = list.get(0).categoryName();
 
                     List<OptionDto> options = list.stream()
                             .map(f -> new OptionDto(
                                     f.optionId(),
-                                    DISPLAY_VALUE_MAP.getOrDefault(f.optionCode(), f.optionValue())
+                                    f.optionValue()
                             ))
                             .toList();
                     return new CategoryResponseDto(categoryId, categoryName, options);
