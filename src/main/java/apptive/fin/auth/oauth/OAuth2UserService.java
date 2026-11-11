@@ -27,6 +27,7 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
         String providerId = userInfo.getProviderId();
         String email = userInfo.getEmail();
         String name = userInfo.getName();
+        boolean emailVerified = userInfo.isEmailVerified();
 
         User user = userRepository.findByProviderAndProviderId(provider, providerId)
                 .orElseGet(()->userRepository.save(
@@ -38,6 +39,10 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
                             .userRole(UserRole.BEFORE_AGREED)
                             .build()
                 ));
+
+        if (emailVerified && !user.isEmailVerified()) {
+            user.verifyEmail();
+        }
 
         return new CustomOAuth2User(
                 user, oAuth2User.getAttributes()
