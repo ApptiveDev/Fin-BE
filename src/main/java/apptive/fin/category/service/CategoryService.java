@@ -43,6 +43,10 @@ public class CategoryService {
             "혜택선택", "핵심 혜택"
     );
 
+    private static final Set<String> HIDDEN_CATEGORIES = Set.of(
+            "상품관심사"
+    );
+
     private final CategoryRepository categoryRepository;
 
     public List<CategoryResponseDto> getCategories() {
@@ -50,6 +54,7 @@ public class CategoryService {
 
         Map<Long, List<CategoryFlatDto>> grouped =
                 flats.stream()
+                        .filter(f -> !HIDDEN_CATEGORIES.contains(f.categoryName()))
                         .filter(f -> !HIDDEN_OPTION_CODES.contains(f.optionCode()))
                         .collect(Collectors.groupingBy(
                                 CategoryFlatDto::categoryId,
