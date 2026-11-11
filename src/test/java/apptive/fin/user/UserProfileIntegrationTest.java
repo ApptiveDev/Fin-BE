@@ -66,7 +66,7 @@ class UserProfileIntegrationTest extends IntegrationTestSupport {
         assertThat(display.age()).isEqualTo(30);
         assertThat(display.householdIncomeGuide()).isEqualTo(256);   // V2 migration: 2026·1인·100% = 256
         assertThat(display.region()).isEqualTo("서울");
-        assertThat(display.preferentialConditions()).contains("급여이체 가능");
+        assertThat(display.preferentialConditions()).contains("급여이체 우대");   // V11 migration 문구
         // provider 미시드 → 첫거래/재예치 코드는 그대로 폴백
         assertThat(display.transactionHistory().firstTransactionBanks()).containsExactly("SH");
         assertThat(display.transactionHistory().redepositBanks()).containsExactly("WR");

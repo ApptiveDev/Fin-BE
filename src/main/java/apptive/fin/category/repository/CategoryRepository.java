@@ -12,7 +12,7 @@ public interface CategoryRepository extends JpaRepository<Category, Long>{
 
     @Query("""
           SELECT new apptive.fin.category.dto.CategoryFlatDto(
-            c.id, c.name, o.id, o.value
+            c.id, c.name, o.id, o.value, o.code
           )
           FROM Category c
           JOIN CategoryOption o ON c.id = o.category.id

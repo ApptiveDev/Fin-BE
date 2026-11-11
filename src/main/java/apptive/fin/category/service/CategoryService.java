@@ -20,6 +20,21 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class CategoryService {
 
+    // 숨김 옵션은 저장된 선택(selected_option_ids)과 레거시 매칭 로직이 남아 있어 DB에서 지우지 않고 응답에서만 뺀다.
+    // 첫거래 고객, 재예치는 거래이력 입력(neverUsedBanks, maturedSavingBanks)으로 자동 활성화된다.
+    private static final Set<String> HIDDEN_OPTION_CODES = Set.of(
+            "TERM_OVER_3_YEARS",
+            "TERM_2_TO_3_YEARS",
+            "TERM_AROUND_1_YEAR",
+            "BANK_FIRST_TRANSACTION",
+            "BANK_REDEPOSIT"
+    );
+
+    // 상품관심사는 다시 쓸 수 있어 행을 남겨 둔다.
+    private static final Set<Long> HIDDEN_CATEGORY_IDS = Set.of(
+            CategoryIdEnum.INTEREST.getId()
+    );
+
     private final CategoryRepository categoryRepository;
 
     public List<CategoryResponseDto> getCategories() {
@@ -27,6 +42,8 @@ public class CategoryService {
 
         Map<Long, List<CategoryFlatDto>> grouped =
                 flats.stream()
+                        .filter(f -> !HIDDEN_CATEGORY_IDS.contains(f.categoryId()))
+                        .filter(f -> !HIDDEN_OPTION_CODES.contains(f.optionCode()))
                         .collect(Collectors.groupingBy(
                                 CategoryFlatDto::categoryId,
                                 LinkedHashMap::new,
