@@ -52,7 +52,7 @@ class CategoryServiceTest {
         assertThat(category2.categoryName()).isEqualTo("현재신분");
         assertThat(category2.options()).hasSize(1);
 
-        assertThat(category2.options().get(0).optionValue()).isEqualTo("무소득(학생)");
+        assertThat(category2.options().get(0).optionValue()).isEqualTo("미취업");
     }
 
     @Test

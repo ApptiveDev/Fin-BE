@@ -29,7 +29,7 @@ public class CategoryService {
     );
 
     private static final Map<String, String> DISPLAY_VALUE_MAP = Map.of(
-            "STATUS_UNEMPLOYED", "무소득(학생)",
+            "STATUS_UNEMPLOYED", "미취업",
             "STATUS_PART_TIME", "알바/프리랜서",
             "BENEFIT_MAX_INTEREST", "최고이율 중심",
             "BANK_AUTO_TRANSFER", "자동이체 우대",
