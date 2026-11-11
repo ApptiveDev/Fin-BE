@@ -38,6 +38,11 @@ public class CategoryService {
             "BANK_MARKETING", "마케팅동의 OK"
     );
 
+    private static final Map<String, String> CATEGORY_NAME_MAP = Map.of(
+            "우대거래", "은행 우대 조건",
+            "혜택선택", "핵심 혜택"
+    );
+
     private final CategoryRepository categoryRepository;
 
     public List<CategoryResponseDto> getCategories() {
@@ -56,7 +61,8 @@ public class CategoryService {
                     if (list.isEmpty()) return null;
 
                     Long categoryId = list.get(0).categoryId();
-                    String categoryName = list.get(0).categoryName();
+                    String categoryName = CATEGORY_NAME_MAP.getOrDefault(
+                            list.get(0).categoryName(), list.get(0).categoryName());
 
                     List<OptionDto> options = list.stream()
                             .map(f -> new OptionDto(
