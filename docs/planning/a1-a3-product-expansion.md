@@ -196,6 +196,7 @@
 PR #36이 바꾸는 것:
 
 - **대분류 라우팅**: 저축기간 1·3개월이면 단기예치(`SHORT_TERM`), 그 외 목돈만들기(`LONG_TERM`)(`ProductCategoryEnum.fromSaveTrm`). 허용 저축기간은 1, 3, 6, 12, 24, 36개월이고 그 밖의 값은 `INVALID_SAVING_PERIOD`.
+- **대분류 전환**: 요청 body의 `category`(`SHORT_TERM`/`LONG_TERM`, 선택)가 있으면 저축기간보다 우선한다. 결과 화면 세그먼트 전환용이다. 이때 대분류와 맞지 않는 저축기간(예: 목돈 + 3개월)은 고르지 않은 것으로 보고, 적합도의 저축 기간 축과 단기 예적금의 기간 필터에서 뺀다. 저축기간은 대분류를 정하는 데만 필수라서 `category`가 있으면 없어도 된다. 응답의 `category`와 같은 이름·값이다(입력 폼 질문 그룹 `options[].categoryId`와는 별개).
 - **입력**: V7 마이그레이션으로 개월 단위 저축기간 옵션(`TERM_1_MONTH`, `TERM_3_MONTH`, `TERM_6_MONTH`, `TERM_12_MONTH`, `TERM_24_MONTH`, `TERM_36_MONTH`)을 추가하고 기존 범위형 옵션은 남긴다. 단기예치는 예치액(`depositAmount`) 필수, 은행 조건은 선택.
 - **응답**: `POST /search/products`가 `UnifiedSearchResultDto`를 반환한다. `category`, 탭 상태(목돈 탭 A 적합도순, 탭 B 실수령액순 / 단기 탭 C 예적금 실수령액순, 탭 D 파킹통장 최고금리순), 목돈 결과(정부·은행 랭킹, TOP3, 금리 랭킹, 청약), 단기 결과(파킹, 예적금), 대분류 전환 시 필요한 금액 입력 여부.
 - **탭 A 배점 V2** (4축, 고특성 30점, 균등 20점)
@@ -211,7 +212,7 @@ PR #36이 바꾸는 것:
 - **TOP3 배점**: 정부·은행 공통으로 핵심 혜택 33, 납입 한도 33, 저축 기간 34 (신분, 은행 거래 제외).
 - **탭 B (목돈)**: 은행은 세후 실수령액 내림차순, 정부는 예상 기여금 총액이 큰 순(환산 수익률보다 우선).
 - **탭 C 활성화 (단기 예적금)**: 로그인 + 예치액 + 저축기간 + 은행 조건 1개 이상 + 거래 이력(둘 다 `null` 아님) + 생년월일.
-- **금액 정규화**: 예금은 예치 원금(단기: 예치액, 목돈: 월저축액 × 기간)을 `min_deposit_amount`와, 적금은 월 납입액(단기: 예치액 ÷ 기간, 목돈: 월저축액)을 `min_monthly_limit`과, 파킹은 예치액을 `min_deposit_amount`와 비교한다.
+- **금액 정규화**: 예금은 예치 원금(단기: 예치액, 목돈: 월저축액 × 상품 기간)을 `min_deposit_amount`와, 적금은 월 납입액(단기: 예치액 ÷ 상품 기간, 목돈: 월저축액)을 `min_monthly_limit`과, 파킹은 예치액을 `min_deposit_amount`와 비교한다. 실수령액과 표시 원금도 같은 금액을 쓴다. 기간은 사용자가 고른 저축기간이 아니라 상품의 `save_trm`이다. 그래야 기간이 빠진 전환 요청에서도 계산할 수 있고, 목돈 예금의 원금 기간과 이자 기간이 일치한다.
 - **상품 유형**: `ProductType.PARKING` 추가. 파킹 상품 출처 `KFB`(은행연합회)는 수집기가 첫 동기화 때 `product_source`에 만든다.
 
 이 PR들이 머지되면 [추천 엔진](../implementation/recommendation-engine.md), [데이터 모델](../implementation/data-model.md), [기획과 구현 차이](../implementation/plan-vs-implementation.md)를 함께 갱신해야 한다.

@@ -24,7 +24,7 @@ public class SearchRequestPolicy {
             throw new BusinessException(SearchErrorCode.MONTHLY_SAVINGS_GOAL_REQUIRED);
         }
         // 저축기간 검증 (키워드에서만 추출)
-        validateSaveTrm(request.getSaveTrm(keywords));
+        validateSaveTrm(request, keywords);
         if (keywords == null || keywords.bankConditions() == null || keywords.bankConditions().isEmpty()) {
             throw new BusinessException(SearchErrorCode.BANK_CONDITION_REQUIRED);
         }
@@ -32,15 +32,21 @@ public class SearchRequestPolicy {
 
     /**
      * 저축기간 유효값 검증.
-     * 허용값: {1, 3, 6, 12, 24, 36}개월
+     * 허용값: {1, 3, 6, 12, 24, 36}개월. 대분류를 명시한 요청은 저축기간이 없어도 된다.
      */
-    private void validateSaveTrm(Integer saveTrm) {
-        if (saveTrm == null) {
+    private void validateSaveTrm(SearchRequestDto request, ResolvedKeywords keywords) {
+        if (!hasCategoryInput(request, keywords)) {
             throw new BusinessException(SearchErrorCode.SAVING_PERIOD_REQUIRED);
         }
-        if (!VALID_SAVE_TERMS.contains(saveTrm)) {
+        Integer saveTrm = request.getSaveTrm(keywords);
+        if (saveTrm != null && !VALID_SAVE_TERMS.contains(saveTrm)) {
             throw new BusinessException(SearchErrorCode.INVALID_SAVING_PERIOD);
         }
+    }
+
+    // 대분류를 정할 입력(명시한 대분류 또는 저축기간)이 있는지
+    private boolean hasCategoryInput(SearchRequestDto request, ResolvedKeywords keywords) {
+        return request.category() != null || request.getSaveTrm(keywords) != null;
     }
 
     /** 첫거래/만기예적금 은행은 최소 1개 이상 선택해야 입력을 완료한 것으로 본다. 빈 목록과 null은 둘 다 미입력으로 본다. */
@@ -69,7 +75,7 @@ public class SearchRequestPolicy {
     private boolean isStep1Complete(SearchRequestDto request, ResolvedKeywords keywords) {
         return request != null
                 && request.monthlySavingsGoal() != null
-                && request.getSaveTrm(keywords) != null  // 저축기간 검증
+                && hasCategoryInput(request, keywords)
                 && keywords != null
                 && keywords.bankConditions() != null
                 && !keywords.bankConditions().isEmpty();
@@ -91,7 +97,7 @@ public class SearchRequestPolicy {
             throw new BusinessException(SearchErrorCode.DEPOSIT_AMOUNT_REQUIRED);
         }
         // 저축기간 검증 (키워드에서만 추출)
-        validateSaveTrm(request.getSaveTrm(keywords));
+        validateSaveTrm(request, keywords);
     }
 
     /**
@@ -113,8 +119,7 @@ public class SearchRequestPolicy {
             return false;
         }
 
-        // 저축기간 입력 확인 (키워드에서 추출)
-        if (request.getSaveTrm(keywords) == null) {
+        if (!hasCategoryInput(request, keywords)) {
             return false;
         }
 

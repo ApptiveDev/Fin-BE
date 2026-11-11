@@ -239,7 +239,7 @@ public class RateCalculatorService {
             ResolvedKeywords keywords
     ) {
         Long netReturn = calculateBankNetReturn(product, property, request, keywords);
-        Long principal = calculatePrincipal(product, property, request);
+        Long principal = calculatePrincipal(product, property, request, keywords);
 
         return baseDto(product, property)
                 .baseRate(baseRate(property))
@@ -253,8 +253,8 @@ public class RateCalculatorService {
                 .build();
     }
 
-    // 원금 계산
-    private Long calculatePrincipal(Product product, ProductProperty property, SearchRequestDto request) {
+    // 원금 계산 (실수령액과 같은 정규화 금액 기준)
+    private Long calculatePrincipal(Product product, ProductProperty property, SearchRequestDto request, ResolvedKeywords keywords) {
         if (property == null) {
             return null;
         }
@@ -266,9 +266,9 @@ public class RateCalculatorService {
 
         ProductType type = product.getType();
         if (type == ProductType.DEPOSIT) {
-            return request.depositAmount();
+            return request.depositPrincipalFor(keywords, months);
         } else if (type == ProductType.SAVING) {
-            Long monthlyGoal = request.monthlySavingsGoal();
+            Long monthlyGoal = request.monthlyDepositFor(keywords, months);
             if (monthlyGoal == null || monthlyGoal <= 0) {
                 return null;
             }
@@ -533,15 +533,15 @@ public class RateCalculatorService {
 
         ProductType type = product.getType();
         if (type == ProductType.DEPOSIT) {
-            // 예금: 정규화된 예치 원금 사용 (목돈만들기 시 월저축액×기간으로 변환)
-            Long depositAmount = request.normalizedDepositPrincipal(keywords);
+            // 예금: 단기예치는 예치액, 목돈만들기는 월저축액×상품기간
+            Long depositAmount = request.depositPrincipalFor(keywords, months);
             if (depositAmount == null || depositAmount <= 0) {
                 return null;
             }
             return calculateNetReturn(type, depositAmount, null, achievable, months, isCompound);
         } else if (type == ProductType.SAVING) {
-            // 적금: 정규화된 월 납입액 사용 (단기예치 시 예치액÷기간으로 변환)
-            Long monthlyGoal = request.normalizedMonthlyDeposit(keywords);
+            // 적금: 단기예치는 예치액÷상품기간, 목돈만들기는 월저축액
+            Long monthlyGoal = request.monthlyDepositFor(keywords, months);
             if (monthlyGoal == null || monthlyGoal <= 0) {
                 return null;
             }
