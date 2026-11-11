@@ -5,4 +5,8 @@ public interface OAuth2UserInfo {
     String getName();
     String getEmail();
     String getProviderId();
+
+    default boolean isEmailVerified() {
+        return false;
+    }
 }
