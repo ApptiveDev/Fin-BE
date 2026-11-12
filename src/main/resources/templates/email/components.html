@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<body>
+<!--
+    공통 컴포넌트 Fragment 모음
+    ==========================
+-->
+
+<!-- 로고 (text 기반 임시 버전) -->
+<th:block th:fragment="logo">
+    <!-- TODO: PNG 로고 파일이 준비되면 아래 img 태그로 교체 -->
+    <!-- <img th:src="${logoUrl}" width="80" height="28" alt="Y-Fin" style="display:block;border:0;"> -->
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            <td style="width:36px;height:36px;background-color:#03BFA5;border-radius:50%;text-align:center;vertical-align:middle;">
+                <span style="font-size:18px;font-weight:700;color:#ffffff;">Y</span>
+            </td>
+            <td style="padding-left:6px;font-size:20px;font-weight:700;color:#03BFA5;">Fin</td>
+        </tr>
+    </table>
+</th:block>
+
+<!-- 헤더 -->
+<th:block th:fragment="header(headerRight)">
+    <tr>
+        <td class="card-padding" style="padding:32px 40px 24px 40px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                    <td th:replace="~{email/components :: logo}"></td>
+                    <td align="right" style="font-size:14px;color:#8B9098;" th:text="${headerRight}">일정 알림</td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</th:block>
+
+<!-- 푸터 -->
+<th:block th:fragment="footer(manageUrl, unsubscribeUrl, footerNotice)">
+    <tr>
+        <td style="background-color:#F1F2F4;border-radius:0 0 24px 24px;padding:32px 40px;">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                    <td style="font-size:13px;line-height:1.9;color:#9AA0A6;">
+                        <th:block th:if="${footerNotice != null}" th:utext="${footerNotice}"></th:block>
+                        <th:block th:unless="${footerNotice != null}">
+                            일정은 발송일 06:00 온통청년 공고 기준이며 기관 사정에 따라 바뀔 수 있어요.<br/>
+                            Y-Fin.은 해당 상품의 판매·중개 주체가 아니며, 신청은 기관 공식 페이지에서 진행됩니다.<br/>
+                            이 메일은 회원님이 직접 신청한 일정 안내입니다.<br/>
+                            알림을 하나씩 끄거나 다시 켜는 건 Y-Fin 내 알림에서 할 수 있어요.
+                        </th:block>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-top:24px;">
+                        <a th:href="${manageUrl}" style="font-size:13px;font-weight:700;color:#03BFA5;text-decoration:underline;">알림 설정 관리</a>
+                        <span style="color:#9AA0A6;"> · </span>
+                        <a th:href="${unsubscribeUrl}" style="font-size:13px;color:#9AA0A6;text-decoration:underline;">전체 수신거부</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td style="padding-top:16px;font-size:12px;color:#9AA0A6;">
+                        <!-- TODO: 사업자 주소, 고객센터 이메일 properties에서 읽기 -->
+                        Y-Fin. · <span th:text="${businessInfo} ?: 'TODO: 사업자 주소 · 고객센터 이메일'">사업자 정보</span>
+                    </td>
+                </tr>
+            </table>
+        </td>
+    </tr>
+</th:block>
+
+<!-- 주 버튼 (CTA) -->
+<th:block th:fragment="primaryButton(label, url, external)">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+            <td align="center" bgcolor="#03BFA5" style="border-radius:14px;">
+                <a th:href="${url}"
+                   th:target="${external} ? '_blank' : null"
+                   style="display:block;padding:17px 24px;font-size:18px;font-weight:700;line-height:22px;color:#ffffff;text-decoration:none;">
+                    <span style="color:#ffffff;" th:text="${label}">버튼 라벨</span>
+                </a>
+            </td>
+        </tr>
+    </table>
+</th:block>
+
+<!-- 정보 행 (요약 박스 내) -->
+<th:block th:fragment="infoRow(label, value)">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border-top:1px solid #EEF0F2;">
+        <tr>
+            <td style="padding:12px 0;font-size:14px;color:#8B9098;" th:text="${label}">라벨</td>
+            <td style="padding:12px 0;font-size:14px;font-weight:700;color:#222222;text-align:right;" th:text="${value}">값</td>
+        </tr>
+    </table>
+</th:block>
+
+<!-- 마감 뱃지 -->
+<th:block th:fragment="deadlineBadge(dday, urgent)">
+    <span th:if="${urgent}"
+          style="display:inline-block;padding:6px 12px;border-radius:999px;font-size:13px;font-weight:700;background:#F0596E;color:#ffffff;"
+          th:text="'마감 D-' + ${dday}">마감 D-3</span>
+    <span th:unless="${urgent}"
+          style="display:inline-block;padding:6px 12px;border-radius:999px;font-size:13px;font-weight:700;background:#FEEFF2;color:#F0596E;"
+          th:text="'마감 D-' + ${dday}">마감 D-7</span>
+</th:block>
+
+<!-- 유형 뱃지 -->
+<th:block th:fragment="typeBadge(typeLabel)">
+    <span style="display:inline-block;padding:6px 12px;border-radius:999px;font-size:13px;font-weight:700;background:#F1F2F4;color:#333333;"
+          th:text="${typeLabel}">금융 지원 정책</span>
+</th:block>
+
+</body>
+</html>

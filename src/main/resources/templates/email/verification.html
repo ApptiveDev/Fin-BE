@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <title>Y-Fin 이메일 인증</title>
+    <style type="text/css">
+        @media only screen and (max-width: 600px) {
+            .card-padding { padding-left: 24px !important; padding-right: 24px !important; }
+        }
+    </style>
+</head>
+<!--
+    이메일 인증 (verification)
+    ==========================
+    변수: verifyUrl, preheader
+-->
+<body style="margin:0;padding:0;background-color:#F1F2F4;font-family:Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;-webkit-font-smoothing:antialiased;">
+    <!-- Preheader (hidden) -->
+    <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;" th:text="${preheader}">Y-Fin. 이메일 인증을 완료해주세요</div>
+    <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;</div>
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F1F2F4;">
+        <tr>
+            <td align="center" style="padding:40px 20px;">
+                <!-- Card -->
+                <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;background-color:#FFFFFF;border:1px solid #E6E8EB;border-radius:24px;">
+
+                    <!-- Header -->
+                    <tr th:replace="~{email/components :: header('이메일 인증')}"></tr>
+
+                    <!-- Content Box -->
+                    <tr>
+                        <td class="card-padding" style="padding:0 40px 40px 40px;">
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f8fafc;border-radius:12px;">
+                                <tr>
+                                    <td style="padding:30px;color:#333333;line-height:1.6;">
+                                        <h2 style="margin:0 0 16px 0;font-size:20px;font-weight:600;color:#1e293b;">이메일 인증을 완료해주세요</h2>
+                                        <p style="margin:0 0 12px 0;font-size:14px;">아래 버튼을 클릭하여 이메일 인증을 완료해주세요.</p>
+                                        <p style="margin:0 0 24px 0;font-size:14px;">이 링크는 24시간 동안 유효합니다.</p>
+
+                                        <!-- Button -->
+                                        <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                                            <tr>
+                                                <td align="center" bgcolor="#03BFA5" style="border-radius:8px;">
+                                                    <a th:href="${verifyUrl}" target="_blank"
+                                                       style="display:inline-block;padding:14px 28px;font-size:14px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:8px;">
+                                                        <span style="color:#ffffff;">이메일 인증하기</span>
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        </table>
+
+                                        <p style="margin:24px 0 0 0;font-size:12px;color:#64748b;word-break:break-all;">
+                                            버튼이 작동하지 않으면 아래 링크를 복사하여 브라우저에 붙여넣기 해주세요:<br/>
+                                            <span th:text="${verifyUrl}">https://y-fin.com/verify?token=xxx</span>
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Footer Note -->
+                    <tr>
+                        <td class="card-padding" style="padding:0 40px 40px 40px;text-align:center;">
+                            <p style="margin:0;font-size:12px;color:#64748b;">본 메일은 Y-Fin. 서비스 이용을 위해 발송되었습니다.</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
