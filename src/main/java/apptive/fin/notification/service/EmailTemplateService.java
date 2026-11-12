@@ -1,56 +1,166 @@
 package apptive.fin.notification.service;
 
 import apptive.fin.notification.NotificationProperties;
+import apptive.fin.notification.dto.DeadlineEmailData;
+import apptive.fin.notification.dto.DigestEmailData;
+import apptive.fin.notification.dto.MaturityEmailData;
+import apptive.fin.notification.dto.StartEmailData;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
 
-import java.util.Map;
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
 public class EmailTemplateService {
 
+    // TODO: 시안은 "[Y-Fin.]", 명세는 "[Y-Fin]" - 확정 후 통일 필요
+    private static final String MAIL_SUBJECT_PREFIX = "[Y-Fin.]";
+
+    private final TemplateEngine templateEngine;
     private final NotificationProperties properties;
 
-    public String buildVerificationEmail(String verifyUrl) {
-        return """
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <style>
-                    body { font-family: 'Pretendard', -apple-system, sans-serif; line-height: 1.6; color: #333; }
-                    .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
-                    .header { text-align: center; margin-bottom: 30px; }
-                    .logo { font-size: 24px; font-weight: bold; color: #2563eb; }
-                    .content { background: #f8fafc; border-radius: 12px; padding: 30px; }
-                    .button { display: inline-block; background: #2563eb; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; }
-                    .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #64748b; }
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <div class="header">
-                        <div class="logo">Y-Fin.</div>
-                    </div>
-                    <div class="content">
-                        <h2>이메일 인증을 완료해주세요</h2>
-                        <p>아래 버튼을 클릭하여 이메일 인증을 완료해주세요.</p>
-                        <p>이 링크는 24시간 동안 유효합니다.</p>
-                        <a href="%s" class="button">이메일 인증하기</a>
-                        <p style="font-size: 12px; color: #64748b;">버튼이 작동하지 않으면 아래 링크를 복사하여 브라우저에 붙여넣기 해주세요:<br>%s</p>
-                    </div>
-                    <div class="footer">
-                        <p>본 메일은 Y-Fin. 서비스 이용을 위해 발송되었습니다.</p>
-                    </div>
-                </div>
-            </body>
-            </html>
-            """.formatted(verifyUrl, verifyUrl);
+    // ──────────────────────────────────────────────────────────────────────────
+    // Public API - Thymeleaf 기반 템플릿
+    // ──────────────────────────────────────────────────────────────────────────
+
+    /**
+     * 마감 알림 단건 이메일
+     */
+    public String buildDeadlineEmailV2(DeadlineEmailData data) {
+        Context context = createBaseContext();
+
+        context.setVariable("preheader", data.title() + " 신청 마감까지 " + data.dday() + "일 남았어요");
+        context.setVariable("dday", data.dday());
+        context.setVariable("urgent", data.urgent());
+        context.setVariable("typeLabel", data.typeLabel());
+        context.setVariable("title", data.title());
+        context.setVariable("startDateLabel", data.startDateLabel());
+        context.setVariable("endDateLabel", data.endDateLabel());
+        context.setVariable("agency", data.agency());
+        context.setVariable("applyMethod", data.applyMethod());
+        context.setVariable("ctaLabel", data.ctaLabel());
+        context.setVariable("ctaUrl", data.ctaUrl());
+        context.setVariable("ctaExternal", data.ctaExternal());
+        context.setVariable("allSchedulesUrl", data.allSchedulesUrl());
+        context.setVariable("manageUrl", data.manageUrl());
+        context.setVariable("unsubscribeUrl", data.unsubscribeUrl());
+        context.setVariable("nextAlertDate", data.nextAlertDate());
+        context.setVariable("nextAlertDday", data.nextAlertDday());
+        context.setVariable("footerNotice", data.footerNotice());
+
+        return templateEngine.process("email/deadline", context);
     }
 
+    /**
+     * 시작 알림 이메일
+     */
+    public String buildStartEmailV2(StartEmailData data) {
+        Context context = createBaseContext();
+
+        context.setVariable("preheader", data.title() + " 신청이 시작되었습니다");
+        context.setVariable("typeLabel", data.typeLabel());
+        context.setVariable("title", data.title());
+        context.setVariable("startDateLabel", data.startDateLabel());
+        context.setVariable("endDateLabel", data.endDateLabel());
+        context.setVariable("agency", data.agency());
+        context.setVariable("applyMethod", data.applyMethod());
+        context.setVariable("ctaLabel", data.ctaLabel());
+        context.setVariable("ctaUrl", data.ctaUrl());
+        context.setVariable("ctaExternal", data.ctaExternal());
+        context.setVariable("allSchedulesUrl", data.allSchedulesUrl());
+        context.setVariable("manageUrl", data.manageUrl());
+        context.setVariable("unsubscribeUrl", data.unsubscribeUrl());
+        context.setVariable("footerNotice", data.footerNotice());
+
+        return templateEngine.process("email/start", context);
+    }
+
+    /**
+     * 다이제스트 이메일
+     */
+    public String buildDigestEmailV2(DigestEmailData data) {
+        Context context = createBaseContext();
+
+        context.setVariable("preheader", "오늘 확인할 일정 " + data.count() + "건");
+        context.setVariable("count", data.count());
+        context.setVariable("baseDateLabel", data.baseDateLabel());
+        context.setVariable("items", data.items());
+        context.setVariable("moreCount", data.moreCount());
+        context.setVariable("allUrl", data.allUrl());
+        context.setVariable("manageUrl", data.manageUrl());
+        context.setVariable("unsubscribeUrl", data.unsubscribeUrl());
+        context.setVariable("footerNotice", data.footerNotice());
+
+        return templateEngine.process("email/digest", context);
+    }
+
+    /**
+     * 만기 알림 이메일
+     */
+    public String buildMaturityEmailV2(MaturityEmailData data) {
+        Context context = createBaseContext();
+
+        context.setVariable("preheader", data.productName() + " 만기가 " + data.dday() + "일 남았어요");
+        context.setVariable("dday", data.dday());
+        context.setVariable("productName", data.productName());
+        context.setVariable("joinDate", data.joinDate());
+        context.setVariable("termLabel", data.termLabel());
+        context.setVariable("maturityDateLabel", data.maturityDateLabel());
+        context.setVariable("compareUrl", data.compareUrl());
+        context.setVariable("allSchedulesUrl", data.allSchedulesUrl());
+        context.setVariable("manageUrl", data.manageUrl());
+        context.setVariable("unsubscribeUrl", data.unsubscribeUrl());
+        context.setVariable("footerNotice", data.footerNotice());
+
+        return templateEngine.process("email/maturity", context);
+    }
+
+    /**
+     * 인증 이메일
+     */
+    public String buildVerificationEmail(String verifyUrl) {
+        Context context = createBaseContext();
+
+        context.setVariable("preheader", "Y-Fin. 이메일 인증을 완료해주세요");
+        context.setVariable("verifyUrl", verifyUrl);
+
+        return templateEngine.process("email/verification", context);
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // Subject 생성
+    // ──────────────────────────────────────────────────────────────────────────
+
+    public String buildDeadlineSubject(String productName, int dday) {
+        return MAIL_SUBJECT_PREFIX + " " + productName + " 신청 마감까지 " + dday + "일 남았어요";
+    }
+
+    public String buildStartSubject(String productName) {
+        return MAIL_SUBJECT_PREFIX + " " + productName + " 신청이 시작되었습니다";
+    }
+
+    public String buildDigestSubject(int count) {
+        return MAIL_SUBJECT_PREFIX + " 오늘 확인할 일정 " + count + "건";
+    }
+
+    public String buildMaturitySubject(String productName, int dday) {
+        return MAIL_SUBJECT_PREFIX + " " + productName + " 만기가 " + dday + "일 남았어요";
+    }
+
+    public String buildVerificationSubject() {
+        return MAIL_SUBJECT_PREFIX + " 이메일 인증을 완료해주세요";
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // 기존 API - 하위 호환성 유지 (추후 제거 예정)
+    // ──────────────────────────────────────────────────────────────────────────
+
+    @Deprecated
     public String buildDeadlineEmail(String productName, String dDay, String detailUrl, String unsubscribeUrl) {
-        return buildNotificationEmail(
+        return buildNotificationEmailLegacy(
                 "마감 임박 알림",
                 productName,
                 dDay + " 마감 예정입니다.",
@@ -60,8 +170,9 @@ public class EmailTemplateService {
         );
     }
 
+    @Deprecated
     public String buildStartEmail(String productName, String detailUrl, String unsubscribeUrl) {
-        return buildNotificationEmail(
+        return buildNotificationEmailLegacy(
                 "신청 시작 알림",
                 productName,
                 "신청이 시작되었습니다.",
@@ -71,8 +182,9 @@ public class EmailTemplateService {
         );
     }
 
+    @Deprecated
     public String buildMaturityEmail(String productName, String dDay, String unsubscribeUrl) {
-        return buildNotificationEmail(
+        return buildNotificationEmailLegacy(
                 "만기 알림",
                 productName,
                 dDay + " 만기 예정입니다.",
@@ -82,6 +194,7 @@ public class EmailTemplateService {
         );
     }
 
+    @Deprecated
     public String buildCorrectionEmail(String productName, String changeDetails, String detailUrl, String unsubscribeUrl) {
         return """
             <!DOCTYPE html>
@@ -92,11 +205,11 @@ public class EmailTemplateService {
                     body { font-family: 'Pretendard', -apple-system, sans-serif; line-height: 1.6; color: #333; }
                     .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
                     .header { text-align: center; margin-bottom: 30px; }
-                    .logo { font-size: 24px; font-weight: bold; color: #2563eb; }
+                    .logo { font-size: 24px; font-weight: bold; color: #03BFA5; }
                     .content { background: #f8fafc; border-radius: 12px; padding: 30px; }
                     .product-name { font-size: 18px; font-weight: 600; color: #1e293b; }
                     .changes { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin: 16px 0; }
-                    .button { display: inline-block; background: #2563eb; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; }
+                    .button { display: inline-block; background: #03BFA5; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; }
                     .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #64748b; }
                 </style>
             </head>
@@ -120,6 +233,7 @@ public class EmailTemplateService {
             """.formatted(productName, changeDetails, detailUrl, unsubscribeUrl);
     }
 
+    @Deprecated
     public String buildDigestEmail(String digestContent, String unsubscribeUrl) {
         return """
             <!DOCTYPE html>
@@ -130,7 +244,7 @@ public class EmailTemplateService {
                     body { font-family: 'Pretendard', -apple-system, sans-serif; line-height: 1.6; color: #333; }
                     .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
                     .header { text-align: center; margin-bottom: 30px; }
-                    .logo { font-size: 24px; font-weight: bold; color: #2563eb; }
+                    .logo { font-size: 24px; font-weight: bold; color: #03BFA5; }
                     .content { background: #f8fafc; border-radius: 12px; padding: 30px; }
                     .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #64748b; }
                 </style>
@@ -153,8 +267,9 @@ public class EmailTemplateService {
             """.formatted(digestContent, unsubscribeUrl);
     }
 
-    private String buildNotificationEmail(String title, String productName, String message,
-                                          String callToAction, String detailUrl, String unsubscribeUrl) {
+    @Deprecated
+    private String buildNotificationEmailLegacy(String title, String productName, String message,
+                                                String callToAction, String detailUrl, String unsubscribeUrl) {
         String buttonHtml = detailUrl != null
                 ? "<a href=\"" + detailUrl + "\" class=\"button\">상세 확인하기</a>"
                 : "";
@@ -168,12 +283,12 @@ public class EmailTemplateService {
                     body { font-family: 'Pretendard', -apple-system, sans-serif; line-height: 1.6; color: #333; }
                     .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
                     .header { text-align: center; margin-bottom: 30px; }
-                    .logo { font-size: 24px; font-weight: bold; color: #2563eb; }
+                    .logo { font-size: 24px; font-weight: bold; color: #03BFA5; }
                     .content { background: #f8fafc; border-radius: 12px; padding: 30px; }
                     .product-name { font-size: 18px; font-weight: 600; color: #1e293b; margin: 16px 0; }
                     .message { color: #475569; }
-                    .cta { color: #2563eb; font-weight: 600; }
-                    .button { display: inline-block; background: #2563eb; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; }
+                    .cta { color: #03BFA5; font-weight: 600; }
+                    .button { display: inline-block; background: #03BFA5; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; }
                     .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #64748b; }
                 </style>
             </head>
@@ -196,5 +311,17 @@ public class EmailTemplateService {
             </body>
             </html>
             """.formatted(title, productName, message, callToAction, buttonHtml, unsubscribeUrl);
+    }
+
+    // ──────────────────────────────────────────────────────────────────────────
+    // Private Helpers
+    // ──────────────────────────────────────────────────────────────────────────
+
+    private Context createBaseContext() {
+        Context context = new Context(Locale.KOREA);
+        // TODO: properties에서 사업자 정보 읽기
+        context.setVariable("businessInfo", null);
+        context.setVariable("logoUrl", "https://y-fin.com/logo-email.png");
+        return context;
     }
 }
