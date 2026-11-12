@@ -80,6 +80,9 @@ public class SecurityConfig {
                             .requestMatchers(HttpMethod.POST, "/search/products/*/detail").permitAll()
                             .requestMatchers(HttpMethod.GET, "/providers/banks").permitAll()
                             .requestMatchers(HttpMethod.GET, "/calendar/events", "/calendar/summary").permitAll()
+                            .requestMatchers("/test/**").permitAll()
+                            .requestMatchers(HttpMethod.GET, "/notifications/email/verify").permitAll()
+                            .requestMatchers("/notifications/unsubscribe/**").permitAll()
                             .anyRequest().authenticated();
                 })
                 .oauth2Login(oauth2 -> oauth2

@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <title>Y-Fin 시작 알림</title>
+    <style type="text/css">
+        @media only screen and (max-width: 600px) {
+            .card-padding { padding-left: 24px !important; padding-right: 24px !important; }
+        }
+    </style>
+</head>
+<!--
+    시작 알림 (start)
+    =================
+    TODO: 디자이너 확인 후 별도 디자인 적용 필요
+-->
+<body style="margin:0;padding:0;background-color:#F1F2F4;font-family:Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;-webkit-font-smoothing:antialiased;">
+    <!-- Preheader (hidden) -->
+    <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;" th:text="${preheader}">프리헤더</div>
+    <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;</div>
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F1F2F4;">
+        <tr>
+            <td align="center" style="padding:40px 20px;">
+                <!-- Card -->
+                <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;background-color:#FFFFFF;border:1px solid #E6E8EB;border-radius:24px;">
+
+                    <!-- Header -->
+                    <tr th:replace="~{email/components :: header('일정 알림')}"></tr>
+
+                    <!-- Title -->
+                    <tr>
+                        <td class="card-padding" style="padding:0 40px 24px 40px;">
+                            <h1 style="margin:0 0 8px 0;font-size:28px;font-weight:700;line-height:1.4;color:#222222;" th:text="${title}">상품명</h1>
+                            <p style="margin:0;font-size:28px;font-weight:700;line-height:1.4;color:#222222;">
+                                신청이 <span style="color:#03BFA5;">시작</span>되었습니다
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Body -->
+                    <tr>
+                        <td class="card-padding" style="padding:0 40px 24px 40px;">
+                            <p style="margin:0;font-size:16px;line-height:1.6;color:#333333;">
+                                오늘부터 신청을 받고 있어요.
+                                마감은 <strong th:text="${endDateLabel}">12월 31일(화)</strong>이에요.
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Summary Box -->
+                    <tr>
+                        <td class="card-padding" style="padding:0 40px 24px 40px;">
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #E6E8EB;border-radius:20px;">
+                                <tr>
+                                    <td style="padding:24px;">
+                                        <!-- Badges -->
+                                        <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                                            <tr>
+                                                <td>
+                                                    <span style="display:inline-block;padding:6px 12px;border-radius:999px;font-size:13px;font-weight:700;background:#03BFA5;color:#ffffff;">신청 시작</span>
+                                                </td>
+                                                <td style="padding-left:8px;" th:replace="~{email/components :: typeBadge(${typeLabel})}"></td>
+                                            </tr>
+                                        </table>
+                                        <!-- Product Name -->
+                                        <p style="margin:16px 0;font-size:20px;font-weight:700;color:#222222;" th:text="${title}">상품명</p>
+                                        <!-- Info Rows -->
+                                        <div th:replace="~{email/components :: infoRow('신청 기간', ${startDateLabel} + ' ~ ' + ${endDateLabel})}"></div>
+                                        <div th:replace="~{email/components :: infoRow('운영 기관', ${agency})}"></div>
+                                        <div th:replace="~{email/components :: infoRow('신청 방법', ${applyMethod})}"></div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- CTA Button -->
+                    <tr>
+                        <td class="card-padding" style="padding:0 40px 16px 40px;">
+                            <div th:replace="~{email/components :: primaryButton(${ctaLabel}, ${ctaUrl}, ${ctaExternal})}"></div>
+                        </td>
+                    </tr>
+
+                    <!-- Bottom Links -->
+                    <tr>
+                        <td class="card-padding" style="padding:0 40px 40px 40px;">
+                            <a th:href="${allSchedulesUrl}" style="font-size:15px;font-weight:700;color:#03BFA5;text-decoration:none;">Y-Fin.에서 내 일정 모두 보기 ›</a>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr th:replace="~{email/components :: footer(${manageUrl}, ${unsubscribeUrl}, ${footerNotice})}"></tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

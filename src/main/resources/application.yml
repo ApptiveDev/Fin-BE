@@ -55,3 +55,12 @@ app:
   oauth2:
     success-redirect-url: "/"
     failure-redirect-url: "/login-error"
+
+notification:
+  resend:
+    api-key: ${RESEND_API_KEY:}
+    webhook-secret: ${RESEND_WEBHOOK_SECRET:}
+  mail:
+    from: ${MAIL_FROM:Y-Fin <noreply@y-fin.com>}
+  app-base-url: ${APP_BASE_URL:http://localhost:8080}
+  unsubscribe-signing-secret: ${UNSUBSCRIBE_SIGNING_SECRET:default-secret}

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <title>Y-Fin 다이제스트</title>
+    <style type="text/css">
+        @media only screen and (max-width: 600px) {
+            .card-padding { padding-left: 24px !important; padding-right: 24px !important; }
+        }
+    </style>
+</head>
+<!--
+    다이제스트 (digest)
+    ===================
+    변수: count, baseDateLabel, items[], moreCount, allUrl, manageUrl, unsubscribeUrl, footerNotice
+-->
+<body style="margin:0;padding:0;background-color:#F1F2F4;font-family:Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;-webkit-font-smoothing:antialiased;">
+    <!-- Preheader (hidden) -->
+    <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;" th:text="${preheader}">프리헤더</div>
+    <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;</div>
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F1F2F4;">
+        <tr>
+            <td align="center" style="padding:40px 20px;">
+                <!-- Card -->
+                <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;background-color:#FFFFFF;border:1px solid #E6E8EB;border-radius:24px;">
+
+                    <!-- Header -->
+                    <tr th:replace="~{email/components :: header('일정 알림')}"></tr>
+
+                    <!-- Title -->
+                    <tr>
+                        <td class="card-padding" style="padding:0 40px 24px 40px;">
+                            <h1 style="margin:0;font-size:28px;font-weight:700;line-height:1.4;color:#222222;">
+                                오늘 확인할 일정 <span style="color:#03BFA5;" th:text="${count} + '건'">3건</span>
+                            </h1>
+                        </td>
+                    </tr>
+
+                    <!-- Body -->
+                    <tr>
+                        <td class="card-padding" style="padding:0 40px 24px 40px;">
+                            <p style="margin:0;font-size:16px;line-height:1.6;color:#333333;">
+                                <span th:text="${baseDateLabel}">10월 15일(화)</span> 기준, 신청하신 알림을 한 번에 모았어요.
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Items List -->
+                    <tr>
+                        <td class="card-padding" style="padding:0 40px;">
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                                <!-- Loop through items (max 10) -->
+                                <th:block th:each="item, stat : ${items}" th:if="${stat.index lt 10}">
+                                    <tr>
+                                        <td style="padding:20px 0;border-top:1px solid #EEF0F2;">
+                                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                                                <tr>
+                                                    <td style="vertical-align:top;width:90px;">
+                                                        <!-- 긴급: red/white, 여유: redSoftBg/red -->
+                                                        <span th:if="${item.urgent}"
+                                                              style="display:inline-block;padding:6px 12px;border-radius:999px;font-size:13px;font-weight:700;background:#F0596E;color:#ffffff;"
+                                                              th:text="${item.badgeText}">마감 D-1</span>
+                                                        <span th:unless="${item.urgent}"
+                                                              style="display:inline-block;padding:6px 12px;border-radius:999px;font-size:13px;font-weight:700;background:#FEEFF2;color:#F0596E;"
+                                                              th:text="${item.badgeText}">마감 D-7</span>
+                                                    </td>
+                                                    <td style="vertical-align:top;padding-left:12px;">
+                                                        <p style="margin:0 0 4px 0;font-size:17px;font-weight:700;color:#222222;" th:text="${item.title}">상품명</p>
+                                                        <p style="margin:0;font-size:14px;color:#8B9098;" th:text="${item.subText}">설명</p>
+                                                    </td>
+                                                    <td style="vertical-align:top;text-align:right;white-space:nowrap;padding-left:12px;">
+                                                        <a th:href="${item.linkUrl}" style="font-size:14px;font-weight:700;color:#03BFA5;text-decoration:none;">
+                                                            <span th:text="${item.linkLabel}">보기</span> ›
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                </th:block>
+
+                                <!-- More count -->
+                                <tr th:if="${moreCount gt 0}">
+                                    <td style="padding:20px 0;border-top:1px solid #EEF0F2;text-align:center;">
+                                        <p style="margin:0;font-size:14px;color:#8B9098;">
+                                            외 <span th:text="${moreCount}">5</span>건은 Y-Fin에서 확인하세요
+                                        </p>
+                                    </td>
+                                </tr>
+
+                                <!-- Bottom divider -->
+                                <tr>
+                                    <td style="border-top:1px solid #EEF0F2;"></td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- CTA Button -->
+                    <tr>
+                        <td class="card-padding" style="padding:24px 40px 40px 40px;">
+                            <div th:replace="~{email/components :: primaryButton('Y-Fin.에서 모두 보기', ${allUrl}, false)}"></div>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr th:replace="~{email/components :: footer(${manageUrl}, ${unsubscribeUrl}, ${footerNotice})}"></tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

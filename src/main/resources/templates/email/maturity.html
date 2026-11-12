@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+    <title>Y-Fin 만기 알림</title>
+    <style type="text/css">
+        @media only screen and (max-width: 600px) {
+            .card-padding { padding-left: 24px !important; padding-right: 24px !important; }
+        }
+    </style>
+</head>
+<!--
+    만기 알림 (maturity)
+    ====================
+    변수: dday, productName, joinDate, termLabel, maturityDateLabel, compareUrl, allSchedulesUrl, manageUrl, unsubscribeUrl, footerNotice
+-->
+<body style="margin:0;padding:0;background-color:#F1F2F4;font-family:Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;-webkit-font-smoothing:antialiased;">
+    <!-- Preheader (hidden) -->
+    <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;" th:text="${preheader}">프리헤더</div>
+    <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;</div>
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F1F2F4;">
+        <tr>
+            <td align="center" style="padding:40px 20px;">
+                <!-- Card -->
+                <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;background-color:#FFFFFF;border:1px solid #E6E8EB;border-radius:24px;">
+
+                    <!-- Header -->
+                    <tr th:replace="~{email/components :: header('일정 알림')}"></tr>
+
+                    <!-- Title -->
+                    <tr>
+                        <td class="card-padding" style="padding:0 40px 24px 40px;">
+                            <h1 style="margin:0 0 8px 0;font-size:28px;font-weight:700;line-height:1.4;color:#222222;" th:text="${productName}">KB Star 정기예금</h1>
+                            <p style="margin:0;font-size:28px;font-weight:700;line-height:1.4;color:#222222;">
+                                만기가 <span style="color:#7B1FA2;" th:text="${dday} + '일'">30일</span> 남았어요
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Body -->
+                    <tr>
+                        <td class="card-padding" style="padding:0 40px 24px 40px;">
+                            <p style="margin:0;font-size:16px;line-height:1.6;color:#333333;">
+                                <strong th:text="${maturityDateLabel}">2024년 11월 15일(금)</strong>에 만기가 돼요. 만기 후 어디에 맡길지 미리 비교해 보세요.
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Summary Box -->
+                    <tr>
+                        <td class="card-padding" style="padding:0 40px 24px 40px;">
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #E6E8EB;border-radius:20px;">
+                                <tr>
+                                    <td style="padding:24px;">
+                                        <!-- Badges -->
+                                        <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                                            <tr>
+                                                <td>
+                                                    <span style="display:inline-block;padding:6px 12px;border-radius:999px;font-size:13px;font-weight:700;background:#F3E9FA;color:#7B1FA2;"
+                                                          th:text="'만기 D-' + ${dday}">만기 D-30</span>
+                                                </td>
+                                                <td style="padding-left:8px;">
+                                                    <span style="display:inline-block;padding:6px 12px;border-radius:999px;font-size:13px;font-weight:700;background:#F1F2F4;color:#333333;">내가 등록한 가입 상품</span>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                        <!-- Product Name -->
+                                        <p style="margin:16px 0;font-size:20px;font-weight:700;color:#222222;" th:text="${productName}">KB Star 정기예금</p>
+                                        <!-- Info Rows -->
+                                        <div th:replace="~{email/components :: infoRow('가입일', ${joinDate})}"></div>
+                                        <div th:replace="~{email/components :: infoRow('저축 기간', ${termLabel})}"></div>
+                                        <div th:replace="~{email/components :: infoRow('만기 예정일', ${maturityDateLabel})}"></div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Notice Box -->
+                    <tr>
+                        <td class="card-padding" style="padding:0 40px 24px 40px;">
+                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#EFFFFD;border-radius:16px;">
+                                <tr>
+                                    <td style="padding:20px;">
+                                        <p style="margin:0;font-size:15px;line-height:1.6;color:#333333;">
+                                            만기 후 잠깐 맡길 돈이라면 <a th:href="${compareUrl}" style="color:#03BFA5;font-weight:700;text-decoration:none;">단기 예치</a>로,
+                                            1년 이상 저축할 수 있다면 <a th:href="${compareUrl}" style="color:#03BFA5;font-weight:700;text-decoration:none;">목돈 만들기</a>로 비교해 볼 수 있어요.
+                                            지난번 입력한 금액·기간을 그대로 채워둘게요.
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- CTA Button -->
+                    <tr>
+                        <td class="card-padding" style="padding:0 40px 16px 40px;">
+                            <div th:replace="~{email/components :: primaryButton('만기 후 선택지 비교하기 ›', ${compareUrl}, false)}"></div>
+                        </td>
+                    </tr>
+
+                    <!-- Disclaimer -->
+                    <tr>
+                        <td class="card-padding" style="padding:0 40px 40px 40px;text-align:center;">
+                            <p style="margin:0;font-size:13px;color:#8B9098;">만기일은 가입일과 저축 기간으로 계산한 예정일이에요. 실제 지급일은 은행 영업일 규칙을 따라요.</p>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr th:replace="~{email/components :: footer(${manageUrl}, ${unsubscribeUrl}, ${footerNotice})}"></tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
