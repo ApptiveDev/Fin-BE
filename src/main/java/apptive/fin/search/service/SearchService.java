@@ -53,10 +53,10 @@ public class SearchService {
 
         if (category == ProductCategoryEnum.SHORT_TERM) {
             ShortTermResultDto shortTermResult = searchShortTerm(request, userDetails, resolvedKeywords);
-            return UnifiedSearchResultDto.fromShortTerm(shortTermResult);
+            return UnifiedSearchResultDto.fromShortTerm(shortTermResult, request);
         } else {
             ProductSearchResultDto longTermResult = searchLongTerm(request, userDetails, resolvedKeywords);
-            return UnifiedSearchResultDto.fromLongTerm(longTermResult);
+            return UnifiedSearchResultDto.fromLongTerm(longTermResult, request);
         }
     }
 

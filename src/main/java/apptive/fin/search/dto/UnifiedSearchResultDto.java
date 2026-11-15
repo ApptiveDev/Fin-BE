@@ -34,14 +34,14 @@ public record UnifiedSearchResultDto(
         List<ProductCardSummaryDto> productCardSummaries,
         Long eligibleProductCount,
 
-        // 대분류 전환 시 필요한 금액 입력 여부
+        // 반대 대분류로 전환할 때 금액을 더 입력받아야 하는지 (현재 대분류의 금액은 검증에서 필수라 항상 false)
         Boolean needsDepositAmount,      // 단기예치 전환 시 예치액 필요
         Boolean needsMonthlySavingsGoal  // 목돈만들기 전환 시 월저축액 필요
 ) {
     /**
      * 기존 ProductSearchResultDto에서 변환 (목돈만들기 결과).
      */
-    public static UnifiedSearchResultDto fromLongTerm(ProductSearchResultDto result) {
+    public static UnifiedSearchResultDto fromLongTerm(ProductSearchResultDto result, SearchRequestDto request) {
         return UnifiedSearchResultDto.builder()
                 .category(ProductCategoryEnum.LONG_TERM)
                 .tabs(result.tabs())
@@ -54,7 +54,7 @@ public record UnifiedSearchResultDto(
                 .subscriptionProducts(result.subscriptionProducts())
                 .productCardSummaries(result.productCardSummaries())
                 .eligibleProductCount(result.eligibleProductCount())
-                .needsDepositAmount(false)
+                .needsDepositAmount(request.depositAmount() == null || request.depositAmount() <= 0)
                 .needsMonthlySavingsGoal(false)
                 .build();
     }
@@ -62,7 +62,7 @@ public record UnifiedSearchResultDto(
     /**
      * 단기예치 결과 생성.
      */
-    public static UnifiedSearchResultDto fromShortTerm(ShortTermResultDto result) {
+    public static UnifiedSearchResultDto fromShortTerm(ShortTermResultDto result, SearchRequestDto request) {
         return UnifiedSearchResultDto.builder()
                 .category(ProductCategoryEnum.SHORT_TERM)
                 .tabs(result.tabs())
@@ -71,7 +71,7 @@ public record UnifiedSearchResultDto(
                 .productCardSummaries(result.productCardSummaries())
                 .eligibleProductCount(result.eligibleProductCount())
                 .needsDepositAmount(false)
-                .needsMonthlySavingsGoal(false)
+                .needsMonthlySavingsGoal(request.monthlySavingsGoal() == null)
                 .build();
     }
 }

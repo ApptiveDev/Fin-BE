@@ -107,6 +107,47 @@ class CategorySwitchIntegrationTest extends IntegrationTestSupport {
                 .doesNotContain("중금리예금", "저금리예금");
     }
 
+    @Test
+    void 목돈_결과는_예치액이_없으면_단기예치_전환에_예치액이_필요하다고_알린다() {
+        UnifiedSearchResultDto result = searchService.searchUnified(
+                longTermRequest(detailedOptions(100_000L, null)), loggedInUser());
+
+        assertThat(result.needsDepositAmount()).isTrue();
+        assertThat(result.needsMonthlySavingsGoal()).isFalse();
+    }
+
+    @Test
+    void 단기_결과는_월저축액이_없으면_목돈만들기_전환에_월저축액이_필요하다고_알린다() {
+        SearchRequestDto request = new SearchRequestDto(
+                List.of(new OptionRequestDto(3L, TERM_3_MONTH_OPTION_ID)),
+                detailedOptions(null, 10_000_000L)
+        );
+
+        UnifiedSearchResultDto result = searchService.searchUnified(request, loggedInUser());
+
+        assertThat(result.needsMonthlySavingsGoal()).isTrue();
+        assertThat(result.needsDepositAmount()).isFalse();
+    }
+
+    @Test
+    void 두_금액이_모두_있으면_전환에_추가_입력이_필요없다() {
+        UnifiedSearchResultDto result = searchService.searchUnified(
+                longTermRequest(detailedOptions(100_000L, 10_000_000L)), loggedInUser());
+
+        assertThat(result.needsDepositAmount()).isFalse();
+        assertThat(result.needsMonthlySavingsGoal()).isFalse();
+    }
+
+    private SearchRequestDto longTermRequest(DetailedOptionsDto detailedOptions) {
+        return new SearchRequestDto(
+                List.of(
+                        new OptionRequestDto(3L, TERM_12_MONTH_OPTION_ID),
+                        new OptionRequestDto(6L, SALARY_TRANSFER_OPTION_ID)
+                ),
+                detailedOptions
+        );
+    }
+
     private DetailedOptionsDto detailedOptions(Long monthlySavingsGoal, Long depositAmount) {
         return new DetailedOptionsDto(
                 LocalDate.now().minusYears(25),
