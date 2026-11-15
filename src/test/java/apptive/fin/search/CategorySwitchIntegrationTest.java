@@ -24,10 +24,10 @@ import static org.mockito.Mockito.when;
 /**
  * 결과 화면의 대분류 전환 통합 테스트.
  * 요청에 대분류를 명시하면 그 대분류로 검색하고, 대분류와 맞지 않는 저축기간은 고르지 않은 것으로 본다.
- * 픽스처: 1개월 예금 3개 + 파킹통장 1개.
+ * 픽스처: 1개월 예금 3개 + 파킹통장 1개 + 12개월 옵션(고금리예금의 두 번째 옵션, 12개월 전용 예금).
  */
 @Sql(
-        scripts = "/sql/short-term-sorting-products.sql",
+        scripts = {"/sql/short-term-sorting-products.sql", "/sql/category-switch-long-term-options.sql"},
         executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD
 )
 @Sql(
@@ -45,7 +45,7 @@ class CategorySwitchIntegrationTest extends IntegrationTestSupport {
     private SearchService searchService;
 
     @Test
-    void 단기예치로_전환하면_목돈_저축기간은_무시하고_단기_상품을_모두_보여준다() {
+    void 단기예치로_전환하면_목돈_저축기간은_무시하고_단기_기간_상품만_보여준다() {
         SearchRequestDto request = new SearchRequestDto(
                 List.of(
                         new OptionRequestDto(3L, TERM_12_MONTH_OPTION_ID),
@@ -60,6 +60,9 @@ class CategorySwitchIntegrationTest extends IntegrationTestSupport {
         assertThat(result.depositSavingsProducts())
                 .extracting(ProductRateDto::productName)
                 .containsExactlyInAnyOrder("고금리예금", "중금리예금", "저금리예금");
+        assertThat(result.depositSavingsProducts())
+                .extracting(ProductRateDto::saveTrm)
+                .containsOnly(1);
     }
 
     @Test

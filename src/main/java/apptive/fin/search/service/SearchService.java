@@ -64,7 +64,7 @@ public class SearchService {
         return searchUnified(request, null);
     }
 
-    // 대분류와 맞지 않는 저축기간은 고르지 않은 것으로 본다 (적합도 기간 축, 단기 기간 필터에서 빠진다).
+    // 대분류와 맞지 않는 저축기간은 고르지 않은 것으로 본다 (적합도 기간 축에서 빠지고, 단기는 1·3개월 상품을 모두 보여준다).
     private ResolvedKeywords withoutMismatchedPeriod(ResolvedKeywords keywords, ProductCategoryEnum category) {
         KeywordValueEnum period = keywords.savingPeriod();
         if (period == null || ProductCategoryEnum.fromSaveTrm(period.toSaveTrm()) == category) {
@@ -96,13 +96,13 @@ public class SearchService {
                 .filter(option -> option.product().isBank())
                 .toList();
 
-        // 저축기간 필터 (선택된 기간과 일치하는 상품만)
+        // 저축기간 필터 (선택된 기간과 일치하는 상품만, 기간이 없으면 단기 기간 상품만)
         Integer targetSaveTrm = request.getSaveTrm(resolvedKeywords);
-        List<EligibleProductOption> filteredByTerm = targetSaveTrm != null
-                ? bankList.stream()
-                        .filter(option -> targetSaveTrm.equals(option.property().getSaveTrm()))
-                        .toList()
-                : bankList;
+        List<EligibleProductOption> filteredByTerm = bankList.stream()
+                .filter(option -> targetSaveTrm != null
+                        ? targetSaveTrm.equals(option.property().getSaveTrm())
+                        : ProductCategoryEnum.fromSaveTrm(option.property().getSaveTrm()) == ProductCategoryEnum.SHORT_TERM)
+                .toList();
 
         // 파킹통장 목록 (최고금리순, 비로그인 허용)
         List<ParkingProductDto> parkingProducts = parkingProductService.findParkingProducts(request);
