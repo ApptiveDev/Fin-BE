@@ -183,7 +183,14 @@ public class SearchService {
                 request,
                 resolvedKeywords
         );
-        
+
+        // 고른 기간이 없으면(대분류를 명시한 요청) 목돈 기간 옵션만 남긴다. 단기 옵션이 상품 대표로 뽑히지 않게 한다.
+        if (request.getSaveTrm(resolvedKeywords) == null) {
+            eligible = eligible.stream()
+                    .filter(option -> ProductCategoryEnum.fromSaveTrm(option.property().getSaveTrm()) == ProductCategoryEnum.LONG_TERM)
+                    .toList();
+        }
+
         // 선택된 지역 키워드가 빈칸이 아니라면
         if (!resolvedKeywords.regions().isEmpty()) {
             // 은행 상품이거나 해당 지역 키워드를 가진 상품만 필터링하여 eligible한 상품 업데이트
@@ -405,13 +412,13 @@ public class SearchService {
     }
 
     // 상품별로 총점이 가장 높은 (Product, ProductProperty) 쌍만 남기고 총점 내림차순 정렬(순수 함수, 테스트 용이하도록 분리).
-    // 동점이면 먼저 계산된 항목을 유지(>=).
+    // 같은 상품의 옵션끼리도 탭 A 정렬 규칙(적합도 → tieBreaker → 상품명)으로 대표를 고른다. 모두 같으면 먼저 계산된 항목.
     static List<ProductMatchDto> collapseToBestPerProduct(Stream<ProductMatchDto> scored) {
         return scored.collect(Collectors.collectingAndThen(
                 Collectors.toMap(
                         ProductMatchDto::productId,
                         Function.identity(),
-                        (left, right) -> left.totalScore() >= right.totalScore() ? left : right
+                        (left, right) -> tabAComparator().compare(left, right) <= 0 ? left : right
                 ),
                 map -> map.values().stream()
                         .sorted(tabAComparator())

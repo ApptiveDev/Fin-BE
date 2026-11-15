@@ -94,12 +94,13 @@ public record DetailedOptionsDto(
 
     /**
      * 적금 상품 하나에 넣을 월 납입액.
-     * 단기예치는 예치액을 상품 기간으로 나누고, 목돈만들기는 월 저축 가능액을 그대로 쓴다. 계산할 수 없으면 null.
+     * 단기예치는 예치액을 정규화 기간으로 나누고, 목돈만들기는 월 저축 가능액을 그대로 쓴다. 계산할 수 없으면 null.
      */
-    public Long monthlyDepositFor(ProductCategoryEnum category, Integer productSaveTrm) {
+    public Long monthlyDepositFor(ProductCategoryEnum category, Integer selectedSaveTrm, Integer productSaveTrm) {
         if (category == ProductCategoryEnum.SHORT_TERM) {
-            return depositAmount != null && productSaveTrm != null && productSaveTrm > 0
-                    ? depositAmount / productSaveTrm
+            Integer term = normalizationTerm(category, selectedSaveTrm, productSaveTrm);
+            return depositAmount != null && term != null && term > 0
+                    ? depositAmount / term
                     : null;
         }
         return monthlySavingsGoal;
@@ -107,14 +108,24 @@ public record DetailedOptionsDto(
 
     /**
      * 예금 상품 하나에 넣을 예치 원금.
-     * 단기예치는 예치액을 그대로 쓰고, 목돈만들기는 월 저축 가능액에 상품 기간을 곱한다. 계산할 수 없으면 null.
+     * 단기예치는 예치액을 그대로 쓰고, 목돈만들기는 월 저축 가능액에 정규화 기간을 곱한다. 계산할 수 없으면 null.
      */
-    public Long depositPrincipalFor(ProductCategoryEnum category, Integer productSaveTrm) {
+    public Long depositPrincipalFor(ProductCategoryEnum category, Integer selectedSaveTrm, Integer productSaveTrm) {
         if (category == ProductCategoryEnum.SHORT_TERM) {
             return depositAmount;
         }
-        return monthlySavingsGoal != null && productSaveTrm != null
-                ? monthlySavingsGoal * productSaveTrm
+        Integer term = normalizationTerm(category, selectedSaveTrm, productSaveTrm);
+        return monthlySavingsGoal != null && term != null
+                ? monthlySavingsGoal * term
                 : null;
+    }
+
+    // 정규화 기간: 고른 저축기간이 대분류에 속하면 그 기간(명세의 공통 기준원금),
+    // 없거나 대분류와 맞지 않으면(대분류 전환 요청) 상품 기간. 후자는 명세에 정의가 없어 임시로 정한 규칙이다.
+    private static Integer normalizationTerm(ProductCategoryEnum category, Integer selectedSaveTrm, Integer productSaveTrm) {
+        if (selectedSaveTrm != null && ProductCategoryEnum.fromSaveTrm(selectedSaveTrm) == category) {
+            return selectedSaveTrm;
+        }
+        return productSaveTrm;
     }
 }

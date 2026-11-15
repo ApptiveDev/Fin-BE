@@ -3,6 +3,7 @@ package apptive.fin.search;
 import apptive.fin.auth.security.AuthUserDetails;
 import apptive.fin.search.dto.DetailedOptionsDto;
 import apptive.fin.search.dto.OptionRequestDto;
+import apptive.fin.search.dto.ProductMatchDto;
 import apptive.fin.search.dto.ProductRateDto;
 import apptive.fin.search.dto.SearchRequestDto;
 import apptive.fin.search.dto.UnifiedSearchResultDto;
@@ -83,6 +84,27 @@ class CategorySwitchIntegrationTest extends IntegrationTestSupport {
         assertThat(result.bankRanked())
                 .isNotEmpty()
                 .allSatisfy(dto -> assertThat(dto.periodScore()).isZero());
+    }
+
+    @Test
+    void 목돈만들기로_전환하면_단기_기간_옵션은_빠진다() {
+        // 1개월 옵션만 있는 중금리·저금리예금은 빠지고, 고금리예금은 12개월 옵션으로 남는다
+        SearchRequestDto request = new SearchRequestDto(
+                List.of(
+                        new OptionRequestDto(3L, TERM_3_MONTH_OPTION_ID),
+                        new OptionRequestDto(6L, SALARY_TRANSFER_OPTION_ID)
+                ),
+                detailedOptions(100_000L, null),
+                ProductCategoryEnum.LONG_TERM
+        );
+
+        UnifiedSearchResultDto result = searchService.searchUnified(request, loggedInUser());
+
+        // 픽스처 파킹통장(기간 없음)은 이 테스트의 관심 밖이라 예금만 본다
+        assertThat(result.bankRanked())
+                .extracting(ProductMatchDto::productName)
+                .contains("고금리예금", "1년예금")
+                .doesNotContain("중금리예금", "저금리예금");
     }
 
     private DetailedOptionsDto detailedOptions(Long monthlySavingsGoal, Long depositAmount) {

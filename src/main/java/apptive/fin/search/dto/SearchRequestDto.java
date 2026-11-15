@@ -67,15 +67,15 @@ public record SearchRequestDto(
         return null;
     }
 
-    // 적금 계산용 월 납입액 (상품 기간 기준)
+    // 적금 계산용 월 납입액 (고른 기간 기준, 없으면 상품 기간)
     public Long monthlyDepositFor(ResolvedKeywords keywords, Integer productSaveTrm) {
         if (detailedOptions == null) return null;
-        return detailedOptions.monthlyDepositFor(category(keywords), productSaveTrm);
+        return detailedOptions.monthlyDepositFor(category(keywords), getSaveTrm(keywords), productSaveTrm);
     }
 
-    // 예금 계산용 예치 원금 (상품 기간 기준)
+    // 예금 계산용 예치 원금 (고른 기간 기준, 없으면 상품 기간)
     public Long depositPrincipalFor(ResolvedKeywords keywords, Integer productSaveTrm) {
         if (detailedOptions == null) return null;
-        return detailedOptions.depositPrincipalFor(category(keywords), productSaveTrm);
+        return detailedOptions.depositPrincipalFor(category(keywords), getSaveTrm(keywords), productSaveTrm);
     }
 }

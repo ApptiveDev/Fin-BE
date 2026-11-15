@@ -107,7 +107,8 @@ public class EligibilityFilterService {
                 // 단기예치 월 납입액은 상품 기간마다 달라 쿼리에서 거르지 않고 isAmountEligible에서 상품별로 확인한다.
                 category == ProductCategoryEnum.LONG_TERM ? detail.monthlySavingsGoal() : null,
                 detail,
-                category
+                category,
+                request.getSaveTrm(keywords)
         );
     }
     // ProductProperty의 자격요건에 사용자의 조건이 부합하는지 검사하는 함수
@@ -121,7 +122,7 @@ public class EligibilityFilterService {
                 && isIncomeEligible(property, criteria.annualIncome(), criteria.householdIncomePercent(), criteria.incomeProofUnavailable())
                 && isResidenceEligible(property, criteria.isHomeless(), criteria.isHouseholder())
                 && isTenureEligible(property, criteria.tenureMonths())
-                && isAmountEligible(property, criteria.detail(), criteria.category())
+                && isAmountEligible(property, criteria)
                 && isIdentityEligible(property, identities);
     }
 
@@ -183,12 +184,13 @@ public class EligibilityFilterService {
     }
 
     // 금액 하한 조건 확인 (예금: 예치 원금 vs 최소예치금, 그 외: 월 납입액 vs 월 최소납입액)
-    private boolean isAmountEligible(ProductProperty property, DetailedOptionsDto detail, ProductCategoryEnum category) {
+    private boolean isAmountEligible(ProductProperty property, EligibilityCriteria criteria) {
         boolean isDeposit = property.getProduct() != null
                 && property.getProduct().getType() == ProductType.DEPOSIT;
+        DetailedOptionsDto detail = criteria.detail();
         Long amount = isDeposit
-                ? detail.depositPrincipalFor(category, property.getSaveTrm())
-                : detail.monthlyDepositFor(category, property.getSaveTrm());
+                ? detail.depositPrincipalFor(criteria.category(), criteria.selectedSaveTrm(), property.getSaveTrm())
+                : detail.monthlyDepositFor(criteria.category(), criteria.selectedSaveTrm(), property.getSaveTrm());
         Long minLimit = property.resolvedMinLimit();
         return amount == null
                 || minLimit == null
@@ -242,7 +244,8 @@ public class EligibilityFilterService {
             Integer tenureMonths,
             Long queryMonthlyDeposit,  // 쿼리의 월 최소납입액 비교용 (목돈만들기만)
             DetailedOptionsDto detail,
-            ProductCategoryEnum category
+            ProductCategoryEnum category,
+            Integer selectedSaveTrm    // 사용자가 고른 저축기간 (없을 수 있음)
     ) {
     }
 }

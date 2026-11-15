@@ -68,53 +68,73 @@ class CategoryRoutingTest {
     }
 
     @Test
-    void 단기예치_정규화_월납입액은_예치액을_상품기간으로_나눈다() {
-        DetailedOptionsDto dto = new DetailedOptionsDto(
-                null, null, null, null, null,
-                null, null, null,
-                null, 3000000L,  // depositAmount=300만
-                null, null, List.of()
-        );
+    void 단기예치_월납입액은_예치액을_고른_기간으로_나눈다() {
+        DetailedOptionsDto dto = amounts(null, 3000000L);  // 예치액 300만
 
-        // 상품 기간 3개월: 300만 / 3 = 100만
-        assertThat(dto.monthlyDepositFor(ProductCategoryEnum.SHORT_TERM, 3)).isEqualTo(1000000L);
+        // 고른 기간 3개월: 300만 / 3 = 100만
+        assertThat(dto.monthlyDepositFor(ProductCategoryEnum.SHORT_TERM, 3, 3)).isEqualTo(1000000L);
     }
 
     @Test
-    void 목돈만들기_정규화_예치원금은_월저축액에_상품기간을_곱한다() {
-        DetailedOptionsDto dto = new DetailedOptionsDto(
-                null, null, null, null, null,
-                null, null, null,
-                500000L, null,  // monthlySavingsGoal=50만
-                null, null, List.of()
-        );
+    void 단기예치_월납입액은_고른_기간이_없으면_상품기간으로_나눈다() {
+        DetailedOptionsDto dto = amounts(null, 3000000L);
 
-        // 상품 기간 12개월: 50만 × 12 = 600만
-        assertThat(dto.depositPrincipalFor(ProductCategoryEnum.LONG_TERM, 12)).isEqualTo(6000000L);
+        assertThat(dto.monthlyDepositFor(ProductCategoryEnum.SHORT_TERM, null, 3)).isEqualTo(1000000L);
     }
 
     @Test
-    void 목돈만들기_월납입액은_상품기간이_짧고_예치액이_있어도_월저축액이다() {
-        DetailedOptionsDto dto = new DetailedOptionsDto(
-                null, null, null, null, null,
-                null, null, null,
-                500000L, 3000000L,  // monthlySavingsGoal=50만, depositAmount=300만
-                null, null, List.of()
-        );
+    void 목돈만들기_예치원금은_월저축액에_고른_기간을_곱한다() {
+        DetailedOptionsDto dto = amounts(500000L, null);  // 월저축액 50만
 
-        assertThat(dto.monthlyDepositFor(ProductCategoryEnum.LONG_TERM, 3)).isEqualTo(500000L);
+        // 고른 기간 12개월, 상품 기간 36개월: 50만 × 12 = 600만 (공통 기준원금)
+        assertThat(dto.depositPrincipalFor(ProductCategoryEnum.LONG_TERM, 12, 36)).isEqualTo(6000000L);
+    }
+
+    @Test
+    void 목돈만들기_예치원금은_고른_기간이_없으면_상품기간을_곱한다() {
+        DetailedOptionsDto dto = amounts(500000L, null);
+
+        assertThat(dto.depositPrincipalFor(ProductCategoryEnum.LONG_TERM, null, 36)).isEqualTo(18000000L);
+    }
+
+    @Test
+    void 목돈만들기_예치원금은_고른_기간이_대분류와_다르면_상품기간을_곱한다() {
+        DetailedOptionsDto dto = amounts(500000L, null);
+
+        // 3개월을 고르고 목돈으로 전환: 3개월은 목돈 기간이 아니라 쓰지 않는다
+        assertThat(dto.depositPrincipalFor(ProductCategoryEnum.LONG_TERM, 3, 12)).isEqualTo(6000000L);
+    }
+
+    @Test
+    void 목돈만들기_월납입액은_예치액이_있어도_월저축액이다() {
+        DetailedOptionsDto dto = amounts(500000L, 3000000L);
+
+        assertThat(dto.monthlyDepositFor(ProductCategoryEnum.LONG_TERM, 12, 3)).isEqualTo(500000L);
     }
 
     @Test
     void 단기예치_예치원금은_상품기간이_길어도_예치액이다() {
-        DetailedOptionsDto dto = new DetailedOptionsDto(
+        DetailedOptionsDto dto = amounts(500000L, 3000000L);
+
+        assertThat(dto.depositPrincipalFor(ProductCategoryEnum.SHORT_TERM, null, 12)).isEqualTo(3000000L);
+    }
+
+    @Test
+    void 요청의_예치원금은_키워드의_저축기간을_고른_기간으로_쓴다() {
+        SearchRequestDto request = new SearchRequestDto(List.of(), amounts(500000L, null));
+        ResolvedKeywords keywords = new ResolvedKeywords(
+                List.of(), List.of(), KeywordValueEnum.TERM_12_MONTH, List.of(), List.of());
+
+        assertThat(request.depositPrincipalFor(keywords, 36)).isEqualTo(6000000L);
+    }
+
+    private DetailedOptionsDto amounts(Long monthlySavingsGoal, Long depositAmount) {
+        return new DetailedOptionsDto(
                 null, null, null, null, null,
                 null, null, null,
-                500000L, 3000000L,  // monthlySavingsGoal=50만, depositAmount=300만
+                monthlySavingsGoal, depositAmount,
                 null, null, List.of()
         );
-
-        assertThat(dto.depositPrincipalFor(ProductCategoryEnum.SHORT_TERM, 12)).isEqualTo(3000000L);
     }
 
     @Test
