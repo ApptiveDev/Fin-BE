@@ -5,7 +5,9 @@ cd "$(dirname "$0")"
 chmod 600 .env
 
 sudo docker login ghcr.io -u github-actions --password-stdin
-sudo docker compose pull backend
+# nginx는 태그가 고정이라 버전을 올린 배포에서만 새로 받는다.
+# postgres는 태그(pg16)가 움직여서 받으면 DB가 재시작될 수 있으므로 여기서 받지 않는다.
+sudo docker compose pull backend nginx
 sudo docker logout ghcr.io
 
 sudo docker compose up -d

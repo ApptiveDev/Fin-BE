@@ -11,7 +11,9 @@ x-logging: &logging
 
 services:
   nginx:
-    image: nginx:alpine
+    # 버전을 고정해 보안 업데이트를 PR로 올린다. alpine 같은 움직이는 태그는 서버에 처음 받은 이미지가 계속 남는다.
+    # 1.31.9: NGINX2Root 등 2026-11 보안 릴리스 (https://nginx.org/en/security_advisories.html)
+    image: nginx:1.31.9-alpine
     container_name: fin-nginx
     restart: always
     logging: *logging
