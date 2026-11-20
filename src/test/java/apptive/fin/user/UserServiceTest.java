@@ -102,6 +102,17 @@ class UserServiceTest {
     }
 
     @Test
+    void 본인_이메일을_그대로_보내면_중복이_아니다() {
+        UserUpdateRequestDto request = new UserUpdateRequestDto("test@email.com", "newName");
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userRepository.existsByEmail("test@email.com")).thenReturn(true);
+
+        assertDoesNotThrow(() -> userService.updateUser(1L, request));
+
+        verify(user).updateName("newName");
+    }
+
+    @Test
     void 회원탈퇴_성공() {
         when(userRepository.findById(1L))
                 .thenReturn(Optional.of(user));

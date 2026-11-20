@@ -34,7 +34,7 @@ public class UserController {
 
     @PatchMapping("/me")
     public void updateUser(
-            @RequestBody UserUpdateRequestDto request,
+            @Valid @RequestBody UserUpdateRequestDto request,
             @AuthenticationPrincipal AuthUserDetails userDetails
     ){
         userService.updateUser(userDetails.getId(), request);

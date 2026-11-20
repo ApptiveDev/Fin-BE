@@ -43,7 +43,7 @@ public class SearchRequestPolicy {
         }
     }
 
-    /** 첫거래/만기예적금 은행은 최소 1개 이상 선택해야 입력을 완료한 것으로 본다. 빈 목록과 null은 둘 다 미입력으로 본다. */
+    /** 첫거래/만기예적금 은행 목록은 null이면 미입력, 빈 목록이면 "해당 없음"으로 답한 것으로 본다(입력 완료). */
     public boolean canUsePersonalization(
             SearchRequestDto request,
             ResolvedKeywords keywords,
