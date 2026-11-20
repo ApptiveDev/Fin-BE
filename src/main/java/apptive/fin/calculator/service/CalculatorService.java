@@ -28,11 +28,6 @@ public class CalculatorService {
     }
 
     private void validateWithProductProperty(CalculatorRequestDto request, ProductProperty property) {
-        // 적금인 경우 reserveType 필수
-        if (request.productType() == ProductType.SAVING && request.reserveType() == null) {
-            throw new IllegalArgumentException("적금 계산기는 reserveType(적립 방식: 정액 또는 자유)이 필요합니다.");
-        }
-
         // 금리 상한 검증 (maxRate는 % 단위, appliedRate는 소수 단위)
         if (property.getMaxRate() != null) {
             BigDecimal maxRateDecimal = property.getMaxRate().divide(BigDecimal.valueOf(100));

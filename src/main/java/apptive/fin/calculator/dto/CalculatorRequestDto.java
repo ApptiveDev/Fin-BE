@@ -16,7 +16,7 @@ public record CalculatorRequestDto(
 
     @NotNull ProductType productType,
     @NotNull InterestRateType interestRateType,
-    ReserveType reserveType,
+    ReserveType reserveType, // 적립 방식. 지금 계산식은 매월 초 정액 납입으로 계산하며 이 값을 쓰지 않는다
 
     @NotNull
     @DecimalMin(value = "0.0", inclusive = true)
