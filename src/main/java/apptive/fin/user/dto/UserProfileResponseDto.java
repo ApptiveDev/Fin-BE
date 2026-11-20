@@ -5,7 +5,7 @@ import java.util.List;
 
 /**
  * 마이페이지(Y5-2) 프로필 조회 응답.
- * - 최상위: 원본 저장값(정보 입력 화면 프리필용 11개).
+ * - 최상위: 원본 저장값(정보 입력 화면 프리필용 12개).
  * - display: 서버 계산 표시값(마이페이지 표시 6개용). 만 나이·가구소득 금액 가이드·라벨/은행명 해소.
  * 프로필 미저장 시 {@link #notFound()} (hasProfile=false, 나머지 null).
  */
@@ -21,7 +21,8 @@ public record UserProfileResponseDto(
         Boolean isFirstJob,
         Boolean isHomeless,
         Boolean isHouseholder,
-        Long monthlySavingsGoal,
+        Long monthlySavingsGoal,          // 목돈만들기 월 저축액
+        Long depositAmount,               // 단기예치 예치 희망액 (monthlySavingsGoal과 같은 단위)
         List<String> neverUsedBanks,
         List<String> maturedSavingBanks,
         List<Long> selectedOptionIds,
@@ -49,7 +50,7 @@ public record UserProfileResponseDto(
     public static UserProfileResponseDto notFound() {
         return new UserProfileResponseDto(
                 false,
-                null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null,
                 null, null, null,
                 null
         );

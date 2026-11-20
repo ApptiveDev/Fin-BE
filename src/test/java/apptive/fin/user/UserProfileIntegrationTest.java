@@ -48,7 +48,7 @@ class UserProfileIntegrationTest extends IntegrationTestSupport {
         LocalDate birthdate = LocalDate.now(KST).minusYears(30);
         UserProfileRequestDto request = new UserProfileRequestDto(
                 birthdate, 3600L, 1, 100, 24,
-                true, true, true, 500_000L,
+                true, true, true, 500_000L, 3_000_000L,
                 List.of("SH"), List.of("WR"),
                 List.of(seoulId, salaryTransferId));
 
@@ -59,6 +59,7 @@ class UserProfileIntegrationTest extends IntegrationTestSupport {
         assertThat(response.hasProfile()).isTrue();
         // 원본 저장값(프리필용) 왕복
         assertThat(response.birthdate()).isEqualTo(birthdate);
+        assertThat(response.depositAmount()).isEqualTo(3_000_000L);
         assertThat(response.neverUsedBanks()).containsExactly("SH");
         assertThat(response.selectedOptionIds()).containsExactly(seoulId, salaryTransferId);
         // 서버 계산 표시값
