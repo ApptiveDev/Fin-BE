@@ -71,5 +71,5 @@
 - **스키마 변경**: 새 `V{n}__설명.sql`을 추가한다. 적용된 마이그레이션은 고치지 않는다. 엔티티도 같이 바꾸고(`ddl-auto: validate`), 시드 SQL이 새 컬럼과 맞는지 확인한다.
 - **키워드·카테고리 추가**: `KeywordValueEnum`, `CategoryIdEnum`, `category_option` 시드(마이그레이션)를 함께 바꾼다. 수집기가 같은 코드 문자열을 쓰므로 수집기 쪽에도 알린다.
 - **추천 수치 일관성**: 리스트, 상세, 찜이 같은 값을 보여야 한다. 개인화 판정은 `SearchRequestPolicy`, 금리·수익률은 `RateCalculatorService`, 적합도는 `MatchScoreService` 한 곳에서만 계산하고 다른 곳에서 다시 구현하지 않는다. 자세한 내용은 [추천 엔진](recommendation-engine.md#일관성을-지키는-장치).
-- **API 변경**: 저장소 루트 README의 API 명세도 같이 고친다.
+- **API 변경**: 저장소 루트 README의 API 요약도 같이 고친다. 머지 후에는 [Fin API 명세](https://yuyeol3.github.io/fin-api-docs/)를 갱신한다(루트 [AGENTS.md](../../AGENTS.md#api-명세-갱신)).
 - **기획과 다르게 구현할 때**: [기획과 구현 차이](plan-vs-implementation.md)에 이유와 함께 남긴다.
