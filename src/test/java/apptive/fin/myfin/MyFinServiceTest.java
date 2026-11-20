@@ -24,6 +24,7 @@ import apptive.fin.search.service.RateCalculatorService;
 import apptive.fin.search.service.ResolveKeywordService;
 import apptive.fin.search.service.SearchRequestPolicy;
 import apptive.fin.auth.security.AuthUserDetails;
+import apptive.fin.user.UserErrorCode;
 import apptive.fin.user.entity.User;
 import apptive.fin.user.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -111,6 +112,31 @@ class MyFinServiceTest {
                 () -> myFinService.addFavorite(1L, 100L));
 
         assertEquals(MyFinErrorCode.FAVORITE_ALREADY_EXISTS, ex.getErrorCode());
+    }
+
+    @Test
+    void 찜이_가득_찬_상태에서_이미_찜한_상품을_다시_추가하면_중복_오류다() {
+        when(myFinRepository.countByUserId(1L)).thenReturn(20);
+        when(myFinRepository.existsByUserIdAndProductPropertyId(1L, 100L)).thenReturn(true);
+
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> myFinService.addFavorite(1L, 100L));
+
+        assertEquals(MyFinErrorCode.FAVORITE_ALREADY_EXISTS, ex.getErrorCode());
+    }
+
+    @Test
+    void 탈퇴한_사용자의_토큰으로_찜하면_사용자_없음_오류다() {
+        when(myFinRepository.countByUserId(1L)).thenReturn(0);
+        when(myFinRepository.existsByUserIdAndProductPropertyId(1L, 100L)).thenReturn(false);
+        when(productPropertyRepository.findByIdAndIsJoinableTrue(100L)).thenReturn(Optional.of(productProperty));
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> myFinService.addFavorite(1L, 100L));
+
+        assertEquals(UserErrorCode.USER_NOT_FOUND, ex.getErrorCode());
+        verify(myFinRepository, never()).save(any(MyFin.class));
     }
 
     @Test
