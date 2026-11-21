@@ -1,6 +1,7 @@
 package apptive.fin.search.dto;
 
 import apptive.fin.global.util.AgeUtil;
+import apptive.fin.search.enums.ProductCategoryEnum;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -92,28 +93,39 @@ public record DetailedOptionsDto(
     }
 
     /**
-     * 정규화된 월 납입액 계산.
-     * @param saveTrm 저축기간 (키워드에서 추출)
-     * @return 단기예치(1,3개월)면 예치액÷기간, 목돈만들기면 monthlySavingsGoal
+     * 적금 상품 하나에 넣을 월 납입액.
+     * 단기예치는 예치액을 정규화 기간으로 나누고, 목돈만들기는 월 저축 가능액을 그대로 쓴다. 계산할 수 없으면 null.
      */
-    public Long normalizedMonthlyDeposit(Integer saveTrm) {
-        boolean isShortTerm = saveTrm != null && (saveTrm == 1 || saveTrm == 3);
-        if (isShortTerm && depositAmount != null && saveTrm > 0) {
-            return depositAmount / saveTrm;
+    public Long monthlyDepositFor(ProductCategoryEnum category, Integer selectedSaveTrm, Integer productSaveTrm) {
+        if (category == ProductCategoryEnum.SHORT_TERM) {
+            Integer term = normalizationTerm(category, selectedSaveTrm, productSaveTrm);
+            return depositAmount != null && term != null && term > 0
+                    ? depositAmount / term
+                    : null;
         }
         return monthlySavingsGoal;
     }
 
     /**
-     * 정규화된 예치 원금 계산.
-     * @param saveTrm 저축기간 (키워드에서 추출)
-     * @return 목돈만들기(6개월 이상)면 월저축액×기간, 단기예치면 depositAmount
+     * 예금 상품 하나에 넣을 예치 원금.
+     * 단기예치는 예치액을 그대로 쓰고, 목돈만들기는 월 저축 가능액에 정규화 기간을 곱한다. 계산할 수 없으면 null.
      */
-    public Long normalizedDepositPrincipal(Integer saveTrm) {
-        boolean isLongTerm = saveTrm != null && saveTrm >= 6;
-        if (isLongTerm && monthlySavingsGoal != null) {
-            return monthlySavingsGoal * saveTrm;
+    public Long depositPrincipalFor(ProductCategoryEnum category, Integer selectedSaveTrm, Integer productSaveTrm) {
+        if (category == ProductCategoryEnum.SHORT_TERM) {
+            return depositAmount;
         }
-        return depositAmount;
+        Integer term = normalizationTerm(category, selectedSaveTrm, productSaveTrm);
+        return monthlySavingsGoal != null && term != null
+                ? monthlySavingsGoal * term
+                : null;
+    }
+
+    // 정규화 기간: 고른 저축기간이 대분류에 속하면 그 기간(명세의 공통 기준원금),
+    // 없거나 대분류와 맞지 않으면(대분류 전환 요청) 상품 기간. 후자는 명세에 정의가 없어 임시로 정한 규칙이다.
+    private static Integer normalizationTerm(ProductCategoryEnum category, Integer selectedSaveTrm, Integer productSaveTrm) {
+        if (selectedSaveTrm != null && ProductCategoryEnum.fromSaveTrm(selectedSaveTrm) == category) {
+            return selectedSaveTrm;
+        }
+        return productSaveTrm;
     }
 }
