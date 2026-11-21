@@ -1,6 +1,6 @@
 # Y-Fin. 백엔드 문서
 
-Y-Fin. 기획(노션)과 이 저장소의 백엔드 구현을 정리한 문서다. API 엔드포인트 목록은 저장소 루트 [README](../README.md), 요청·응답 스키마는 dev 프로필의 Swagger UI를 본다.
+Y-Fin. 기획(노션)과 이 저장소의 백엔드 구현을 정리한 문서다. 엔드포인트별 요청·응답, 인증 수준, 오류 코드는 [Fin API 명세](https://yuyeol3.github.io/fin-api-docs/)를, 코드에서 생성한 스키마는 dev 프로필의 Swagger UI를 본다.
 
 ## 처음 읽는 순서
 
@@ -53,5 +53,6 @@ Y-Fin. 기획(노션)과 이 저장소의 백엔드 구현을 정리한 문서�
 
 - 기획이 바뀌면 노션이 원본이다. 이 폴더의 기획 문서는 개발에 영향을 주는 변경이 있을 때 갱신한다.
 - 구현 문서는 코드와 같은 PR에서 고친다.
+- API 계약을 바꾼 PR이 머지되면 [Fin API 명세](https://yuyeol3.github.io/fin-api-docs/)를 갱신한다. 절차는 루트 [AGENTS.md](../AGENTS.md)에 있다.
 - 기획과 다르게 구현했다면 [plan-vs-implementation](implementation/plan-vs-implementation.md)에 남긴다.
 - 노션 export에 있던 발표 대본, 해커톤·공모전 제출 자료, 설문 홍보 문구, 인터뷰 스크립트는 개발과 무관해 옮기지 않았다.
