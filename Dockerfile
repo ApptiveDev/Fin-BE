@@ -6,6 +6,7 @@ WORKDIR /app
 COPY build/libs/*-SNAPSHOT.jar app.jar
 
 # GCP e2-micro(1GB)에서 Postgres·nginx와 같이 돌리기 위한 힙 제한
-ENV JAVA_OPTS="-Xms256m -Xmx256m"
+# -XX:-UseBASE64Intrinsics: CVE-2026-114938(Java4Shell) 완화. 베이스 이미지가 21.0.13.1 이상이 되면 뺀다.
+ENV JAVA_OPTS="-Xms256m -Xmx256m -XX:-UseBASE64Intrinsics"
 
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar"]
