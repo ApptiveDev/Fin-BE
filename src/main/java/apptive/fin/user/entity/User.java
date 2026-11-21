@@ -36,7 +36,8 @@ public class User extends BaseTimeEntity {
     @Column(name = "user_role", nullable = false, length = 50)
     private UserRole userRole = UserRole.BEFORE_AGREED;
 
-
+    @Column(name = "email_verified", nullable = false)
+    private boolean emailVerified = false;
 
     @Builder
     public User(String name, String email, String provider, String providerId, UserRole userRole) {
@@ -61,5 +62,13 @@ public class User extends BaseTimeEntity {
     }
     public void updateEmail(String email) {
         this.email = email;
+    }
+
+    public void verifyEmail() {
+        this.emailVerified = true;
+    }
+
+    public void unverifyEmail() {
+        this.emailVerified = false;
     }
 }
