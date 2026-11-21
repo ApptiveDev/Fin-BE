@@ -66,6 +66,7 @@ class UserProfileServiceTest {
         assertThat(saved.getBirthdate()).isEqualTo(LocalDate.of(1996, 5, 20));
         assertThat(saved.getAnnualIncome()).isEqualTo(3600L);
         assertThat(saved.getHouseholdSize()).isEqualTo(1);
+        assertThat(saved.getDepositAmount()).isEqualTo(3_000_000L);
         assertThat(saved.getNeverUsedBanks()).containsExactly("SHINHAN");
         assertThat(saved.getSelectedOptionIds()).containsExactly(100L, 200L);
     }
@@ -79,7 +80,7 @@ class UserProfileServiceTest {
 
         UserProfileRequestDto updated = new UserProfileRequestDto(
                 LocalDate.of(2000, 1, 1), 5000L, 2, 120, 12,
-                false, true, false, 700_000L,
+                false, true, false, 700_000L, 2_000_000L,
                 List.of("SHINHAN"), List.of("WOORI"), List.of(300L));
 
         userProfileService.upsert(USER_ID, updated);
@@ -87,6 +88,7 @@ class UserProfileServiceTest {
         assertThat(existing.getBirthdate()).isEqualTo(LocalDate.of(2000, 1, 1));
         assertThat(existing.getAnnualIncome()).isEqualTo(5000L);
         assertThat(existing.getHouseholdIncomePercent()).isEqualTo(120);
+        assertThat(existing.getDepositAmount()).isEqualTo(2_000_000L);
         assertThat(existing.getSelectedOptionIds()).containsExactly(300L);
         verify(userRepository, never()).findById(eq(USER_ID));
     }
@@ -116,7 +118,7 @@ class UserProfileServiceTest {
         UserProfile profile = new UserProfile(mockUser());
         profile.apply(new UserProfileRequestDto(
                 today.minusYears(28), 3600L, 1, 100, 24,
-                true, true, true, 500_000L,
+                true, true, true, 500_000L, 3_000_000L,
                 List.of("SHINHAN"), List.of("WOORI"),
                 List.of(100L, 200L)));
 
@@ -149,7 +151,7 @@ class UserProfileServiceTest {
         UserProfile profile = new UserProfile(mockUser());
         profile.apply(new UserProfileRequestDto(
                 LocalDate.of(1995, 1, 1), 3000L, 1, 100, null,
-                null, null, null, null, null, null, null));
+                null, null, null, null, null, null, null, null));
 
         when(userProfileRepository.findByUserId(USER_ID)).thenReturn(Optional.of(profile));
         when(medianIncomeService.getMedianIncomesDto(anyInt(), eq(1))).thenReturn(
@@ -166,7 +168,7 @@ class UserProfileServiceTest {
     private UserProfileRequestDto sampleRequest() {
         return new UserProfileRequestDto(
                 LocalDate.of(1996, 5, 20), 3600L, 1, 100, 24,
-                true, true, true, 500_000L,
+                true, true, true, 500_000L, 3_000_000L,
                 List.of("SHINHAN"), List.of("WOORI"),
                 List.of(100L, 200L));
     }
