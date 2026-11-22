@@ -1,116 +1,88 @@
 <!DOCTYPE html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<html lang="ko" xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <meta charset="UTF-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
-    <title>Y-Fin 다이제스트</title>
-    <style type="text/css">
-        @media only screen and (max-width: 600px) {
-            .card-padding { padding-left: 24px !important; padding-right: 24px !important; }
-        }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="x-apple-disable-message-reformatting">
+<title>[Y-Fin.] 오늘 확인할 일정 {{itemCount}}건</title>
+<!--[if !mso]><!-->
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.css" rel="stylesheet">
+<style>body,table,td,a,p,h1,div{font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic','맑은 고딕',Arial,sans-serif !important;}</style>
+<!--<![endif]-->
 </head>
-<!--
-    다이제스트 (digest)
-    ===================
-    변수: count, baseDateLabel, items[], moreCount, allUrl, manageUrl, unsubscribeUrl, footerNotice
--->
-<body style="margin:0;padding:0;background-color:#F1F2F4;font-family:Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;-webkit-font-smoothing:antialiased;">
-    <!-- Preheader (hidden) -->
-    <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;" th:text="${preheader}">프리헤더</div>
-    <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;</div>
+<body style="margin:0;padding:0;background-color:#f2f3f5;">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:#f2f3f5;">{{baseDateText}} 기준, 신청하신 알림을 한 번에 모았어요.</div>
 
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F1F2F4;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f2f3f5;">
+<tr><td align="center" style="padding:40px 12px;">
+
+  <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic','맑은 고딕',Arial,sans-serif;">
+
+    <tr><td style="background-color:#ffffff;border:1px solid #e5e7eb;border-radius:16px;padding:40px;">
+
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
-            <td align="center" style="padding:40px 20px;">
-                <!-- Card -->
-                <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;background-color:#FFFFFF;border:1px solid #E6E8EB;border-radius:24px;">
-
-                    <!-- Header -->
-                    <tr th:replace="~{email/components :: header('일정 알림')}"></tr>
-
-                    <!-- Title -->
-                    <tr>
-                        <td class="card-padding" style="padding:0 40px 24px 40px;">
-                            <h1 style="margin:0;font-size:28px;font-weight:700;line-height:1.4;color:#222222;">
-                                오늘 확인할 일정 <span style="color:#03BFA5;" th:text="${count} + '건'">3건</span>
-                            </h1>
-                        </td>
-                    </tr>
-
-                    <!-- Body -->
-                    <tr>
-                        <td class="card-padding" style="padding:0 40px 24px 40px;">
-                            <p style="margin:0;font-size:16px;line-height:1.6;color:#333333;">
-                                <span th:text="${baseDateLabel}">10월 15일(화)</span> 기준, 신청하신 알림을 한 번에 모았어요.
-                            </p>
-                        </td>
-                    </tr>
-
-                    <!-- Items List -->
-                    <tr>
-                        <td class="card-padding" style="padding:0 40px;">
-                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-                                <!-- Loop through items (max 10) -->
-                                <th:block th:each="item, stat : ${items}" th:if="${stat.index lt 10}">
-                                    <tr>
-                                        <td style="padding:20px 0;border-top:1px solid #EEF0F2;">
-                                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-                                                <tr>
-                                                    <td style="vertical-align:top;width:90px;">
-                                                        <!-- 긴급: red/white, 여유: redSoftBg/red -->
-                                                        <span th:if="${item.urgent}"
-                                                              style="display:inline-block;padding:6px 12px;border-radius:999px;font-size:13px;font-weight:700;background:#F0596E;color:#ffffff;"
-                                                              th:text="${item.badgeText}">마감 D-1</span>
-                                                        <span th:unless="${item.urgent}"
-                                                              style="display:inline-block;padding:6px 12px;border-radius:999px;font-size:13px;font-weight:700;background:#FEEFF2;color:#F0596E;"
-                                                              th:text="${item.badgeText}">마감 D-7</span>
-                                                    </td>
-                                                    <td style="vertical-align:top;padding-left:12px;">
-                                                        <p style="margin:0 0 4px 0;font-size:17px;font-weight:700;color:#222222;" th:text="${item.title}">상품명</p>
-                                                        <p style="margin:0;font-size:14px;color:#8B9098;" th:text="${item.subText}">설명</p>
-                                                    </td>
-                                                    <td style="vertical-align:top;text-align:right;white-space:nowrap;padding-left:12px;">
-                                                        <a th:href="${item.linkUrl}" style="font-size:14px;font-weight:700;color:#03BFA5;text-decoration:none;">
-                                                            <span th:text="${item.linkLabel}">보기</span> ›
-                                                        </a>
-                                                    </td>
-                                                </tr>
-                                            </table>
-                                        </td>
-                                    </tr>
-                                </th:block>
-
-                                <!-- More count -->
-                                <tr th:if="${moreCount gt 0}">
-                                    <td style="padding:20px 0;border-top:1px solid #EEF0F2;text-align:center;">
-                                        <p style="margin:0;font-size:14px;color:#8B9098;">
-                                            외 <span th:text="${moreCount}">5</span>건은 Y-Fin에서 확인하세요
-                                        </p>
-                                    </td>
-                                </tr>
-
-                                <!-- Bottom divider -->
-                                <tr>
-                                    <td style="border-top:1px solid #EEF0F2;"></td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
-
-                    <!-- CTA Button -->
-                    <tr>
-                        <td class="card-padding" style="padding:24px 40px 40px 40px;">
-                            <div th:replace="~{email/components :: primaryButton('Y-Fin.에서 모두 보기', ${allUrl}, false)}"></div>
-                        </td>
-                    </tr>
-
-                    <!-- Footer -->
-                    <tr th:replace="~{email/components :: footer(${manageUrl}, ${unsubscribeUrl}, ${footerNotice})}"></tr>
-                </table>
-            </td>
+          <td align="left" valign="middle">
+            <img src="{{assets.logoUrl}}" width="90" height="53" alt="Y-Fin" style="display:block;border:0;color:#03bfa5;font-size:28px;font-weight:bold;">
+          </td>
+          <td align="right" valign="middle" style="font-size:12px;line-height:18px;color:#8a8f99;">일정 알림</td>
         </tr>
-    </table>
+      </table>
+
+      <h1 style="margin:32px 0 0;font-size:26px;line-height:36px;font-weight:700;color:#222222;">오늘 확인할 일정 <span style="color:#03bfa5;">{{itemCount}}건</span></h1>
+
+      <p style="margin:24px 0 0;font-size:15px;line-height:24px;color:#222222;">{{baseDateText}} 기준, 신청하신 알림을 한 번에 모았어요.</p>
+
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:24px;">
+        {{#schedules}}
+        <tr>
+          <td style="border-top:1px solid #f0f1f3;padding:18px 0;" valign="middle">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td width="58" valign="middle">
+                  <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+                    <td style="background-color:{{badgeBg}};border-radius:11px;padding:0 9px;height:22px;font-size:11px;line-height:22px;font-weight:700;color:{{badgeColor}};white-space:nowrap;">마감 D-{{daysLeft}}</td>
+                  </tr></table>
+                </td>
+                <td width="16" style="font-size:0;line-height:0;">&nbsp;</td>
+                <td valign="middle">
+                  <div style="font-size:15px;line-height:22px;font-weight:700;color:#222222;">{{name}}</div>
+                  <div style="margin-top:2px;font-size:12px;line-height:18px;color:#8a8f99;">{{deadlineText}}</div>
+                </td>
+                <td align="right" valign="middle" style="white-space:nowrap;">
+                  <a href="{{externalUrl}}" target="_blank" style="font-size:13px;line-height:20px;font-weight:700;color:#03bfa5;text-decoration:none;">온통청년 보기 &nbsp;›</a>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        {{/schedules}}
+      </table>
+
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:12px;">
+        <tr><td align="center" bgcolor="#03bfa5" style="background-color:#03bfa5;border-radius:10px;">
+          <a href="{{links.schedule}}" target="_blank" style="display:block;padding:16px 0;font-size:16px;line-height:24px;font-weight:600;color:#ffffff;text-decoration:none;">Y-Fin.에서 모두 보기</a>
+        </td></tr>
+      </table>
+
+    </td></tr>
+
+    <tr><td style="padding:24px 28px 0;font-size:12px;line-height:18px;color:#8a8f99;">
+      <p style="margin:0 0 10px;">일정은 발송일 06:00 온통청년 공고 기준이며 기관 사정에 따라 바뀔 수 있어요.</p>
+      <p style="margin:0 0 10px;">Y-Fin.은 해당 상품의 판매·중개 주체가 아니며, 신청은 기관 공식 페이지에서 진행됩니다.</p>
+      <p style="margin:0 0 10px;">이 메일은 회원님이 직접 신청한 일정 안내입니다.</p>
+      <p style="margin:0 0 10px;">알림을 하나씩 끄거나 다시 켜는 건 Y-Fin 내 알림에서 할 수 있어요.</p>
+      <p style="margin:0 0 10px;">
+        <a href="{{links.settings}}" target="_blank" style="color:#03bfa5;font-weight:700;text-decoration:underline;">알림 설정 관리</a>
+        &nbsp;&nbsp;
+        <a href="{{links.unsubscribe}}" target="_blank" style="color:#8a8f99;text-decoration:underline;">전체 수신거부</a>
+      </p>
+      <p style="margin:0;">Y-Fin. · {{company.address}} · {{company.supportEmail}}</p>
+    </td></tr>
+
+  </table>
+
+</td></tr>
+</table>
 </body>
 </html>

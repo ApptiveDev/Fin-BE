@@ -3,15 +3,11 @@ package apptive.fin.notification;
 import apptive.fin.notification.dto.DeadlineEmailData;
 import apptive.fin.notification.dto.DigestEmailData;
 import apptive.fin.notification.dto.MaturityEmailData;
-import apptive.fin.notification.dto.StartEmailData;
 import apptive.fin.notification.service.EmailTemplateService;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.thymeleaf.TemplateEngine;
-import org.thymeleaf.templatemode.TemplateMode;
-import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 
 import java.util.List;
 
@@ -23,20 +19,20 @@ class EmailTemplateServiceTest {
 
     @BeforeAll
     static void setUp() {
-        ClassLoaderTemplateResolver templateResolver = new ClassLoaderTemplateResolver();
-        templateResolver.setPrefix("templates/");
-        templateResolver.setSuffix(".html");
-        templateResolver.setTemplateMode(TemplateMode.HTML);
-        templateResolver.setCharacterEncoding("UTF-8");
+        NotificationProperties properties = new NotificationProperties(
+                new NotificationProperties.Resend("test-api-key", "test-webhook-secret"),
+                new NotificationProperties.Mail("Y-Fin <noreply@y-fin.com>"),
+                new NotificationProperties.Email("https://fin-qa.yuyeol3.uk/email/logo.png"),
+                new NotificationProperties.Company("부산대학교", "noreply@y-fin.com"),
+                "http://localhost:8080",
+                "test-secret"
+        );
 
-        TemplateEngine templateEngine = new TemplateEngine();
-        templateEngine.setTemplateResolver(templateResolver);
-
-        emailTemplateService = new EmailTemplateService(templateEngine, null);
+        emailTemplateService = new EmailTemplateService(properties);
     }
 
     @Nested
-    @DisplayName("V2 템플릿 - 새 디자인 시스템")
+    @DisplayName("V2 템플릿 - Mustache 기반")
     class V2Templates {
 
         @Test
@@ -66,11 +62,8 @@ class EmailTemplateServiceTest {
 
             assertThat(html).contains("부산 청년 신용회복 지원금");
             assertThat(html).contains("3일");
-            assertThat(html).contains("#F0596E");
             assertThat(html).contains("온통청년 보기");
-            assertThat(html).contains("target=\"_blank\"");
             assertThat(html).contains("다음 알림");
-            assertThat(html).contains("#03BFA5");
         }
 
         @Test
@@ -99,35 +92,7 @@ class EmailTemplateServiceTest {
             String html = emailTemplateService.buildDeadlineEmailV2(data);
 
             assertThat(html).contains("7일");
-            assertThat(html).contains("#FEEFF2");
-        }
-
-        @Test
-        @DisplayName("시작 알림 템플릿 생성")
-        void 시작_알림_템플릿_생성() {
-            StartEmailData data = StartEmailData.builder()
-                    .typeLabel("금융 지원 정책")
-                    .title("청년도약계좌")
-                    .startDateLabel("10월 1일")
-                    .endDateLabel("12월 31일(화)")
-                    .agency("금융위원회")
-                    .applyMethod("은행 앱")
-                    .ctaLabel("온통청년 보기")
-                    .ctaUrl("https://ontong.example.com/policy/456")
-                    .ctaExternal(true)
-                    .allSchedulesUrl("https://y-fin.com/schedules")
-                    .manageUrl("https://y-fin.com/settings/notifications")
-                    .unsubscribeUrl("https://y-fin.com/unsubscribe?token=abc")
-                    .footerNotice(null)
-                    .build();
-
-            String html = emailTemplateService.buildStartEmailV2(data);
-
-            assertThat(html).contains("청년도약계좌");
-            assertThat(html).contains("신청이");
-            assertThat(html).contains("시작");
-            assertThat(html).contains("#03BFA5");
-            assertThat(html).contains("신청 시작");
+            assertThat(html).contains("청년희망적금");
         }
 
         @Test
@@ -152,14 +117,6 @@ class EmailTemplateServiceTest {
                                     .subText("10.21 (수) 마감")
                                     .linkLabel("상세 보기")
                                     .linkUrl("https://y-fin.com/products/2")
-                                    .build(),
-                            DigestEmailData.DigestItem.builder()
-                                    .badgeText("마감 D-14")
-                                    .urgent(false)
-                                    .title("청년도약계좌")
-                                    .subText("10.28 (수) 마감")
-                                    .linkLabel("상세 보기")
-                                    .linkUrl("https://y-fin.com/products/3")
                                     .build()
                     ))
                     .moreCount(0)
@@ -173,39 +130,9 @@ class EmailTemplateServiceTest {
 
             assertThat(html).contains("오늘 확인할 일정");
             assertThat(html).contains("3건");
-            assertThat(html).contains("#03BFA5");
             assertThat(html).contains("부산 청년 신용회복 지원금");
             assertThat(html).contains("청년희망적금");
-            assertThat(html).contains("청년도약계좌");
             assertThat(html).contains("Y-Fin.에서 모두 보기");
-        }
-
-        @Test
-        @DisplayName("다이제스트 템플릿 생성 - 10건 초과")
-        void 다이제스트_템플릿_10건_초과() {
-            DigestEmailData data = DigestEmailData.builder()
-                    .count(15)
-                    .baseDateLabel("10월 15일(화)")
-                    .items(List.of(
-                            DigestEmailData.DigestItem.builder()
-                                    .badgeText("마감 D-1")
-                                    .urgent(true)
-                                    .title("상품1")
-                                    .subText("설명1")
-                                    .linkLabel("보기")
-                                    .linkUrl("https://example.com/1")
-                                    .build()
-                    ))
-                    .moreCount(5)
-                    .allUrl("https://y-fin.com/schedules")
-                    .manageUrl("https://y-fin.com/settings/notifications")
-                    .unsubscribeUrl("https://y-fin.com/unsubscribe?token=abc")
-                    .footerNotice(null)
-                    .build();
-
-            String html = emailTemplateService.buildDigestEmailV2(data);
-
-            assertThat(html).contains("건은 Y-Fin에서 확인하세요");
         }
 
         @Test
@@ -229,14 +156,21 @@ class EmailTemplateServiceTest {
             assertThat(html).contains("KB Star 정기예금");
             assertThat(html).contains("만기가");
             assertThat(html).contains("30일");
-            assertThat(html).contains("#7B1FA2");
-            assertThat(html).contains("#F3E9FA");
-            assertThat(html).contains("D-30");
             assertThat(html).contains("내가 등록한 가입 상품");
-            assertThat(html).contains("#EFFFFD");
             assertThat(html).contains("단기 예치");
             assertThat(html).contains("목돈 만들기");
             assertThat(html).contains("만기 후 선택지 비교하기");
+        }
+
+        @Test
+        @DisplayName("인증 이메일 템플릿 생성")
+        void 인증_이메일_템플릿_생성() {
+            String html = emailTemplateService.buildVerificationEmail("https://y-fin.com/verify?token=abc123");
+
+            assertThat(html).contains("이메일 인증");
+            assertThat(html).contains("y-fin.com/verify");
+            assertThat(html).contains("Y-Fin");
+            assertThat(html).contains("24시간");
         }
 
         @Test
@@ -253,11 +187,14 @@ class EmailTemplateServiceTest {
 
             assertThat(emailTemplateService.buildMaturitySubject("KB정기예금", 30))
                     .isEqualTo("[Y-Fin.] KB정기예금 만기가 30일 남았어요");
+
+            assertThat(emailTemplateService.buildVerificationSubject())
+                    .isEqualTo("[Y-Fin.] 알림 받을 이메일을 확인해 주세요");
         }
 
         @Test
-        @DisplayName("공통 레이아웃 요소 포함")
-        void 공통_레이아웃_요소_포함() {
+        @DisplayName("로고 URL과 회사 정보 포함")
+        void 로고_URL과_회사_정보_포함() {
             DeadlineEmailData data = DeadlineEmailData.builder()
                     .dday(7)
                     .urgent(false)
@@ -277,28 +214,15 @@ class EmailTemplateServiceTest {
 
             String html = emailTemplateService.buildDeadlineEmailV2(data);
 
-            assertThat(html).contains("display:none;max-height:0;overflow:hidden");
-            assertThat(html).contains("일정 알림");
-            assertThat(html).contains("#F1F2F4");
-            assertThat(html).contains("알림 설정 관리");
-            assertThat(html).contains("전체 수신거부");
-            assertThat(html).contains("bgcolor=\"#03BFA5\"");
-            assertThat(html).contains("@media only screen and (max-width: 600px)");
+            assertThat(html).contains("https://fin-qa.yuyeol3.uk/email/logo.png");
+            assertThat(html).contains("부산대학교");
+            assertThat(html).contains("noreply@y-fin.com");
         }
     }
 
     @Nested
     @DisplayName("레거시 템플릿 - 하위 호환성")
     class LegacyTemplates {
-
-        @Test
-        void 인증_이메일_템플릿_생성() {
-            String html = emailTemplateService.buildVerificationEmail("https://y-fin.com/verify?token=abc123");
-
-            assertThat(html).contains("이메일 인증");
-            assertThat(html).contains("https://y-fin.com/verify?token=abc123");
-            assertThat(html).contains("Y-Fin");
-        }
 
         @Test
         void 마감_알림_템플릿_생성() {

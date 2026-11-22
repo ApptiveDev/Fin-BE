@@ -1,113 +1,99 @@
 <!DOCTYPE html>
-<html lang="ko" xmlns:th="http://www.thymeleaf.org">
+<html lang="ko" xmlns="http://www.w3.org/1999/xhtml">
 <head>
-    <meta charset="UTF-8"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
-    <title>Y-Fin 마감 알림</title>
-    <style type="text/css">
-        @media only screen and (max-width: 600px) {
-            .card-padding { padding-left: 24px !important; padding-right: 24px !important; }
-        }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="x-apple-disable-message-reformatting">
+<title>[Y-Fin.] {{policy.name}} 신청 마감까지 {{alert.daysLeft}}일 남았어요</title>
+<!--[if !mso]><!-->
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.css" rel="stylesheet">
+<style>body,table,td,a,p,h1,div{font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic','맑은 고딕',Arial,sans-serif !important;}</style>
+<!--<![endif]-->
 </head>
-<!--
-    마감 알림 단건 (deadline-single)
-    ================================
-    변수: dday, urgent, typeLabel, title, startDateLabel, endDateLabel,
-          agency, applyMethod, ctaLabel, ctaUrl, ctaExternal,
-          allSchedulesUrl, manageUrl, unsubscribeUrl,
-          nextAlertDate, nextAlertDday, footerNotice, preheader
--->
-<body style="margin:0;padding:0;background-color:#F1F2F4;font-family:Pretendard, 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;-webkit-font-smoothing:antialiased;">
-    <!-- Preheader (hidden) -->
-    <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;" th:text="${preheader}">프리헤더</div>
-    <div style="display:none;max-height:0;overflow:hidden;mso-hide:all;">&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;</div>
+<body style="margin:0;padding:0;background-color:#f2f3f5;">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:#f2f3f5;">{{policy.applyStartText}}부터 신청을 받고 있어요. 마감은 {{policy.applyEndText}}이에요.</div>
 
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#F1F2F4;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f2f3f5;">
+<tr><td align="center" style="padding:40px 12px;">
+
+  <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic','맑은 고딕',Arial,sans-serif;">
+
+    <tr><td style="background-color:#ffffff;border:1px solid #e5e7eb;border-radius:16px;padding:40px;">
+
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
         <tr>
-            <td align="center" style="padding:40px 20px;">
-                <!-- Card -->
-                <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;background-color:#FFFFFF;border:1px solid #E6E8EB;border-radius:24px;">
-
-                    <!-- Header -->
-                    <tr th:replace="~{email/components :: header('일정 알림')}"></tr>
-
-                    <!-- Title -->
-                    <tr>
-                        <td class="card-padding" style="padding:0 40px 24px 40px;">
-                            <h1 style="margin:0 0 8px 0;font-size:28px;font-weight:700;line-height:1.4;color:#222222;" th:text="${title}">상품명</h1>
-                            <p style="margin:0;font-size:28px;font-weight:700;line-height:1.4;color:#222222;">
-                                신청 마감까지 <span style="color:#F0596E;" th:text="${dday} + '일'">7일</span> 남았어요
-                            </p>
-                        </td>
-                    </tr>
-
-                    <!-- Body -->
-                    <tr>
-                        <td class="card-padding" style="padding:0 40px 24px 40px;">
-                            <p style="margin:0;font-size:16px;line-height:1.6;color:#333333;">
-                                <span th:text="${startDateLabel}">10월 1일</span>부터 신청을 받고 있어요.
-                                마감은 <strong th:text="${endDateLabel}">10월 21일(수)</strong>이에요.
-                            </p>
-                        </td>
-                    </tr>
-
-                    <!-- Summary Box -->
-                    <tr>
-                        <td class="card-padding" style="padding:0 40px 24px 40px;">
-                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #E6E8EB;border-radius:20px;">
-                                <tr>
-                                    <td style="padding:24px;">
-                                        <!-- Badges -->
-                                        <table role="presentation" cellpadding="0" cellspacing="0" border="0">
-                                            <tr>
-                                                <td th:replace="~{email/components :: deadlineBadge(${dday}, ${urgent})}"></td>
-                                                <td style="padding-left:8px;" th:replace="~{email/components :: typeBadge(${typeLabel})}"></td>
-                                            </tr>
-                                        </table>
-                                        <!-- Product Name -->
-                                        <p style="margin:16px 0;font-size:20px;font-weight:700;color:#222222;" th:text="${title}">상품명</p>
-                                        <!-- Info Rows -->
-                                        <div th:replace="~{email/components :: infoRow('신청 기간', ${startDateLabel} + ' ~ ' + ${endDateLabel})}"></div>
-                                        <div th:replace="~{email/components :: infoRow('운영 기관', ${agency})}"></div>
-                                        <div th:replace="~{email/components :: infoRow('신청 방법', ${applyMethod})}"></div>
-                                    </td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
-
-                    <!-- CTA Button -->
-                    <tr>
-                        <td class="card-padding" style="padding:0 40px 16px 40px;">
-                            <div th:replace="~{email/components :: primaryButton(${ctaLabel}, ${ctaUrl}, ${ctaExternal})}"></div>
-                        </td>
-                    </tr>
-
-                    <!-- Bottom Links -->
-                    <tr>
-                        <td class="card-padding" style="padding:0 40px 40px 40px;">
-                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
-                                <tr>
-                                    <td>
-                                        <a th:href="${allSchedulesUrl}" style="font-size:15px;font-weight:700;color:#03BFA5;text-decoration:none;">Y-Fin.에서 내 일정 모두 보기 ›</a>
-                                    </td>
-                                    <td align="right" th:if="${nextAlertDate != null}">
-                                        <span style="color:#8B9098;font-size:14px;">
-                                            다음 알림 · <span th:text="${nextAlertDate}">10.18</span> (D-<span th:text="${nextAlertDday}">3</span>)
-                                        </span>
-                                    </td>
-                                </tr>
-                            </table>
-                        </td>
-                    </tr>
-
-                    <!-- Footer -->
-                    <tr th:replace="~{email/components :: footer(${manageUrl}, ${unsubscribeUrl}, ${footerNotice})}"></tr>
-                </table>
-            </td>
+          <td align="left" valign="middle">
+            <img src="{{assets.logoUrl}}" width="90" height="53" alt="Y-Fin" style="display:block;border:0;color:#03bfa5;font-size:28px;font-weight:bold;">
+          </td>
+          <td align="right" valign="middle" style="font-size:12px;line-height:18px;color:#8a8f99;">일정 알림</td>
         </tr>
-    </table>
+      </table>
+
+      <h1 style="margin:32px 0 0;font-size:26px;line-height:36px;font-weight:700;color:#222222;">{{policy.name}}<br>신청 마감까지 <span style="color:#ef5b6e;">{{alert.daysLeft}}일</span> 남았어요</h1>
+
+      <p style="margin:24px 0 0;font-size:15px;line-height:24px;color:#222222;">{{policy.applyStartText}}부터 신청을 받고 있어요. 마감은 <b>{{policy.applyEndText}}</b>이에요.</p>
+
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:24px;border:1px solid #e5e7eb;border-radius:14px;">
+        <tr><td style="padding:22px 24px 8px;">
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <td style="background-color:#fcf4f5;border-radius:11px;padding:0 10px;height:22px;font-size:11px;line-height:22px;font-weight:600;color:#ef5b6e;white-space:nowrap;">마감 D-{{alert.daysLeft}}</td>
+              <td width="6" style="font-size:0;line-height:0;">&nbsp;</td>
+              <td style="background-color:#f2f3f5;border-radius:11px;padding:0 10px;height:22px;font-size:11px;line-height:22px;font-weight:600;color:#3d3d3d;white-space:nowrap;">금융 지원 정책</td>
+            </tr>
+          </table>
+          <div style="margin:12px 0 0;font-size:18px;line-height:26px;font-weight:700;color:#222222;">{{policy.name}}</div>
+        </td></tr>
+        <tr><td style="padding:8px 24px 0;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <td style="border-top:1px solid #f0f1f3;padding:12px 0;font-size:12px;line-height:16px;color:#8a8f99;" align="left">신청 기간</td>
+              <td style="border-top:1px solid #f0f1f3;padding:12px 0;font-size:12px;line-height:16px;font-weight:600;color:#222222;" align="right">{{policy.applyPeriod}}</td>
+            </tr>
+            <tr>
+              <td style="border-top:1px solid #f0f1f3;padding:12px 0;font-size:12px;line-height:16px;color:#8a8f99;" align="left">운영 기관</td>
+              <td style="border-top:1px solid #f0f1f3;padding:12px 0;font-size:12px;line-height:16px;font-weight:600;color:#222222;" align="right">{{policy.institution}}</td>
+            </tr>
+            <tr>
+              <td style="border-top:1px solid #f0f1f3;padding:12px 0;font-size:12px;line-height:16px;color:#8a8f99;" align="left">신청 방법</td>
+              <td style="border-top:1px solid #f0f1f3;padding:12px 0;font-size:12px;line-height:16px;font-weight:600;color:#222222;" align="right">{{policy.applyMethod}}</td>
+            </tr>
+          </table>
+        </td></tr>
+      </table>
+
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:24px;">
+        <tr><td align="center" bgcolor="#03bfa5" style="background-color:#03bfa5;border-radius:10px;">
+          <a href="{{policy.externalUrl}}" target="_blank" style="display:block;padding:16px 0;font-size:16px;line-height:24px;font-weight:600;color:#ffffff;text-decoration:none;">온통청년 보기 &nbsp;↗</a>
+        </td></tr>
+      </table>
+
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:20px;">
+        <tr><td align="center" style="font-size:13px;line-height:20px;">
+          <a href="{{links.schedule}}" target="_blank" style="font-weight:700;color:#03bfa5;text-decoration:none;">Y-Fin.에서 내 일정 모두 보기 &nbsp;›</a>
+          &nbsp;&nbsp;&nbsp;&nbsp;
+          {{#alert.nextAlertText}}<span style="font-weight:600;color:#8a8f99;">다음 알림 &nbsp;{{alert.nextAlertText}}</span>{{/alert.nextAlertText}}
+        </td></tr>
+      </table>
+
+    </td></tr>
+
+    <tr><td style="padding:24px 28px 0;font-size:12px;line-height:18px;color:#8a8f99;">
+      <p style="margin:0 0 10px;">일정은 발송일 06:00 온통청년 공고 기준이며 기관 사정에 따라 바뀔 수 있어요.</p>
+      <p style="margin:0 0 10px;">Y-Fin.은 해당 상품의 판매·중개 주체가 아니며, 신청은 기관 공식 페이지에서 진행됩니다.</p>
+      <p style="margin:0 0 10px;">이 메일은 회원님이 직접 신청한 일정 안내입니다.</p>
+      <p style="margin:0 0 10px;">알림을 하나씩 끄거나 다시 켜는 건 Y-Fin 내 알림에서 할 수 있어요.</p>
+      <p style="margin:0 0 10px;">
+        <a href="{{links.settings}}" target="_blank" style="color:#03bfa5;font-weight:700;text-decoration:underline;">알림 설정 관리</a>
+        &nbsp;&nbsp;
+        <a href="{{links.unsubscribe}}" target="_blank" style="color:#8a8f99;text-decoration:underline;">전체수신거부</a>
+      </p>
+      <p style="margin:0;">Y-Fin. · {{company.address}} · {{company.supportEmail}}</p>
+    </td></tr>
+
+  </table>
+
+</td></tr>
+</table>
 </body>
 </html>

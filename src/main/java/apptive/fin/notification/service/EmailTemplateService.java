@@ -5,129 +5,160 @@ import apptive.fin.notification.dto.DeadlineEmailData;
 import apptive.fin.notification.dto.DigestEmailData;
 import apptive.fin.notification.dto.MaturityEmailData;
 import apptive.fin.notification.dto.StartEmailData;
+import com.samskivert.mustache.Mustache;
+import com.samskivert.mustache.Template;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
-import org.thymeleaf.TemplateEngine;
-import org.thymeleaf.context.Context;
 
-import java.util.Locale;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
 public class EmailTemplateService {
 
-    // TODO: 시안은 "[Y-Fin.]", 명세는 "[Y-Fin]" - 확정 후 통일 필요
     private static final String MAIL_SUBJECT_PREFIX = "[Y-Fin.]";
 
-    private final TemplateEngine templateEngine;
     private final NotificationProperties properties;
+    private final Mustache.Compiler mustacheCompiler = Mustache.compiler();
 
     // ──────────────────────────────────────────────────────────────────────────
-    // Public API - Thymeleaf 기반 템플릿
+    // Public API - Mustache 기반 템플릿
     // ──────────────────────────────────────────────────────────────────────────
 
     /**
-     * 마감 알림 단건 이메일
+     * 마감 알림 단건 이메일 (D-7)
      */
     public String buildDeadlineEmailV2(DeadlineEmailData data) {
-        Context context = createBaseContext();
+        Map<String, Object> context = createBaseContext();
 
-        context.setVariable("preheader", data.title() + " 신청 마감까지 " + data.dday() + "일 남았어요");
-        context.setVariable("dday", data.dday());
-        context.setVariable("urgent", data.urgent());
-        context.setVariable("typeLabel", data.typeLabel());
-        context.setVariable("title", data.title());
-        context.setVariable("startDateLabel", data.startDateLabel());
-        context.setVariable("endDateLabel", data.endDateLabel());
-        context.setVariable("agency", data.agency());
-        context.setVariable("applyMethod", data.applyMethod());
-        context.setVariable("ctaLabel", data.ctaLabel());
-        context.setVariable("ctaUrl", data.ctaUrl());
-        context.setVariable("ctaExternal", data.ctaExternal());
-        context.setVariable("allSchedulesUrl", data.allSchedulesUrl());
-        context.setVariable("manageUrl", data.manageUrl());
-        context.setVariable("unsubscribeUrl", data.unsubscribeUrl());
-        context.setVariable("nextAlertDate", data.nextAlertDate());
-        context.setVariable("nextAlertDday", data.nextAlertDday());
-        context.setVariable("footerNotice", data.footerNotice());
+        // policy 객체
+        Map<String, Object> policy = new HashMap<>();
+        policy.put("name", data.title());
+        policy.put("applyStartText", data.startDateLabel());
+        policy.put("applyEndText", data.endDateLabel());
+        policy.put("applyPeriod", data.startDateLabel() + " ~ " + data.endDateLabel());
+        policy.put("institution", data.agency());
+        policy.put("applyMethod", data.applyMethod());
+        policy.put("externalUrl", data.ctaUrl());
+        context.put("policy", policy);
 
-        return templateEngine.process("email/deadline", context);
+        // alert 객체
+        Map<String, Object> alert = new HashMap<>();
+        alert.put("daysLeft", data.dday());
+        if (data.nextAlertDate() != null && data.nextAlertDday() != null) {
+            alert.put("nextAlertText", data.nextAlertDate() + " (D-" + data.nextAlertDday() + ")");
+        }
+        context.put("alert", alert);
+
+        // links 객체
+        Map<String, Object> links = new HashMap<>();
+        links.put("schedule", data.allSchedulesUrl());
+        links.put("settings", data.manageUrl());
+        links.put("unsubscribe", data.unsubscribeUrl());
+        context.put("links", links);
+
+        return render("templates/email/deadline.html", context);
     }
 
     /**
      * 시작 알림 이메일
      */
     public String buildStartEmailV2(StartEmailData data) {
-        Context context = createBaseContext();
+        Map<String, Object> context = createBaseContext();
 
-        context.setVariable("preheader", data.title() + " 신청이 시작되었습니다");
-        context.setVariable("typeLabel", data.typeLabel());
-        context.setVariable("title", data.title());
-        context.setVariable("startDateLabel", data.startDateLabel());
-        context.setVariable("endDateLabel", data.endDateLabel());
-        context.setVariable("agency", data.agency());
-        context.setVariable("applyMethod", data.applyMethod());
-        context.setVariable("ctaLabel", data.ctaLabel());
-        context.setVariable("ctaUrl", data.ctaUrl());
-        context.setVariable("ctaExternal", data.ctaExternal());
-        context.setVariable("allSchedulesUrl", data.allSchedulesUrl());
-        context.setVariable("manageUrl", data.manageUrl());
-        context.setVariable("unsubscribeUrl", data.unsubscribeUrl());
-        context.setVariable("footerNotice", data.footerNotice());
+        Map<String, Object> policy = new HashMap<>();
+        policy.put("name", data.title());
+        policy.put("applyStartText", data.startDateLabel());
+        policy.put("applyEndText", data.endDateLabel());
+        policy.put("applyPeriod", data.startDateLabel() + " ~ " + data.endDateLabel());
+        policy.put("institution", data.agency());
+        policy.put("applyMethod", data.applyMethod());
+        policy.put("externalUrl", data.ctaUrl());
+        context.put("policy", policy);
 
-        return templateEngine.process("email/start", context);
+        Map<String, Object> links = new HashMap<>();
+        links.put("schedule", data.allSchedulesUrl());
+        links.put("settings", data.manageUrl());
+        links.put("unsubscribe", data.unsubscribeUrl());
+        context.put("links", links);
+
+        return render("templates/email/start.html", context);
     }
 
     /**
      * 다이제스트 이메일
      */
     public String buildDigestEmailV2(DigestEmailData data) {
-        Context context = createBaseContext();
+        Map<String, Object> context = createBaseContext();
 
-        context.setVariable("preheader", "오늘 확인할 일정 " + data.count() + "건");
-        context.setVariable("count", data.count());
-        context.setVariable("baseDateLabel", data.baseDateLabel());
-        context.setVariable("items", data.items());
-        context.setVariable("moreCount", data.moreCount());
-        context.setVariable("allUrl", data.allUrl());
-        context.setVariable("manageUrl", data.manageUrl());
-        context.setVariable("unsubscribeUrl", data.unsubscribeUrl());
-        context.setVariable("footerNotice", data.footerNotice());
+        context.put("itemCount", data.count());
+        context.put("baseDateText", data.baseDateLabel());
 
-        return templateEngine.process("email/digest", context);
+        // schedules 리스트 변환
+        var schedules = data.items().stream().map(item -> {
+            Map<String, Object> schedule = new HashMap<>();
+            schedule.put("daysLeft", extractDaysLeft(item.badgeText()));
+            schedule.put("badgeBg", item.urgent() ? "#EF5B6E" : "#fcf4f5");
+            schedule.put("badgeColor", item.urgent() ? "#ffffff" : "#ef5b6e");
+            schedule.put("name", item.title());
+            schedule.put("deadlineText", item.subText());
+            schedule.put("externalUrl", item.linkUrl());
+            return schedule;
+        }).toList();
+        context.put("schedules", schedules);
+
+        Map<String, Object> links = new HashMap<>();
+        links.put("schedule", data.allUrl());
+        links.put("settings", data.manageUrl());
+        links.put("unsubscribe", data.unsubscribeUrl());
+        context.put("links", links);
+
+        return render("templates/email/digest.html", context);
     }
 
     /**
-     * 만기 알림 이메일
+     * 만기 알림 이메일 (D-30)
      */
     public String buildMaturityEmailV2(MaturityEmailData data) {
-        Context context = createBaseContext();
+        Map<String, Object> context = createBaseContext();
 
-        context.setVariable("preheader", data.productName() + " 만기가 " + data.dday() + "일 남았어요");
-        context.setVariable("dday", data.dday());
-        context.setVariable("productName", data.productName());
-        context.setVariable("joinDate", data.joinDate());
-        context.setVariable("termLabel", data.termLabel());
-        context.setVariable("maturityDateLabel", data.maturityDateLabel());
-        context.setVariable("compareUrl", data.compareUrl());
-        context.setVariable("allSchedulesUrl", data.allSchedulesUrl());
-        context.setVariable("manageUrl", data.manageUrl());
-        context.setVariable("unsubscribeUrl", data.unsubscribeUrl());
-        context.setVariable("footerNotice", data.footerNotice());
+        Map<String, Object> product = new HashMap<>();
+        product.put("name", data.productName());
+        product.put("maturityDateLong", data.maturityDateLabel());
+        product.put("joinDate", data.joinDate());
+        product.put("saveMonths", extractMonths(data.termLabel()));
+        product.put("maturityDate", data.maturityDateLabel());
+        context.put("product", product);
 
-        return templateEngine.process("email/maturity", context);
+        Map<String, Object> alert = new HashMap<>();
+        alert.put("daysLeft", data.dday());
+        context.put("alert", alert);
+
+        Map<String, Object> links = new HashMap<>();
+        links.put("compare", data.compareUrl());
+        links.put("settings", data.manageUrl());
+        links.put("unsubscribe", data.unsubscribeUrl());
+        context.put("links", links);
+
+        return render("templates/email/maturity.html", context);
     }
 
     /**
      * 인증 이메일
      */
     public String buildVerificationEmail(String verifyUrl) {
-        Context context = createBaseContext();
+        Map<String, Object> context = createBaseContext();
 
-        context.setVariable("preheader", "Y-Fin. 이메일 인증을 완료해주세요");
-        context.setVariable("verifyUrl", verifyUrl);
+        Map<String, Object> links = new HashMap<>();
+        links.put("verify", verifyUrl);
+        context.put("links", links);
 
-        return templateEngine.process("email/verification", context);
+        return render("templates/email/verification.html", context);
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -151,7 +182,7 @@ public class EmailTemplateService {
     }
 
     public String buildVerificationSubject() {
-        return MAIL_SUBJECT_PREFIX + " 이메일 인증을 완료해주세요";
+        return MAIL_SUBJECT_PREFIX + " 알림 받을 이메일을 확인해 주세요";
     }
 
     // ──────────────────────────────────────────────────────────────────────────
@@ -317,12 +348,48 @@ public class EmailTemplateService {
     // Private Helpers
     // ──────────────────────────────────────────────────────────────────────────
 
-    private Context createBaseContext() {
-        Context context = new Context(Locale.KOREA);
-        context.setVariable("logoUrl", properties.email().logoUrl());
-        context.setVariable("companyAddress", properties.company().address());
-        context.setVariable("companyEmail", properties.company().supportEmail());
-        context.setVariable("businessInfo", properties.company().address() + " · " + properties.company().supportEmail());
+    private Map<String, Object> createBaseContext() {
+        Map<String, Object> context = new HashMap<>();
+
+        // assets 객체
+        Map<String, Object> assets = new HashMap<>();
+        assets.put("logoUrl", properties.email().logoUrl());
+        context.put("assets", assets);
+
+        // company 객체
+        Map<String, Object> company = new HashMap<>();
+        company.put("address", properties.company().address());
+        company.put("supportEmail", properties.company().supportEmail());
+        context.put("company", company);
+
         return context;
+    }
+
+    private String render(String templatePath, Map<String, Object> context) {
+        try {
+            ClassPathResource resource = new ClassPathResource(templatePath);
+            try (Reader reader = new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8)) {
+                Template template = mustacheCompiler.compile(reader);
+                return template.execute(context);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to render template: " + templatePath, e);
+        }
+    }
+
+    private int extractDaysLeft(String badgeText) {
+        // "마감 D-7" 형태에서 숫자 추출
+        if (badgeText == null) return 0;
+        try {
+            return Integer.parseInt(badgeText.replaceAll("[^0-9]", ""));
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+
+    private String extractMonths(String termLabel) {
+        // "12개월" 형태에서 숫자만 추출
+        if (termLabel == null) return "0";
+        return termLabel.replaceAll("[^0-9]", "");
     }
 }
