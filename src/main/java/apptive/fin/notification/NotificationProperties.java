@@ -9,6 +9,7 @@ public record NotificationProperties(
         Email email,
         Company company,
         String appBaseUrl,
+        String frontendBaseUrl,
         String unsubscribeSigningSecret
 ) {
     public record Resend(String apiKey, String webhookSecret) {}

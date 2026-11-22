@@ -25,6 +25,7 @@ class EmailTemplateServiceTest {
                 new NotificationProperties.Email("https://fin-qa.yuyeol3.uk/email/logo.png"),
                 new NotificationProperties.Company("부산대학교", "noreply@y-fin.com"),
                 "http://localhost:8080",
+                "https://fin-qa.yuyeol3.uk",
                 "test-secret"
         );
 

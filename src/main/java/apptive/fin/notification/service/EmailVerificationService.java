@@ -70,7 +70,7 @@ public class EmailVerificationService {
 
         EmailSendRequest request = EmailSendRequest.of(
                 email,
-                "[Y-Fin.] 이메일 인증을 완료해주세요",
+                emailTemplateService.buildVerificationSubject(),
                 htmlBody,
                 MailType.VERIFICATION
         );

@@ -68,4 +68,5 @@ notification:
     address: ${COMPANY_ADDRESS:부산대학교}
     support-email: ${COMPANY_SUPPORT_EMAIL:noreply@y-fin.com}
   app-base-url: ${APP_BASE_URL:http://localhost:8080}
+  frontend-base-url: ${FRONTEND_BASE_URL:https://fin-qa.yuyeol3.uk}
   unsubscribe-signing-secret: ${UNSUBSCRIBE_SIGNING_SECRET:default-secret}

@@ -138,4 +138,87 @@ class EmailVerificationServiceTest {
         assertThatThrownBy(() -> emailVerificationService.sendVerificationEmail(userId, email))
                 .isInstanceOf(BusinessException.class);
     }
+
+    @Test
+    void 이메일_인증_성공() {
+        // given
+        String rawToken = "validToken123";
+        EmailVerification verification = mock(EmailVerification.class);
+
+        given(verification.isUsed()).willReturn(false);
+        given(verification.isExpired()).willReturn(false);
+        given(verification.getTokenHash()).willReturn("hashedToken");
+        given(verification.getUser()).willReturn(testUser);
+        given(verification.getEmail()).willReturn("test@example.com");
+
+        given(emailVerificationRepository.findAll()).willReturn(List.of(verification));
+        given(passwordEncoder.matches(rawToken, "hashedToken")).willReturn(true);
+
+        // when
+        emailVerificationService.verifyEmail(rawToken);
+
+        // then
+        verify(verification).markAsUsed();
+    }
+
+    @Test
+    void 만료된_토큰_인증시_예외발생() {
+        // given
+        String rawToken = "expiredToken";
+        EmailVerification verification = mock(EmailVerification.class);
+
+        given(verification.isUsed()).willReturn(false);
+        given(verification.isExpired()).willReturn(true);
+
+        given(emailVerificationRepository.findAll()).willReturn(List.of(verification));
+
+        // when & then
+        assertThatThrownBy(() -> emailVerificationService.verifyEmail(rawToken))
+                .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    void 이미_사용된_토큰_인증시_예외발생() {
+        // given
+        String rawToken = "usedToken";
+        EmailVerification verification = mock(EmailVerification.class);
+
+        given(verification.isUsed()).willReturn(true);
+
+        given(emailVerificationRepository.findAll()).willReturn(List.of(verification));
+
+        // when & then
+        assertThatThrownBy(() -> emailVerificationService.verifyEmail(rawToken))
+                .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    void 잘못된_토큰_인증시_예외발생() {
+        // given
+        String rawToken = "invalidToken";
+        EmailVerification verification = mock(EmailVerification.class);
+
+        given(verification.isUsed()).willReturn(false);
+        given(verification.isExpired()).willReturn(false);
+        given(verification.getTokenHash()).willReturn("hashedToken");
+
+        given(emailVerificationRepository.findAll()).willReturn(List.of(verification));
+        given(passwordEncoder.matches(rawToken, "hashedToken")).willReturn(false);
+
+        // when & then
+        assertThatThrownBy(() -> emailVerificationService.verifyEmail(rawToken))
+                .isInstanceOf(BusinessException.class);
+    }
+
+    @Test
+    void 인증_토큰이_없을때_예외발생() {
+        // given
+        String rawToken = "nonExistentToken";
+
+        given(emailVerificationRepository.findAll()).willReturn(List.of());
+
+        // when & then
+        assertThatThrownBy(() -> emailVerificationService.verifyEmail(rawToken))
+                .isInstanceOf(BusinessException.class);
+    }
 }

@@ -9,6 +9,7 @@ import apptive.fin.notification.repository.NotificationGlobalRepository;
 import apptive.fin.notification.repository.NotificationScheduleRepository;
 import apptive.fin.notification.service.EmailTemplateService;
 import apptive.fin.notification.service.UnsubscribeService;
+import apptive.fin.search.repository.ProductRepository;
 import apptive.fin.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +31,7 @@ public class NotificationScheduler {
     private final EmailSendPort emailSendPort;
     private final EmailTemplateService templateService;
     private final UnsubscribeService unsubscribeService;
+    private final ProductRepository productRepository;
 
     @Scheduled(cron = "0 0 9 * * *", zone = "Asia/Seoul")
     @Transactional
@@ -75,7 +77,9 @@ public class NotificationScheduler {
         }
 
         String unsubscribeUrl = unsubscribeService.generateUnsubscribeUrl(email);
-        String subject = buildSubject(setting.getNotificationType(), schedule.getOffsetLabel());
+        String productName = getProductName(setting.getTargetId());
+        int dday = parseDday(schedule.getOffsetLabel());
+        String subject = buildSubject(setting.getNotificationType(), productName, dday);
         String htmlBody = buildHtmlBody(setting, schedule.getOffsetLabel(), unsubscribeUrl);
         MailType mailType = toMailType(setting.getNotificationType());
 
@@ -97,12 +101,31 @@ public class NotificationScheduler {
         }
     }
 
-    private String buildSubject(NotificationType type, String offsetLabel) {
+    private String buildSubject(NotificationType type, String productName, int dday) {
         return switch (type) {
-            case DEADLINE -> "[Y-Fin.] " + offsetLabel + " 마감 알림";
-            case START -> "[Y-Fin.] 신청 시작 알림";
-            case MATURITY -> "[Y-Fin.] " + offsetLabel + " 만기 알림";
+            case DEADLINE -> templateService.buildDeadlineSubject(productName, dday);
+            case START -> templateService.buildStartSubject(productName);
+            case MATURITY -> templateService.buildMaturitySubject(productName, dday);
         };
+    }
+
+    private String getProductName(Long targetId) {
+        return productRepository.findById(targetId)
+                .map(product -> product.getProductName())
+                .orElse("상품");
+    }
+
+    private int parseDday(String offsetLabel) {
+        if (offsetLabel == null || offsetLabel.isBlank()) {
+            return 0;
+        }
+        // "D-7", "D-30" 형식에서 숫자 추출
+        String numericPart = offsetLabel.replaceAll("[^0-9]", "");
+        try {
+            return Integer.parseInt(numericPart);
+        } catch (NumberFormatException e) {
+            return 0;
+        }
     }
 
     private String buildHtmlBody(NotificationSetting setting, String offsetLabel, String unsubscribeUrl) {
