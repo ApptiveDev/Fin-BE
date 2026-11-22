@@ -1,4 +1,4 @@
--- V11: 이메일 알림 발송 스키마
+-- V15: 이메일 알림 발송 스키마
 
 -- users 테이블에 email_verified 컬럼 추가
 ALTER TABLE users ADD COLUMN email_verified BOOLEAN NOT NULL DEFAULT FALSE;
