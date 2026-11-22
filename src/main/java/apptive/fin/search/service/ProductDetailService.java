@@ -1,6 +1,7 @@
 package apptive.fin.search.service;
 
 import apptive.fin.auth.security.AuthUserDetails;
+import apptive.fin.global.config.CacheConfig;
 import apptive.fin.global.error.BusinessException;
 import apptive.fin.search.SearchErrorCode;
 import apptive.fin.search.dto.ApplyLink;
@@ -22,6 +23,7 @@ import apptive.fin.search.util.ApplyLinkResolver;
 import apptive.fin.search.util.ProductAvailability;
 import apptive.fin.search.dto.OptionRequestDto;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,6 +48,7 @@ public class ProductDetailService {
     private final ProductDisplayKeywordService productDisplayKeywordService;
     private final SearchRequestPolicy searchRequestPolicy;
     private final EligibilityFilterService eligibilityFilterService;
+    private final CacheManager cacheManager;
 
     public ProductDetailResponseDto getProductDetail(
             Long productId,
@@ -250,18 +253,22 @@ public class ProductDetailService {
             ResolvedKeywords keywords,
             boolean useRecommendationCandidates
     ) {
-        List<Double> rates = useRecommendationCandidates
-                ? eligibilityFilterService.filterEligibleOptions(request, keywords).stream()
-                        .filter(option -> option.product().isBank())
-                        .map(EligibleProductOption::property)
-                        .map(ProductProperty::getMaxRate)
-                        .filter(Objects::nonNull)
-                        .map(BigDecimal::doubleValue)
-                        .toList()
-                : productRepository.findJoinableMaxRatesBySourceCode(ProductSource.BANK_CODE).stream()
-                        .map(BigDecimal::doubleValue)
-                        .toList();
-        return BankMaxInterestPolicy.calculateThreshold(rates);
+        if (!useRecommendationCandidates) {
+            return BankMaxInterestPolicy.calculateThreshold(
+                    productRepository.findJoinableMaxRatesBySourceCode(ProductSource.BANK_CODE).stream()
+                            .map(BigDecimal::doubleValue)
+                            .toList());
+        }
+        // 추천 모집단은 검색 한 번만큼 읽어야 해서 조건별로 캐시한다(#52). keywords는 request.options()로 정해지므로 키는 request다.
+        return cacheManager.getCache(CacheConfig.BANK_MAX_INTEREST_THRESHOLD).get(request, () ->
+                BankMaxInterestPolicy.calculateThreshold(
+                        eligibilityFilterService.filterEligibleOptions(request, keywords).stream()
+                                .filter(option -> option.product().isBank())
+                                .map(EligibleProductOption::property)
+                                .map(ProductProperty::getMaxRate)
+                                .filter(Objects::nonNull)
+                                .map(BigDecimal::doubleValue)
+                                .toList()));
     }
 
     private List<Integer> saveTrms(List<ProductProperty> properties) {

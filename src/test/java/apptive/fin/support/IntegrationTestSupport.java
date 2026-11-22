@@ -1,7 +1,10 @@
 package apptive.fin.support;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cache.CacheManager;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
@@ -13,4 +16,13 @@ import org.springframework.test.context.ActiveProfiles;
 @ActiveProfiles({"dev", "test"})
 @Import(PostgresTestContainerConfig.class)
 public abstract class IntegrationTestSupport {
+
+    @Autowired
+    private CacheManager cacheManager;
+
+    // 캐시는 스프링 컨텍스트와 함께 테스트 사이에 공유된다. 테스트마다 픽스처 데이터가 다르므로 비우고 시작한다.
+    @BeforeEach
+    protected void clearCaches() {
+        cacheManager.getCacheNames().forEach(name -> cacheManager.getCache(name).clear());
+    }
 }
