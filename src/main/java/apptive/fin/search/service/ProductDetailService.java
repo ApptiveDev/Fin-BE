@@ -6,7 +6,6 @@ import apptive.fin.global.error.BusinessException;
 import apptive.fin.search.SearchErrorCode;
 import apptive.fin.search.dto.ApplyLink;
 import apptive.fin.search.dto.BankDetailDto;
-import apptive.fin.search.dto.EligibleProductOption;
 import apptive.fin.search.dto.GovernmentDetailDto;
 import apptive.fin.search.dto.PreferentialConditionDto;
 import apptive.fin.search.dto.ProductDetailRequestDto;
@@ -65,8 +64,8 @@ public class ProductDetailService {
 
         List<OptionRequestDto> options =
                 req.options() != null ? req.options() : List.of();
-        ResolvedKeywords keywords = resolveKeywordService.resolveKeywords(options);
-        SearchRequestDto calcRequest = new SearchRequestDto(options, req.detailedOptions());
+        SearchRequestDto calcRequest = new SearchRequestDto(options, req.detailedOptions(), req.category());
+        ResolvedKeywords keywords = resolveKeywordService.resolveKeywords(calcRequest);
 
         boolean subscription = product.getType() == ProductType.SUBSCRIPTION;
         boolean government = ONTONG.equals(product.getSource().getCode()) && !subscription;
@@ -261,14 +260,8 @@ public class ProductDetailService {
         }
         // 추천 모집단은 검색 한 번만큼 읽어야 해서 조건별로 캐시한다(#52). keywords는 request.options()로 정해지므로 키는 request다.
         return cacheManager.getCache(CacheConfig.BANK_MAX_INTEREST_THRESHOLD).get(request, () ->
-                BankMaxInterestPolicy.calculateThreshold(
-                        eligibilityFilterService.filterEligibleOptions(request, keywords).stream()
-                                .filter(option -> option.product().isBank())
-                                .map(EligibleProductOption::property)
-                                .map(ProductProperty::getMaxRate)
-                                .filter(Objects::nonNull)
-                                .map(BigDecimal::doubleValue)
-                                .toList()));
+                BankMaxInterestPolicy.calculateThresholdOf(
+                        eligibilityFilterService.filterLongTermCandidates(request, keywords)));
     }
 
     private List<Integer> saveTrms(List<ProductProperty> properties) {

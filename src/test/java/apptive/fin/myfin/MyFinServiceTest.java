@@ -317,7 +317,7 @@ class MyFinServiceTest {
         when(favorite.getId()).thenReturn(10L);
         when(favorite.getProductProperty()).thenReturn(property);
         // 최고이율 상위 30% 임계값 계산용 모집단(전체 가입가능 은행상품)은 이 테스트의 관심사가 아니므로 빈 결과로 스텁
-        when(eligibilityFilterService.filterEligibleOptions(any(), any())).thenReturn(List.of());
+        when(eligibilityFilterService.filterLongTermCandidates(any(), any())).thenReturn(List.of());
 
         SearchRequestDto complete = new SearchRequestDto(
                 List.of(),
@@ -335,7 +335,7 @@ class MyFinServiceTest {
                         List.of("KB"), null, List.of()
                 )
         );
-        when(resolveKeywordService.resolveKeywords(List.of()))
+        when(resolveKeywordService.resolveKeywords(any(SearchRequestDto.class)))
                 .thenReturn(ResolvedKeywords.emptyKeywords());
         // tabBEnabled: complete 요청은 true, incomplete 요청은 false
         when(searchRequestPolicy.canUsePersonalization(eq(complete), any(), eq(userDetails))).thenReturn(true);
@@ -383,7 +383,7 @@ class MyFinServiceTest {
         when(myFinRepository.findAllByUserIdWithDetails(1L)).thenReturn(List.of(favorite));
         when(favorite.getId()).thenReturn(10L);
         when(favorite.getProductProperty()).thenReturn(property);
-        when(eligibilityFilterService.filterEligibleOptions(any(), any())).thenReturn(List.of());
+        when(eligibilityFilterService.filterLongTermCandidates(any(), any())).thenReturn(List.of());
 
         SearchRequestDto request = new SearchRequestDto(
                 List.of(),
@@ -394,7 +394,7 @@ class MyFinServiceTest {
                 )
         );
         ResolvedKeywords keywords = ResolvedKeywords.emptyKeywords();
-        when(resolveKeywordService.resolveKeywords(List.of())).thenReturn(keywords);
+        when(resolveKeywordService.resolveKeywords(any(SearchRequestDto.class))).thenReturn(keywords);
         when(searchRequestPolicy.canUsePersonalization(any(), any(), any())).thenReturn(true);
 
         // When: Search 방식으로 직접 계산

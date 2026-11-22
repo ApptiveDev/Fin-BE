@@ -82,6 +82,22 @@ public class EligibilityFilterService {
                 .toList();
     }
 
+    // 목돈 추천의 후보 옵션. 목록·상세·찜이 같은 후보로 적합도와 #최고이율 컷을 계산한다(#58).
+    // 고른 기간이 없으면(대분류를 명시한 요청) 목돈 기간 옵션만 남긴다. 단기 옵션이 상품 대표로 뽑히지 않게 한다.
+    @Transactional(readOnly = true)
+    public List<EligibleProductOption> filterLongTermCandidates(
+            SearchRequestDto request,
+            ResolvedKeywords keywords
+    ) {
+        List<EligibleProductOption> eligible = filterEligibleOptions(request, keywords);
+        if (request.getSaveTrm(keywords) != null) {
+            return eligible;
+        }
+        return eligible.stream()
+                .filter(option -> ProductCategoryEnum.fromSaveTrm(option.property().getSaveTrm()) == ProductCategoryEnum.LONG_TERM)
+                .toList();
+    }
+
     // 사용자의 상품 가입기준을 정리하는 메서드
     private EligibilityCriteria eligibilityCriteria(
             SearchRequestDto request,
