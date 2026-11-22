@@ -48,8 +48,20 @@ class UnsubscribeServiceTest {
 
         // then
         assertThat(url).startsWith("https://y-fin.com/notifications/unsubscribe");
-        assertThat(url).contains("email=" + TEST_EMAIL);
+        assertThat(url).contains("email=");
         assertThat(url).contains("sig=");
+    }
+
+    @Test
+    void 수신거부_URL_생성_특수문자_이메일_인코딩() {
+        // given
+        String emailWithPlus = "test+tag@example.com";
+
+        // when
+        String url = unsubscribeService.generateUnsubscribeUrl(emailWithPlus);
+
+        // then
+        assertThat(url).contains("email=test%2Btag%40example.com");
     }
 
     @Test
@@ -96,17 +108,28 @@ class UnsubscribeServiceTest {
     @Test
     void 수신거부_해제_성공() {
         // given
+        String validSignature = extractSignature(unsubscribeService.generateUnsubscribeUrl(TEST_EMAIL));
         NotificationGlobal existing = NotificationGlobal.builder().email(TEST_EMAIL).build();
         existing.pause(PausedReason.UNSUBSCRIBE);
 
         given(notificationGlobalRepository.findByEmail(TEST_EMAIL)).willReturn(Optional.of(existing));
 
         // when
-        unsubscribeService.resubscribe(TEST_EMAIL);
+        unsubscribeService.resubscribe(TEST_EMAIL, validSignature);
 
         // then
         assertThat(existing.isEnabled()).isTrue();
         assertThat(existing.getPausedReason()).isNull();
+    }
+
+    @Test
+    void 수신거부_해제_잘못된_서명_예외발생() {
+        // given
+        String invalidSignature = "invalid-signature";
+
+        // when & then
+        assertThatThrownBy(() -> unsubscribeService.resubscribe(TEST_EMAIL, invalidSignature))
+                .isInstanceOf(BusinessException.class);
     }
 
     @Test

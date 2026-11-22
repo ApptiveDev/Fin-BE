@@ -13,7 +13,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.Base64;
 
 @Slf4j
@@ -26,7 +28,8 @@ public class UnsubscribeService {
 
     public String generateUnsubscribeUrl(String email) {
         String signature = generateSignature(email);
-        return properties.appBaseUrl() + "/notifications/unsubscribe?email=" + email + "&sig=" + signature;
+        String encodedEmail = URLEncoder.encode(email, StandardCharsets.UTF_8);
+        return properties.appBaseUrl() + "/notifications/unsubscribe?email=" + encodedEmail + "&sig=" + signature;
     }
 
     @Transactional
@@ -43,7 +46,8 @@ public class UnsubscribeService {
     }
 
     @Transactional
-    public void resubscribe(String email) {
+    public void resubscribe(String email, String signature) {
+        validateSignature(email, signature);
         notificationGlobalRepository.findByEmail(email)
                 .ifPresent(NotificationGlobal::resume);
         log.info("Email resubscribed: {}", email);
@@ -70,7 +74,7 @@ public class UnsubscribeService {
 
     private void validateSignature(String email, String signature) {
         String expected = generateSignature(email);
-        if (!expected.equals(signature)) {
+        if (!MessageDigest.isEqual(expected.getBytes(StandardCharsets.UTF_8), signature.getBytes(StandardCharsets.UTF_8))) {
             throw new BusinessException(NotificationErrorCode.INVALID_UNSUBSCRIBE_SIGNATURE);
         }
     }

@@ -5,6 +5,7 @@ import apptive.fin.notification.dto.SendVerificationRequest;
 import apptive.fin.notification.service.EmailVerificationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,7 +27,7 @@ public class EmailVerificationController {
     @PostMapping("/send-verification")
     public ResponseEntity<Void> sendVerification(
             @AuthenticationPrincipal Long userId,
-            @RequestBody SendVerificationRequest request
+            @Valid @RequestBody SendVerificationRequest request
     ) {
         emailVerificationService.sendVerificationEmail(userId, request.email());
         return ResponseEntity.ok().build();

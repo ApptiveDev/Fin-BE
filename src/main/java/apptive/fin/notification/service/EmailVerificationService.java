@@ -106,8 +106,7 @@ public class EmailVerificationService {
     }
 
     private EmailVerification findValidVerification(String rawToken) {
-        return emailVerificationRepository.findAll().stream()
-                .filter(v -> !v.isUsed() && !v.isExpired())
+        return emailVerificationRepository.findAllValidTokens().stream()
                 .filter(v -> passwordEncoder.matches(rawToken, v.getTokenHash()))
                 .findFirst()
                 .orElseThrow(() -> new BusinessException(NotificationErrorCode.INVALID_TOKEN));

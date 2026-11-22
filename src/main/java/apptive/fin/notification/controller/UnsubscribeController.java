@@ -27,8 +27,11 @@ public class UnsubscribeController {
 
     @Operation(summary = "수신거부 해제", description = "이메일 수신거부를 해제합니다.")
     @PostMapping("/cancel")
-    public ResponseEntity<String> resubscribe(@RequestParam String email) {
-        unsubscribeService.resubscribe(email);
+    public ResponseEntity<String> resubscribe(
+            @RequestParam String email,
+            @RequestParam String sig
+    ) {
+        unsubscribeService.resubscribe(email, sig);
         return ResponseEntity.ok("수신거부가 해제되었습니다.");
     }
 }
