@@ -319,9 +319,10 @@ public class EmailTemplateService {
 
     private Context createBaseContext() {
         Context context = new Context(Locale.KOREA);
-        // TODO: properties에서 사업자 정보 읽기
-        context.setVariable("businessInfo", null);
-        context.setVariable("logoUrl", "https://y-fin.com/logo-email.png");
+        context.setVariable("logoUrl", properties.email().logoUrl());
+        context.setVariable("companyAddress", properties.company().address());
+        context.setVariable("companyEmail", properties.company().supportEmail());
+        context.setVariable("businessInfo", properties.company().address() + " · " + properties.company().supportEmail());
         return context;
     }
 }
