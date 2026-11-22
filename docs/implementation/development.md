@@ -63,12 +63,13 @@
 | `backend-ci.yml` | `test`, `integrationTest`. 모든 PR에서 돌고, 배포 전에 `deploy.yml`이 호출 | O |
 | `deploy.yml` | `main` → dev 서버, `release` → 운영 서버 배포. [배포](deployment.md) 참고 | - |
 | `backend-code-health.yml` | 커버리지·PMD·CPD·Code Health를 main 스냅샷과 비교해 PR 코멘트로 게시 | X |
+| `migration-version-check.yml` | PR이 추가한 마이그레이션 버전이 main의 최대 버전보다 큰지 검사. main에 마이그레이션이 들어오면 열린 PR을 다시 검사 | O |
 
 자세한 내용은 루트 README의 CI 절.
 
 ## 작업 규칙
 
-- **스키마 변경**: 새 `V{n}__설명.sql`을 추가한다. 적용된 마이그레이션은 고치지 않는다. 엔티티도 같이 바꾸고(`ddl-auto: validate`), 시드 SQL이 새 컬럼과 맞는지 확인한다.
+- **스키마 변경**: 새 `V{n}__설명.sql`을 추가한다. `n`은 머지 시점 main의 최대 버전보다 커야 한다(더 작으면 이미 적용된 dev·운영 DB에서 Flyway validate가 실패한다). 먼저 머지된 PR과 겹치면 다음 번호로 다시 매긴다. 적용된 마이그레이션은 고치지 않는다. 엔티티도 같이 바꾸고(`ddl-auto: validate`), 시드 SQL이 새 컬럼과 맞는지 확인한다.
 - **키워드·카테고리 추가**: `KeywordValueEnum`, `CategoryIdEnum`, `category_option` 시드(마이그레이션)를 함께 바꾼다. 수집기가 같은 코드 문자열을 쓰므로 수집기 쪽에도 알린다.
 - **추천 수치 일관성**: 리스트, 상세, 찜이 같은 값을 보여야 한다. 개인화 판정은 `SearchRequestPolicy`, 금리·수익률은 `RateCalculatorService`, 적합도는 `MatchScoreService` 한 곳에서만 계산하고 다른 곳에서 다시 구현하지 않는다. 자세한 내용은 [추천 엔진](recommendation-engine.md#일관성을-지키는-장치).
 - **API 변경**: 저장소 루트 README의 API 명세도 같이 고친다.
