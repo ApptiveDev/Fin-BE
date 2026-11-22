@@ -8,3 +8,10 @@ spring:
     properties:
       hibernate:
         generate_statistics: true   # 쿼리 수 기반 N+1 회귀 테스트용 (테스트 프로파일 전용)
+
+notification:
+  email:
+    logo-url: https://fin-qa.yuyeol3.uk/email/logo.png
+  company:
+    address: 부산대학교
+    support-email: noreply@y-fin.com
