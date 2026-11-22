@@ -45,6 +45,15 @@ class FrontendOriginsIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
+    void CORS_사전요청_결과를_브라우저가_1시간_재사용하게_한다() throws Exception {
+        // 없으면 브라우저가 POST 요청마다 OPTIONS를 한 번 더 보낸다(#52).
+        mockMvc.perform(options("/api/categories")
+                        .header(HttpHeaders.ORIGIN, "https://fe.example.com")
+                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "POST"))
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_MAX_AGE, "3600"));
+    }
+
+    @Test
     void 로그인을_시작한_허용_출처로_OAuth_실패_결과를_돌려보낸다() throws Exception {
         MockHttpSession session = new MockHttpSession();
         MvcResult authorization = mockMvc.perform(get("/oauth2/authorization/google")
