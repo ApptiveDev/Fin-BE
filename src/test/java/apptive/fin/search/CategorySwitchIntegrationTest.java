@@ -1,0 +1,167 @@
+package apptive.fin.search;
+
+import apptive.fin.auth.security.AuthUserDetails;
+import apptive.fin.search.dto.DetailedOptionsDto;
+import apptive.fin.search.dto.OptionRequestDto;
+import apptive.fin.search.dto.ProductMatchDto;
+import apptive.fin.search.dto.ProductRateDto;
+import apptive.fin.search.dto.SearchRequestDto;
+import apptive.fin.search.dto.UnifiedSearchResultDto;
+import apptive.fin.search.enums.ProductCategoryEnum;
+import apptive.fin.search.service.SearchService;
+import apptive.fin.support.IntegrationTestSupport;
+import apptive.fin.user.UserRole;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.jdbc.Sql;
+
+import java.time.LocalDate;
+import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+/**
+ * 결과 화면의 대분류 전환 통합 테스트.
+ * 요청에 대분류를 명시하면 그 대분류로 검색하고, 대분류와 맞지 않는 저축기간은 고르지 않은 것으로 본다.
+ * 픽스처: 1개월 예금 3개 + 파킹통장 1개 + 12개월 옵션(고금리예금의 두 번째 옵션, 12개월 전용 예금).
+ */
+@Sql(
+        scripts = {"/sql/short-term-sorting-products.sql", "/sql/category-switch-long-term-options.sql"},
+        executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD
+)
+@Sql(
+        scripts = "/sql/cleanup-product-fixtures.sql",
+        executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD
+)
+class CategorySwitchIntegrationTest extends IntegrationTestSupport {
+
+    // V9 migration의 category_option 삽입 순서로 결정되는 옵션 ID
+    private static final Long TERM_3_MONTH_OPTION_ID = 38L;    // TERM_3_MONTH
+    private static final Long TERM_12_MONTH_OPTION_ID = 40L;   // TERM_12_MONTH
+    private static final Long SALARY_TRANSFER_OPTION_ID = 32L; // BANK_SALARY_TRANSFER
+
+    @Autowired
+    private SearchService searchService;
+
+    @Test
+    void 단기예치로_전환하면_목돈_저축기간은_무시하고_단기_기간_상품만_보여준다() {
+        SearchRequestDto request = new SearchRequestDto(
+                List.of(
+                        new OptionRequestDto(3L, TERM_12_MONTH_OPTION_ID),
+                        new OptionRequestDto(6L, SALARY_TRANSFER_OPTION_ID)
+                ),
+                detailedOptions(null, 10_000_000L),
+                ProductCategoryEnum.SHORT_TERM
+        );
+
+        UnifiedSearchResultDto result = searchService.searchUnified(request, loggedInUser());
+
+        assertThat(result.depositSavingsProducts())
+                .extracting(ProductRateDto::productName)
+                .containsExactlyInAnyOrder("고금리예금", "중금리예금", "저금리예금");
+        assertThat(result.depositSavingsProducts())
+                .extracting(ProductRateDto::saveTrm)
+                .containsOnly(1);
+    }
+
+    @Test
+    void 목돈만들기로_전환하면_단기_저축기간은_적합도_기간점수에서_빠진다() {
+        // 3개월을 그대로 쓰면 1개월 상품이 인접 기간으로 기간 점수 절반을 받는다.
+        SearchRequestDto request = new SearchRequestDto(
+                List.of(
+                        new OptionRequestDto(3L, TERM_3_MONTH_OPTION_ID),
+                        new OptionRequestDto(6L, SALARY_TRANSFER_OPTION_ID)
+                ),
+                detailedOptions(100_000L, null),
+                ProductCategoryEnum.LONG_TERM
+        );
+
+        UnifiedSearchResultDto result = searchService.searchUnified(request, loggedInUser());
+
+        assertThat(result.category()).isEqualTo(ProductCategoryEnum.LONG_TERM);
+        assertThat(result.bankRanked())
+                .isNotEmpty()
+                .allSatisfy(dto -> assertThat(dto.periodScore()).isZero());
+    }
+
+    @Test
+    void 목돈만들기로_전환하면_단기_기간_옵션은_빠진다() {
+        // 1개월 옵션만 있는 중금리·저금리예금은 빠지고, 고금리예금은 12개월 옵션으로 남는다
+        SearchRequestDto request = new SearchRequestDto(
+                List.of(
+                        new OptionRequestDto(3L, TERM_3_MONTH_OPTION_ID),
+                        new OptionRequestDto(6L, SALARY_TRANSFER_OPTION_ID)
+                ),
+                detailedOptions(100_000L, null),
+                ProductCategoryEnum.LONG_TERM
+        );
+
+        UnifiedSearchResultDto result = searchService.searchUnified(request, loggedInUser());
+
+        // 픽스처 파킹통장(기간 없음)은 이 테스트의 관심 밖이라 예금만 본다
+        assertThat(result.bankRanked())
+                .extracting(ProductMatchDto::productName)
+                .contains("고금리예금", "1년예금")
+                .doesNotContain("중금리예금", "저금리예금");
+    }
+
+    @Test
+    void 목돈_결과는_예치액이_없으면_단기예치_전환에_예치액이_필요하다고_알린다() {
+        UnifiedSearchResultDto result = searchService.searchUnified(
+                longTermRequest(detailedOptions(100_000L, null)), loggedInUser());
+
+        assertThat(result.needsDepositAmount()).isTrue();
+        assertThat(result.needsMonthlySavingsGoal()).isFalse();
+    }
+
+    @Test
+    void 단기_결과는_월저축액이_없으면_목돈만들기_전환에_월저축액이_필요하다고_알린다() {
+        SearchRequestDto request = new SearchRequestDto(
+                List.of(new OptionRequestDto(3L, TERM_3_MONTH_OPTION_ID)),
+                detailedOptions(null, 10_000_000L)
+        );
+
+        UnifiedSearchResultDto result = searchService.searchUnified(request, loggedInUser());
+
+        assertThat(result.needsMonthlySavingsGoal()).isTrue();
+        assertThat(result.needsDepositAmount()).isFalse();
+    }
+
+    @Test
+    void 두_금액이_모두_있으면_전환에_추가_입력이_필요없다() {
+        UnifiedSearchResultDto result = searchService.searchUnified(
+                longTermRequest(detailedOptions(100_000L, 10_000_000L)), loggedInUser());
+
+        assertThat(result.needsDepositAmount()).isFalse();
+        assertThat(result.needsMonthlySavingsGoal()).isFalse();
+    }
+
+    private SearchRequestDto longTermRequest(DetailedOptionsDto detailedOptions) {
+        return new SearchRequestDto(
+                List.of(
+                        new OptionRequestDto(3L, TERM_12_MONTH_OPTION_ID),
+                        new OptionRequestDto(6L, SALARY_TRANSFER_OPTION_ID)
+                ),
+                detailedOptions
+        );
+    }
+
+    private DetailedOptionsDto detailedOptions(Long monthlySavingsGoal, Long depositAmount) {
+        return new DetailedOptionsDto(
+                LocalDate.now().minusYears(25),
+                50_000_000L, 3, 100,
+                null, null, null, null,
+                monthlySavingsGoal,
+                depositAmount,
+                List.of(), List.of(), List.of()
+        );
+    }
+
+    private AuthUserDetails loggedInUser() {
+        AuthUserDetails userDetails = mock(AuthUserDetails.class);
+        when(userDetails.getRole()).thenReturn(UserRole.RECOMMENDATION);
+        return userDetails;
+    }
+}

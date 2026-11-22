@@ -76,6 +76,19 @@ class SearchRequestPolicyTest {
         }
 
         @Test
+        void 대분류를_명시하면_저축기간_키워드가_없어도_통과() {
+            SearchRequestDto request = new SearchRequestDto(
+                    List.of(),
+                    createShortTermRequest(1_000_000L).detailedOptions(),
+                    ProductCategoryEnum.SHORT_TERM
+            );
+            ResolvedKeywords keywordsWithoutPeriod = ResolvedKeywords.emptyKeywords();
+
+            // 예외 없이 통과
+            policy.validateForShortTerm(request, keywordsWithoutPeriod);
+        }
+
+        @Test
         void 키워드에_저축기간_있으면_통과() {
             SearchRequestDto request = createShortTermRequest(1_000_000L);
             ResolvedKeywords keywords = createShortTermKeywords();  // TERM_1_MONTH 있음
@@ -205,6 +218,40 @@ class SearchRequestPolicyTest {
 
             boolean result = policy.canUsePersonalization(
                     request, keywords, userDetails, ProductCategoryEnum.SHORT_TERM);
+
+            assertThat(result).isTrue();
+        }
+
+        @Test
+        void 목돈만들기를_명시하면_저축기간_키워드가_없어도_개인화된다() {
+            SearchRequestDto request = new SearchRequestDto(
+                    List.of(),
+                    createLongTermRequestComplete().detailedOptions(),
+                    ProductCategoryEnum.LONG_TERM
+            );
+            ResolvedKeywords keywordsWithoutPeriod = new ResolvedKeywords(
+                    List.of(), List.of(), null, List.of(), List.of(KeywordValueEnum.BANK_SALARY_TRANSFER));
+            AuthUserDetails userDetails = mockUserDetails(UserRole.RECOMMENDATION);
+
+            boolean result = policy.canUsePersonalization(
+                    request, keywordsWithoutPeriod, userDetails, ProductCategoryEnum.LONG_TERM);
+
+            assertThat(result).isTrue();
+        }
+
+        @Test
+        void 단기예치를_명시하면_저축기간_키워드가_없어도_개인화된다() {
+            SearchRequestDto request = new SearchRequestDto(
+                    List.of(),
+                    createShortTermRequestComplete(1_000_000L).detailedOptions(),
+                    ProductCategoryEnum.SHORT_TERM
+            );
+            ResolvedKeywords keywordsWithoutPeriod = new ResolvedKeywords(
+                    List.of(), List.of(), null, List.of(), List.of(KeywordValueEnum.BANK_SALARY_TRANSFER));
+            AuthUserDetails userDetails = mockUserDetails(UserRole.RECOMMENDATION);
+
+            boolean result = policy.canUsePersonalization(
+                    request, keywordsWithoutPeriod, userDetails, ProductCategoryEnum.SHORT_TERM);
 
             assertThat(result).isTrue();
         }

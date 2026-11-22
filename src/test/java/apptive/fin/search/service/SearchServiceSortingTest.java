@@ -275,6 +275,30 @@ class SearchServiceSortingTest {
                 .containsExactly(1L, 2L, 3L, 4L);
     }
 
+    @Test
+    void 상품별_대표_옵션은_적합도_동점이면_tieBreaker가_큰_옵션이다() {
+        // Given: 같은 상품의 두 옵션, 점수 동일, 실수령액이 작은 옵션이 먼저 들어온다
+        ProductMatchDto shortOption = createOptionDto(1L, 11L, 80.0, 500_000L);
+        ProductMatchDto longOption = createOptionDto(1L, 12L, 80.0, 1_000_000L);
+
+        // When
+        List<ProductMatchDto> collapsed = SearchService.collapseToBestPerProduct(
+                java.util.stream.Stream.of(shortOption, longOption));
+
+        // Then
+        assertThat(collapsed).extracting(ProductMatchDto::productPropertyId).containsExactly(12L);
+    }
+
+    private ProductMatchDto createOptionDto(Long productId, Long propertyId, double totalScore, Long tieBreaker) {
+        return ProductMatchDto.builder()
+                .productId(productId)
+                .productPropertyId(propertyId)
+                .productName("상품")
+                .totalScore(totalScore)
+                .tieBreaker(tieBreaker)
+                .build();
+    }
+
     private ProductMatchDto createMatchDto(Long productId, String name, double totalScore, Long tieBreaker) {
         return ProductMatchDto.builder()
                 .productId(productId)

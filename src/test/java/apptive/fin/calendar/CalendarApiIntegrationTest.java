@@ -308,7 +308,7 @@ class CalendarApiIntegrationTest extends IntegrationTestSupport {
                 .findFirst()
                 .orElseThrow();
         userProfileService.upsert(userId, new UserProfileRequestDto(
-                birthdate, null, null, null, null, null, null, null, null,
+                birthdate, null, null, null, null, null, null, null, null, null,
                 List.of(), List.of(), List.of(regionOptionId)));
         return userId;
     }

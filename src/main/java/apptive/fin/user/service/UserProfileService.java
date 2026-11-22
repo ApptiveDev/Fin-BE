@@ -115,6 +115,7 @@ public class UserProfileService {
                 p.getIsHomeless(),
                 p.getIsHouseholder(),
                 p.getMonthlySavingsGoal(),
+                p.getDepositAmount(),
                 p.getNeverUsedBanks(),
                 p.getMaturedSavingBanks(),
                 p.getSelectedOptionIds(),

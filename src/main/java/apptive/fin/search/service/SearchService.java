@@ -44,18 +44,19 @@ public class SearchService {
 
     /**
      * 통합 검색 (대분류 라우팅).
-     * savingPeriod 키워드에 따라 대분류를 결정하고 해당 파이프라인 실행.
+     * 요청의 대분류(없으면 저축기간)로 파이프라인을 고른다.
      */
     public UnifiedSearchResultDto searchUnified(SearchRequestDto request, AuthUserDetails userDetails) {
-        ResolvedKeywords resolvedKeywords = resolveKeywordService.resolveKeywords(request.options());
-        ProductCategoryEnum category = determineCategory(request, resolvedKeywords);
+        ResolvedKeywords requestedKeywords = resolveKeywordService.resolveKeywords(request.options());
+        ProductCategoryEnum category = request.category(requestedKeywords);
+        ResolvedKeywords resolvedKeywords = withoutMismatchedPeriod(requestedKeywords, category);
 
         if (category == ProductCategoryEnum.SHORT_TERM) {
             ShortTermResultDto shortTermResult = searchShortTerm(request, userDetails, resolvedKeywords);
-            return UnifiedSearchResultDto.fromShortTerm(shortTermResult);
+            return UnifiedSearchResultDto.fromShortTerm(shortTermResult, request);
         } else {
             ProductSearchResultDto longTermResult = searchLongTerm(request, userDetails, resolvedKeywords);
-            return UnifiedSearchResultDto.fromLongTerm(longTermResult);
+            return UnifiedSearchResultDto.fromLongTerm(longTermResult, request);
         }
     }
 
@@ -63,17 +64,19 @@ public class SearchService {
         return searchUnified(request, null);
     }
 
-    /**
-     * 대분류 결정 로직.
-     * savingPeriod 키워드에서 저축기간 추출.
-     * 기본값: LONG_TERM (목돈만들기)
-     */
-    private ProductCategoryEnum determineCategory(SearchRequestDto request, ResolvedKeywords resolvedKeywords) {
-        Integer saveTrm = request.getSaveTrm(resolvedKeywords);
-        if (saveTrm != null) {
-            return ProductCategoryEnum.fromSaveTrm(saveTrm);
+    // 대분류와 맞지 않는 저축기간은 고르지 않은 것으로 본다 (적합도 기간 축에서 빠지고, 단기는 1·3개월 상품을 모두 보여준다).
+    private ResolvedKeywords withoutMismatchedPeriod(ResolvedKeywords keywords, ProductCategoryEnum category) {
+        KeywordValueEnum period = keywords.savingPeriod();
+        if (period == null || ProductCategoryEnum.fromSaveTrm(period.toSaveTrm()) == category) {
+            return keywords;
         }
-        return ProductCategoryEnum.LONG_TERM;
+        return new ResolvedKeywords(
+                keywords.regions(),
+                keywords.identities(),
+                null,
+                keywords.coreBenefits(),
+                keywords.bankConditions()
+        );
     }
 
     /**
@@ -93,13 +96,13 @@ public class SearchService {
                 .filter(option -> option.product().isBank())
                 .toList();
 
-        // 저축기간 필터 (선택된 기간과 일치하는 상품만)
+        // 저축기간 필터 (선택된 기간과 일치하는 상품만, 기간이 없으면 단기 기간 상품만)
         Integer targetSaveTrm = request.getSaveTrm(resolvedKeywords);
-        List<EligibleProductOption> filteredByTerm = targetSaveTrm != null
-                ? bankList.stream()
-                        .filter(option -> targetSaveTrm.equals(option.property().getSaveTrm()))
-                        .toList()
-                : bankList;
+        List<EligibleProductOption> filteredByTerm = bankList.stream()
+                .filter(option -> targetSaveTrm != null
+                        ? targetSaveTrm.equals(option.property().getSaveTrm())
+                        : ProductCategoryEnum.fromSaveTrm(option.property().getSaveTrm()) == ProductCategoryEnum.SHORT_TERM)
+                .toList();
 
         // 파킹통장 목록 (최고금리순, 비로그인 허용)
         List<ParkingProductDto> parkingProducts = parkingProductService.findParkingProducts(request);
@@ -180,7 +183,14 @@ public class SearchService {
                 request,
                 resolvedKeywords
         );
-        
+
+        // 고른 기간이 없으면(대분류를 명시한 요청) 목돈 기간 옵션만 남긴다. 단기 옵션이 상품 대표로 뽑히지 않게 한다.
+        if (request.getSaveTrm(resolvedKeywords) == null) {
+            eligible = eligible.stream()
+                    .filter(option -> ProductCategoryEnum.fromSaveTrm(option.property().getSaveTrm()) == ProductCategoryEnum.LONG_TERM)
+                    .toList();
+        }
+
         // 선택된 지역 키워드가 빈칸이 아니라면
         if (!resolvedKeywords.regions().isEmpty()) {
             // 은행 상품이거나 해당 지역 키워드를 가진 상품만 필터링하여 eligible한 상품 업데이트
@@ -402,13 +412,13 @@ public class SearchService {
     }
 
     // 상품별로 총점이 가장 높은 (Product, ProductProperty) 쌍만 남기고 총점 내림차순 정렬(순수 함수, 테스트 용이하도록 분리).
-    // 동점이면 먼저 계산된 항목을 유지(>=).
+    // 같은 상품의 옵션끼리도 탭 A 정렬 규칙(적합도 → tieBreaker → 상품명)으로 대표를 고른다. 모두 같으면 먼저 계산된 항목.
     static List<ProductMatchDto> collapseToBestPerProduct(Stream<ProductMatchDto> scored) {
         return scored.collect(Collectors.collectingAndThen(
                 Collectors.toMap(
                         ProductMatchDto::productId,
                         Function.identity(),
-                        (left, right) -> left.totalScore() >= right.totalScore() ? left : right
+                        (left, right) -> tabAComparator().compare(left, right) <= 0 ? left : right
                 ),
                 map -> map.values().stream()
                         .sorted(tabAComparator())
