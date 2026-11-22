@@ -8,7 +8,7 @@ public record ProductMatchDto(
         Long productPropertyId,
         String productName,
         String providerName,
-        String source, // government 또는 bank
+        String source, // product_source.code (예: FSS, ONTONG)
         double totalScore,
 
         double benefitScore,

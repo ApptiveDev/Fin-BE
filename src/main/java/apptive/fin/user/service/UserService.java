@@ -37,7 +37,7 @@ public class UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND));
 
-        if(request.email() != null){
+        if(request.email() != null && !request.email().equals(user.getEmail())){
             if(userRepository.existsByEmail(request.email())){
                 throw new BusinessException(UserErrorCode.EMAIL_ALREADY_EXISTS);
             }

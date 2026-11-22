@@ -53,7 +53,7 @@
 | `productPropertyId` | 검증 기준 옵션 |
 | `productType` | `DEPOSIT` 또는 `SAVING`. `RateCalculatorFactory`가 계산기를 고른다 |
 | `interestRateType` | `SINGLE_INTEREST`(단리) / `COMPOUND_INTEREST`(월복리) |
-| `reserveType` | 적금이면 필수 |
+| `reserveType` | 선택. 계산식이 매월 초 정액 납입을 가정해 이 값을 쓰지 않는다 |
 | `appliedRate` | 적용 연이율, **소수** (4% → 0.04). 옵션 최고금리 이하 |
 | `amount` | 예금은 예치금, 적금은 월 납입액. 1만 원 이상, 옵션 한도(예금 `max_deposit_amount`, 적금 `max_monthly_limit`) 이하 |
 | `saveTrm` | 개월 수 |
@@ -78,7 +78,7 @@
 
 | 기능 | 엔드포인트 | 비고 |
 | --- | --- | --- |
-| 추가 | `POST /favorites` | 20개 초과 409 `FAVORITE_LIMIT_EXCEEDED`, 중복 409 `FAVORITE_ALREADY_EXISTS`, 마감 옵션은 404 |
+| 추가 | `POST /favorites` | 중복 409 `FAVORITE_ALREADY_EXISTS`(개수보다 먼저 검사), 20개 초과 409 `FAVORITE_LIMIT_EXCEEDED`, 마감 옵션은 404, 사용자 없음 404 `USER_NOT_FOUND` |
 | 삭제 | `DELETE /favorites/{productPropertyId}` | |
 | 여부 | `GET /favorites/{productPropertyId}/status` | |
 | 개수 | `GET /favorites/count` | |
