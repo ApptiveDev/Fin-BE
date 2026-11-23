@@ -41,8 +41,16 @@ public class NotificationSchedule extends BaseTimeEntity {
         this.offsetLabel = offsetLabel;
     }
 
+    public void markAsSending() {
+        this.status = ScheduleStatus.SENDING;
+    }
+
     public void markAsSent() {
         this.status = ScheduleStatus.SENT;
+    }
+
+    public void markAsFailed() {
+        this.status = ScheduleStatus.FAILED;
     }
 
     public void markAsSkipped() {

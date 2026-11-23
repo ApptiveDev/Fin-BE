@@ -29,7 +29,7 @@ public class NotificationScheduler {
 
         for (NotificationSchedule schedule : schedules) {
             try {
-                scheduleProcessor.processScheduleInTransaction(schedule.getId());
+                scheduleProcessor.processSchedule(schedule.getId());
             } catch (Exception e) {
                 log.error("Failed to process schedule {}: {}", schedule.getId(), e.getMessage());
             }

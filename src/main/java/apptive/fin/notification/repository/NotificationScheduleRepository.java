@@ -3,6 +3,7 @@ package apptive.fin.notification.repository;
 import apptive.fin.notification.entity.NotificationSchedule;
 import apptive.fin.notification.entity.ScheduleStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -18,4 +19,11 @@ public interface NotificationScheduleRepository extends JpaRepository<Notificati
     List<NotificationSchedule> findByDateAndStatus(@Param("date") LocalDate date, @Param("status") ScheduleStatus status);
 
     List<NotificationSchedule> findBySettingId(Long settingId);
+
+    @Modifying
+    @Query("UPDATE NotificationSchedule ns SET ns.status = :newStatus " +
+           "WHERE ns.id = :id AND ns.status = :currentStatus")
+    int updateStatusConditionally(@Param("id") Long id,
+                                  @Param("currentStatus") ScheduleStatus currentStatus,
+                                  @Param("newStatus") ScheduleStatus newStatus);
 }

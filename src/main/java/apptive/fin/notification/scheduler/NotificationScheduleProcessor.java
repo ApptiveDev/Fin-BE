@@ -13,7 +13,6 @@ import apptive.fin.user.entity.User;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
@@ -28,37 +27,55 @@ public class NotificationScheduleProcessor {
     private final UnsubscribeService unsubscribeService;
     private final ProductRepository productRepository;
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
-    public void processScheduleInTransaction(Long scheduleId) {
+    /**
+     * 스케줄 처리 메인 메서드 (트랜잭션 분리)
+     *
+     * [TX 1] SCHEDULED → SENDING 상태 변경으로 작업 선점
+     * [트랜잭션 없음] 외부 서비스(이메일) 호출
+     * [TX 2] 결과에 따라 SENT/FAILED/SKIPPED 상태 변경 및 로그 저장
+     */
+    public void processSchedule(Long scheduleId) {
+        // [TX 1] 작업 선점 - SCHEDULED → SENDING
+        EmailSendContext context = claimSchedule(scheduleId);
+        if (context == null) {
+            return; // 이미 다른 프로세스가 처리 중이거나 스킵됨
+        }
+
+        // [트랜잭션 없음] 이메일 전송
+        EmailSendResult result = null;
+        if (context.shouldSend()) {
+            result = sendEmail(context);
+        }
+
+        // [TX 2] 결과 저장
+        completeSchedule(scheduleId, context, result);
+    }
+
+    @Transactional
+    protected EmailSendContext claimSchedule(Long scheduleId) {
+        // 조건부 UPDATE로 작업 선점
+        int updated = scheduleRepository.updateStatusConditionally(
+                scheduleId, ScheduleStatus.SCHEDULED, ScheduleStatus.SENDING);
+
+        if (updated == 0) {
+            log.debug("Schedule {} already claimed or processed", scheduleId);
+            return null;
+        }
+
         NotificationSchedule schedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> new IllegalStateException("Schedule not found: " + scheduleId));
 
-        processSchedule(schedule);
-    }
-
-    private void processSchedule(NotificationSchedule schedule) {
         NotificationSetting setting = schedule.getSetting();
         User user = setting.getUser();
         String email = user.getEmail();
 
-        if (email == null || email.isBlank()) {
-            log.warn("User {} has no email, skipping notification", user.getId());
-            schedule.markAsSkipped();
-            return;
+        // 스킵 조건 체크
+        SkipReason skipReason = checkSkipConditions(user, email);
+        if (skipReason != null) {
+            return EmailSendContext.skipped(scheduleId, skipReason);
         }
 
-        if (!user.isEmailVerified()) {
-            log.warn("User {} email not verified, skipping notification", user.getId());
-            schedule.markAsSkipped();
-            return;
-        }
-
-        if (unsubscribeService.isUnsubscribed(email)) {
-            log.info("Email {} is unsubscribed, skipping notification", email);
-            schedule.markAsSkipped();
-            return;
-        }
-
+        // 이메일 전송에 필요한 정보 수집
         String unsubscribeUrl = unsubscribeService.generateUnsubscribeUrl(email);
         String productName = getProductName(setting.getTargetId());
         int dday = parseDday(schedule.getOffsetLabel());
@@ -66,13 +83,31 @@ public class NotificationScheduleProcessor {
         String htmlBody = buildHtmlBody(setting, productName, schedule.getOffsetLabel(), unsubscribeUrl);
         MailType mailType = toMailType(setting.getNotificationType());
 
-        EmailSendRequest request = EmailSendRequest.of(email, subject, htmlBody, mailType);
-        EmailSendResult result = emailSendPort.send(request);
+        return EmailSendContext.ready(scheduleId, email, subject, htmlBody, mailType);
+    }
 
+    private EmailSendResult sendEmail(EmailSendContext context) {
+        EmailSendRequest request = EmailSendRequest.of(
+                context.email(), context.subject(), context.htmlBody(), context.mailType());
+        return emailSendPort.send(request);
+    }
+
+    @Transactional
+    protected void completeSchedule(Long scheduleId, EmailSendContext context, EmailSendResult result) {
+        NotificationSchedule schedule = scheduleRepository.findById(scheduleId)
+                .orElseThrow(() -> new IllegalStateException("Schedule not found: " + scheduleId));
+
+        if (context.skipReason() != null) {
+            schedule.markAsSkipped();
+            log.info("Schedule {} skipped: {}", scheduleId, context.skipReason());
+            return;
+        }
+
+        // 발송 로그 저장
         sendLogRepository.save(EmailSendLog.builder()
                 .schedule(schedule)
-                .toEmail(email)
-                .mailType(mailType)
+                .toEmail(context.email())
+                .mailType(context.mailType())
                 .resendMessageId(result.messageId())
                 .status(result.success() ? EmailSendStatus.SENT : EmailSendStatus.FAILED)
                 .errorMessage(result.errorMessage())
@@ -80,8 +115,27 @@ public class NotificationScheduleProcessor {
 
         if (result.success()) {
             schedule.markAsSent();
-            log.info("Notification sent to {} for schedule {}", email, schedule.getId());
+            log.info("Notification sent to {} for schedule {}", context.email(), scheduleId);
+        } else {
+            schedule.markAsFailed();
+            log.error("Failed to send notification for schedule {}: {}", scheduleId, result.errorMessage());
         }
+    }
+
+    private SkipReason checkSkipConditions(User user, String email) {
+        if (email == null || email.isBlank()) {
+            log.warn("User {} has no email, skipping notification", user.getId());
+            return SkipReason.NO_EMAIL;
+        }
+        if (!user.isEmailVerified()) {
+            log.warn("User {} email not verified, skipping notification", user.getId());
+            return SkipReason.NOT_VERIFIED;
+        }
+        if (unsubscribeService.isUnsubscribed(email)) {
+            log.info("Email {} is unsubscribed, skipping notification", email);
+            return SkipReason.UNSUBSCRIBED;
+        }
+        return null;
     }
 
     private String buildSubject(NotificationType type, String productName, int dday) {
@@ -126,5 +180,30 @@ public class NotificationScheduleProcessor {
             case START -> MailType.START;
             case MATURITY -> MailType.MATURITY;
         };
+    }
+
+    private enum SkipReason {
+        NO_EMAIL, NOT_VERIFIED, UNSUBSCRIBED
+    }
+
+    private record EmailSendContext(
+            Long scheduleId,
+            String email,
+            String subject,
+            String htmlBody,
+            MailType mailType,
+            SkipReason skipReason
+    ) {
+        static EmailSendContext ready(Long scheduleId, String email, String subject, String htmlBody, MailType mailType) {
+            return new EmailSendContext(scheduleId, email, subject, htmlBody, mailType, null);
+        }
+
+        static EmailSendContext skipped(Long scheduleId, SkipReason reason) {
+            return new EmailSendContext(scheduleId, null, null, null, null, reason);
+        }
+
+        boolean shouldSend() {
+            return skipReason == null;
+        }
     }
 }
