@@ -42,6 +42,7 @@ public class OAuth2UserService extends DefaultOAuth2UserService {
 
         if (emailVerified && !user.isEmailVerified()) {
             user.verifyEmail();
+            userRepository.save(user);
         }
 
         return new CustomOAuth2User(
