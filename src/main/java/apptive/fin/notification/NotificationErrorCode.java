@@ -16,6 +16,10 @@ public enum NotificationErrorCode implements ErrorCode {
     ALREADY_VERIFIED(HttpStatus.BAD_REQUEST, "005", "이미 인증된 이메일입니다."),
     INVALID_UNSUBSCRIBE_SIGNATURE(HttpStatus.BAD_REQUEST, "006", "잘못된 수신거부 요청입니다."),
     EMAIL_UNSUBSCRIBED(HttpStatus.BAD_REQUEST, "007", "수신거부된 이메일입니다."),
+    SETTING_NOT_FOUND(HttpStatus.NOT_FOUND, "008", "알림 설정을 찾을 수 없습니다."),
+    SETTING_ALREADY_EXISTS(HttpStatus.CONFLICT, "009", "이미 등록된 알림 설정입니다."),
+    INVALID_DEADLINE_DATE(HttpStatus.BAD_REQUEST, "010", "마감일은 오늘 이후여야 합니다."),
+    TARGET_NOT_FOUND(HttpStatus.NOT_FOUND, "011", "대상을 찾을 수 없습니다."),
     ;
 
     private final String codePrefix = "N";
