@@ -142,7 +142,7 @@ public class NotificationScheduleProcessor {
     private String buildSubject(NotificationType type, String productName, int dday) {
         return switch (type) {
             case DEADLINE -> templateService.buildDeadlineSubject(productName, dday);
-            case START -> templateService.buildStartSubject(productName);
+            case START -> templateService.buildStartSubject(productName, dday == 0);  // D-0: 당일, D-1: 전날
             case MATURITY -> templateService.buildMaturitySubject(productName, dday);
         };
     }
@@ -183,6 +183,7 @@ public class NotificationScheduleProcessor {
                     .unsubscribeUrl(unsubscribeUrl)
                     .build());
             case START -> templateService.buildStartEmailV2(StartEmailData.builder()
+                    .isToday(dday == 0)  // D-0: 당일, D-1: 전날
                     .title(productName)
                     .agency(bankName)
                     .ctaUrl(detailUrl)

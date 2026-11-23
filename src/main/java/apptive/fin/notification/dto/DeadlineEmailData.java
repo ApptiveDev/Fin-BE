@@ -32,4 +32,8 @@ public record DeadlineEmailData(
     public boolean hasNextAlert() {
         return nextAlertDate != null && nextAlertDday != null;
     }
+
+    public boolean isTomorrow() {
+        return dday == 1;
+    }
 }

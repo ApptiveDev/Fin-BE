@@ -21,4 +21,12 @@ public record MaturityEmailData(
     public String ddayText() {
         return dday == 0 ? "D-Day" : "D-" + dday;
     }
+
+    public String daysLeftText() {
+        return dday == 7 ? "일주일" : dday + "일";
+    }
+
+    public boolean isOneWeek() {
+        return dday == 7;
+    }
 }

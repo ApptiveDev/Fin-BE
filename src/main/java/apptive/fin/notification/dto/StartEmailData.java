@@ -7,6 +7,7 @@ import lombok.Builder;
  */
 @Builder
 public record StartEmailData(
+        boolean isToday,  // true: 시작 당일, false: 시작 전날
         String typeLabel,
         String title,
         String startDateLabel,

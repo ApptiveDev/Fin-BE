@@ -177,17 +177,32 @@ class EmailTemplateServiceTest {
         @Test
         @DisplayName("이메일 제목 생성")
         void 이메일_제목_생성() {
+            // 마감 알림: D-7, D-3
             assertThat(emailTemplateService.buildDeadlineSubject("청년희망적금", 7))
                     .isEqualTo("[Y-Fin.] 청년희망적금 신청 마감까지 7일 남았어요");
 
-            assertThat(emailTemplateService.buildStartSubject("청년도약계좌"))
-                    .isEqualTo("[Y-Fin.] 청년도약계좌 신청이 시작되었습니다");
+            // 마감 알림: D-1 (내일 마감)
+            assertThat(emailTemplateService.buildDeadlineSubject("청년희망적금", 1))
+                    .isEqualTo("[Y-Fin.] 내일 청년희망적금 신청이 마감돼요");
+
+            // 시작 알림: 당일
+            assertThat(emailTemplateService.buildStartSubject("청년도약계좌", true))
+                    .isEqualTo("[Y-Fin.] 청년도약계좌 신청이 오늘 시작됐어요");
+
+            // 시작 알림: 전날
+            assertThat(emailTemplateService.buildStartSubject("청년도약계좌", false))
+                    .isEqualTo("[Y-Fin.] 내일 청년도약계좌 신청이 시작돼요");
 
             assertThat(emailTemplateService.buildDigestSubject(3))
                     .isEqualTo("[Y-Fin.] 오늘 확인할 일정 3건");
 
+            // 만기 알림: 30일
             assertThat(emailTemplateService.buildMaturitySubject("KB정기예금", 30))
                     .isEqualTo("[Y-Fin.] KB정기예금 만기가 30일 남았어요");
+
+            // 만기 알림: 7일 (일주일)
+            assertThat(emailTemplateService.buildMaturitySubject("KB정기예금", 7))
+                    .isEqualTo("[Y-Fin.] KB정기예금 만기가 일주일 남았어요");
 
             assertThat(emailTemplateService.buildVerificationSubject())
                     .isEqualTo("[Y-Fin.] 알림 받을 이메일을 확인해 주세요");

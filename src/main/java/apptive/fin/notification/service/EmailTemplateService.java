@@ -31,10 +31,13 @@ public class EmailTemplateService {
     // ──────────────────────────────────────────────────────────────────────────
 
     /**
-     * 마감 알림 단건 이메일 (D-7)
+     * 마감 알림 단건 이메일 (D-7, D-3, D-1)
      */
     public String buildDeadlineEmailV2(DeadlineEmailData data) {
         Map<String, Object> context = createBaseContext();
+
+        // D-1 여부 (내일 마감)
+        context.put("isTomorrow", data.isTomorrow());
 
         // policy 객체
         Map<String, Object> policy = new HashMap<>();
@@ -66,10 +69,13 @@ public class EmailTemplateService {
     }
 
     /**
-     * 시작 알림 이메일
+     * 시작 알림 이메일 (전날/당일 구분)
      */
     public String buildStartEmailV2(StartEmailData data) {
         Map<String, Object> context = createBaseContext();
+
+        // 당일/전날 구분
+        context.put("isToday", data.isToday());
 
         Map<String, Object> policy = new HashMap<>();
         policy.put("name", data.title());
@@ -122,7 +128,7 @@ public class EmailTemplateService {
     }
 
     /**
-     * 만기 알림 이메일 (D-30)
+     * 만기 알림 이메일 (D-30, D-7)
      */
     public String buildMaturityEmailV2(MaturityEmailData data) {
         Map<String, Object> context = createBaseContext();
@@ -137,6 +143,8 @@ public class EmailTemplateService {
 
         Map<String, Object> alert = new HashMap<>();
         alert.put("daysLeft", data.dday());
+        alert.put("daysLeftText", data.daysLeftText());  // 7일일 때 "일주일"
+        alert.put("isOneWeek", data.isOneWeek());
         context.put("alert", alert);
 
         Map<String, Object> links = new HashMap<>();
@@ -166,11 +174,17 @@ public class EmailTemplateService {
     // ──────────────────────────────────────────────────────────────────────────
 
     public String buildDeadlineSubject(String productName, int dday) {
+        if (dday == 1) {
+            return MAIL_SUBJECT_PREFIX + " 내일 " + productName + " 신청이 마감돼요";
+        }
         return MAIL_SUBJECT_PREFIX + " " + productName + " 신청 마감까지 " + dday + "일 남았어요";
     }
 
-    public String buildStartSubject(String productName) {
-        return MAIL_SUBJECT_PREFIX + " " + productName + " 신청이 시작되었습니다";
+    public String buildStartSubject(String productName, boolean isToday) {
+        if (isToday) {
+            return MAIL_SUBJECT_PREFIX + " " + productName + " 신청이 오늘 시작됐어요";
+        }
+        return MAIL_SUBJECT_PREFIX + " 내일 " + productName + " 신청이 시작돼요";
     }
 
     public String buildDigestSubject(int count) {
@@ -178,7 +192,12 @@ public class EmailTemplateService {
     }
 
     public String buildMaturitySubject(String productName, int dday) {
-        return MAIL_SUBJECT_PREFIX + " " + productName + " 만기가 " + dday + "일 남았어요";
+        String daysText = (dday == 7) ? "일주일" : dday + "일";
+        return MAIL_SUBJECT_PREFIX + " " + productName + " 만기가 " + daysText + " 남았어요";
+    }
+
+    public String buildCorrectionSubject(String productName) {
+        return MAIL_SUBJECT_PREFIX + " " + productName + " 일정이 변경됐어요";
     }
 
     public String buildVerificationSubject() {
