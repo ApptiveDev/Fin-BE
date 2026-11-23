@@ -55,11 +55,13 @@ public class EmailVerificationService {
 
         String rawToken = generateSecureToken();
         String tokenHash = passwordEncoder.encode(rawToken);
+        String tokenPrefix = rawToken.substring(0, 8);
 
         EmailVerification verification = EmailVerification.builder()
                 .user(user)
                 .email(email)
                 .tokenHash(tokenHash)
+                .tokenPrefix(tokenPrefix)
                 .expiresAt(Instant.now().plus(TOKEN_EXPIRY_HOURS, ChronoUnit.HOURS))
                 .build();
 
@@ -106,7 +108,8 @@ public class EmailVerificationService {
     }
 
     private EmailVerification findValidVerification(String rawToken) {
-        return emailVerificationRepository.findAllValidTokens().stream()
+        String prefix = rawToken.substring(0, 8);
+        return emailVerificationRepository.findValidByTokenPrefix(prefix).stream()
                 .filter(v -> passwordEncoder.matches(rawToken, v.getTokenHash()))
                 .findFirst()
                 .orElseThrow(() -> new BusinessException(NotificationErrorCode.INVALID_TOKEN));

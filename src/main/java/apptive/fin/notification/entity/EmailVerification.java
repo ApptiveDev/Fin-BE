@@ -29,6 +29,9 @@ public class EmailVerification {
     @Column(name = "token_hash", nullable = false)
     private String tokenHash;
 
+    @Column(name = "token_prefix", length = 8)
+    private String tokenPrefix;
+
     @Column(name = "expires_at", nullable = false)
     private Instant expiresAt;
 
@@ -45,10 +48,11 @@ public class EmailVerification {
     private Instant createdAt;
 
     @Builder
-    public EmailVerification(User user, String email, String tokenHash, Instant expiresAt) {
+    public EmailVerification(User user, String email, String tokenHash, String tokenPrefix, Instant expiresAt) {
         this.user = user;
         this.email = email;
         this.tokenHash = tokenHash;
+        this.tokenPrefix = tokenPrefix;
         this.expiresAt = expiresAt;
         this.lastSentAt = Instant.now();
         this.createdAt = Instant.now();
