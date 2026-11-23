@@ -1,13 +1,13 @@
 package apptive.fin.notification.scheduler;
 
 import apptive.fin.notification.adapter.EmailSendPort;
-import apptive.fin.notification.dto.EmailSendRequest;
-import apptive.fin.notification.dto.EmailSendResult;
+import apptive.fin.notification.dto.*;
 import apptive.fin.notification.entity.*;
 import apptive.fin.notification.repository.EmailSendLogRepository;
 import apptive.fin.notification.repository.NotificationScheduleRepository;
 import apptive.fin.notification.service.EmailTemplateService;
 import apptive.fin.notification.service.UnsubscribeService;
+import apptive.fin.search.entity.Product;
 import apptive.fin.search.repository.ProductRepository;
 import apptive.fin.user.entity.User;
 import lombok.RequiredArgsConstructor;
@@ -77,10 +77,11 @@ public class NotificationScheduleProcessor {
 
         // 이메일 전송에 필요한 정보 수집
         String unsubscribeUrl = unsubscribeService.generateUnsubscribeUrl(email);
-        String productName = getProductName(setting.getTargetId());
+        Product product = getProduct(setting.getTargetId());
+        String productName = product != null ? product.getDisplayProductName() : "상품";
         int dday = parseDday(schedule.getOffsetLabel());
         String subject = buildSubject(setting.getNotificationType(), productName, dday);
-        String htmlBody = buildHtmlBody(setting, productName, schedule.getOffsetLabel(), unsubscribeUrl);
+        String htmlBody = buildHtmlBody(setting, product, dday, unsubscribeUrl);
         MailType mailType = toMailType(setting.getNotificationType());
 
         return EmailSendContext.ready(scheduleId, email, subject, htmlBody, mailType);
@@ -146,10 +147,8 @@ public class NotificationScheduleProcessor {
         };
     }
 
-    private String getProductName(Long targetId) {
-        return productRepository.findById(targetId)
-                .map(product -> product.getProductName())
-                .orElse("상품");
+    private Product getProduct(Long targetId) {
+        return productRepository.findById(targetId).orElse(null);
     }
 
     private int parseDday(String offsetLabel) {
@@ -164,13 +163,40 @@ public class NotificationScheduleProcessor {
         }
     }
 
-    private String buildHtmlBody(NotificationSetting setting, String productName, String offsetLabel, String unsubscribeUrl) {
+    private String buildHtmlBody(NotificationSetting setting, Product product, int dday, String unsubscribeUrl) {
+        String productName = product != null ? product.getDisplayProductName() : "상품";
         String detailUrl = "https://y-fin.com/products/" + setting.getTargetId();
+        String allSchedulesUrl = "https://y-fin.com/schedules";
+        String manageUrl = "https://y-fin.com/settings/notifications";
+        String bankName = product != null && product.getSource() != null
+                ? product.getSource().getName() : "";
 
         return switch (setting.getNotificationType()) {
-            case DEADLINE -> templateService.buildDeadlineEmail(productName, offsetLabel, detailUrl, unsubscribeUrl);
-            case START -> templateService.buildStartEmail(productName, detailUrl, unsubscribeUrl);
-            case MATURITY -> templateService.buildMaturityEmail(productName, offsetLabel, unsubscribeUrl);
+            case DEADLINE -> templateService.buildDeadlineEmailV2(DeadlineEmailData.builder()
+                    .dday(dday)
+                    .urgent(dday <= 3)
+                    .title(productName)
+                    .agency(bankName)
+                    .ctaUrl(detailUrl)
+                    .allSchedulesUrl(allSchedulesUrl)
+                    .manageUrl(manageUrl)
+                    .unsubscribeUrl(unsubscribeUrl)
+                    .build());
+            case START -> templateService.buildStartEmailV2(StartEmailData.builder()
+                    .title(productName)
+                    .agency(bankName)
+                    .ctaUrl(detailUrl)
+                    .allSchedulesUrl(allSchedulesUrl)
+                    .manageUrl(manageUrl)
+                    .unsubscribeUrl(unsubscribeUrl)
+                    .build());
+            case MATURITY -> templateService.buildMaturityEmailV2(MaturityEmailData.builder()
+                    .dday(dday)
+                    .productName(productName)
+                    .compareUrl("https://y-fin.com/compare")
+                    .manageUrl(manageUrl)
+                    .unsubscribeUrl(unsubscribeUrl)
+                    .build());
         };
     }
 

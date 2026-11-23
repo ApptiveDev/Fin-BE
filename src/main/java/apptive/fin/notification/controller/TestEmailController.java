@@ -28,15 +28,29 @@ public class TestEmailController {
     public ResponseEntity<TestEmailResponse> send(@RequestBody TestEmailRequest request) {
         String htmlBody = switch (request.templateType()) {
             case "verification" -> templateService.buildVerificationEmail("https://y-fin.com/verify?token=test");
-            case "deadline" -> templateService.buildDeadlineEmail(
-                    "테스트 상품", "D-3", "https://y-fin.com/products/1", "https://y-fin.com/unsubscribe"
-            );
-            case "start" -> templateService.buildStartEmail(
-                    "테스트 상품", "https://y-fin.com/products/1", "https://y-fin.com/unsubscribe"
-            );
-            case "maturity" -> templateService.buildMaturityEmail(
-                    "테스트 상품", "D-30", "https://y-fin.com/unsubscribe"
-            );
+            case "deadline" -> templateService.buildDeadlineEmailV2(DeadlineEmailData.builder()
+                    .dday(3)
+                    .urgent(true)
+                    .title("테스트 상품")
+                    .ctaUrl("https://y-fin.com/products/1")
+                    .allSchedulesUrl("https://y-fin.com/schedules")
+                    .manageUrl("https://y-fin.com/settings/notifications")
+                    .unsubscribeUrl("https://y-fin.com/unsubscribe")
+                    .build());
+            case "start" -> templateService.buildStartEmailV2(StartEmailData.builder()
+                    .title("테스트 상품")
+                    .ctaUrl("https://y-fin.com/products/1")
+                    .allSchedulesUrl("https://y-fin.com/schedules")
+                    .manageUrl("https://y-fin.com/settings/notifications")
+                    .unsubscribeUrl("https://y-fin.com/unsubscribe")
+                    .build());
+            case "maturity" -> templateService.buildMaturityEmailV2(MaturityEmailData.builder()
+                    .dday(30)
+                    .productName("테스트 상품")
+                    .compareUrl("https://y-fin.com/compare")
+                    .manageUrl("https://y-fin.com/settings/notifications")
+                    .unsubscribeUrl("https://y-fin.com/unsubscribe")
+                    .build());
             default -> "<h1>테스트 이메일</h1><p>Y-Fin. 테스트 이메일입니다.</p>";
         };
 
