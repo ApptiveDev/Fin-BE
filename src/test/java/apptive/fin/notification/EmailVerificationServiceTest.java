@@ -149,7 +149,7 @@ class EmailVerificationServiceTest {
         given(verification.getUser()).willReturn(testUser);
         given(verification.getEmail()).willReturn("test@example.com");
 
-        given(emailVerificationRepository.findAllValidTokens()).willReturn(List.of(verification));
+        given(emailVerificationRepository.findValidByTokenPrefix(anyString())).willReturn(List.of(verification));
         given(passwordEncoder.matches(rawToken, "hashedToken")).willReturn(true);
 
         // when
@@ -161,10 +161,10 @@ class EmailVerificationServiceTest {
 
     @Test
     void 만료된_토큰_인증시_예외발생() {
-        // given - findAllValidTokens는 만료된 토큰을 반환하지 않음
-        String rawToken = "expiredToken";
+        // given - findValidByTokenPrefix는 만료된 토큰을 반환하지 않음
+        String rawToken = "expiredToken12345678";
 
-        given(emailVerificationRepository.findAllValidTokens()).willReturn(List.of());
+        given(emailVerificationRepository.findValidByTokenPrefix(anyString())).willReturn(List.of());
 
         // when & then
         assertThatThrownBy(() -> emailVerificationService.verifyEmail(rawToken))
@@ -173,10 +173,10 @@ class EmailVerificationServiceTest {
 
     @Test
     void 이미_사용된_토큰_인증시_예외발생() {
-        // given - findAllValidTokens는 사용된 토큰을 반환하지 않음
-        String rawToken = "usedToken";
+        // given - findValidByTokenPrefix는 사용된 토큰을 반환하지 않음
+        String rawToken = "usedToken123456789";
 
-        given(emailVerificationRepository.findAllValidTokens()).willReturn(List.of());
+        given(emailVerificationRepository.findValidByTokenPrefix(anyString())).willReturn(List.of());
 
         // when & then
         assertThatThrownBy(() -> emailVerificationService.verifyEmail(rawToken))
@@ -186,12 +186,12 @@ class EmailVerificationServiceTest {
     @Test
     void 잘못된_토큰_인증시_예외발생() {
         // given
-        String rawToken = "invalidToken";
+        String rawToken = "invalidToken12345";
         EmailVerification verification = mock(EmailVerification.class);
 
         given(verification.getTokenHash()).willReturn("hashedToken");
 
-        given(emailVerificationRepository.findAllValidTokens()).willReturn(List.of(verification));
+        given(emailVerificationRepository.findValidByTokenPrefix(anyString())).willReturn(List.of(verification));
         given(passwordEncoder.matches(rawToken, "hashedToken")).willReturn(false);
 
         // when & then
@@ -202,9 +202,9 @@ class EmailVerificationServiceTest {
     @Test
     void 인증_토큰이_없을때_예외발생() {
         // given
-        String rawToken = "nonExistentToken";
+        String rawToken = "nonExistentToken12";
 
-        given(emailVerificationRepository.findAllValidTokens()).willReturn(List.of());
+        given(emailVerificationRepository.findValidByTokenPrefix(anyString())).willReturn(List.of());
 
         // when & then
         assertThatThrownBy(() -> emailVerificationService.verifyEmail(rawToken))
