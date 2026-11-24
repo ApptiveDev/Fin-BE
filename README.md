@@ -105,14 +105,17 @@ Update : 2026/07/13
 | `backend-ci.yml` | 단위 테스트(`test`), 통합 테스트(`integrationTest`) | O |
 | `deploy.yml` | `backend-ci.yml` 통과 후 이미지 빌드·배포. `main` → dev 서버, `release` → 운영 서버 | - |
 | `backend-code-health.yml` | 커버리지(JaCoCo)·복잡도/버그 패턴(PMD)·중복(CPD)·Code Health(Codelens)를 main 스냅샷과 비교해 PR 코멘트로 게시 | X (정보 제공용) |
+| `migration-version-check.yml` | PR이 추가한 Flyway 마이그레이션 버전이 main의 최대 버전보다 큰지 검사해 `Migration version` 커밋 상태로 게시 | O |
 
 - `backend-ci.yml`은 모든 PR에서 돌고, `main`·`release` push 때는 `deploy.yml`이 배포 전에 호출한다. 배포 절차와 서버 설정은 [배포 문서](docs/implementation/deployment.md).
 - `IntegrationTestSupport`를 상속한 테스트는 `integration` 태그가 붙어 `integrationTest`에서만 실행된다(Docker 필요).
+- `migration-version-check.yml`은 main에 마이그레이션이 들어오면 열린 PR을 모두 다시 검사해 상태를 갱신한다. 실패하면 PR이 추가한 마이그레이션을 main 최대 버전 다음 번호부터 다시 매긴다.
 - main 비교 기준은 main push 때 저장되는 `backend-code-health-main` artifact(30일 보관)다. 없으면 Base가 N/A로 표시된다.
 - 로컬 실행
   ```bash
   ./gradlew test              # 단위 테스트
   ./gradlew integrationTest   # 통합 테스트 (Testcontainers)
   ./gradlew codeHealthReports # build/reports/{jacoco/combined.xml,pmd/main.xml,cpd/main.xml}
-  python -m unittest discover -s tools/tests  # 리포트 생성기 테스트
+  python -m unittest discover -s tools/tests  # 리포트 생성기·마이그레이션 버전 검사 테스트
+  python tools/check_migration_versions.py origin/main HEAD  # 마이그레이션 버전 검사
   ```

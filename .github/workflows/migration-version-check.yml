@@ -1,0 +1,75 @@
+name: Migration version check
+
+# PR이 추가한 Flyway 마이그레이션 버전이 main의 최대 버전보다 큰지 검사해, PR head 커밋에 "Migration version" 상태로 남긴다.
+# PR을 올릴 때 통과했어도 그 뒤 main에 더 큰 버전이 들어오면 어긋나므로, main에 마이그레이션이 들어올 때 열린 PR을 모두 다시 검사한다.
+# (PR 이벤트의 job 결과는 그 시점 커밋에 고정돼 다시 바꿀 수 없어서, 나중에 갱신할 수 있는 커밋 상태를 쓴다.)
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+    paths:
+      - "src/main/resources/db/migration/**"
+  # 열린 PR을 지금 바로 모두 다시 검사할 때 (Actions 탭 → Run workflow)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+  statuses: write
+
+concurrency:
+  group: migration-version-check-${{ github.event.pull_request.number || 'main' }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Check migration versions
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Check and report on PRs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          git fetch --quiet origin main
+          base=$(git rev-parse FETCH_HEAD)
+          if [ -n "$PR_NUMBER" ]; then
+            prs="$PR_NUMBER"
+          else
+            prs=$(gh pr list --base main --state open --limit 100 --json number --jq '.[].number')
+          fi
+
+          failed=0
+          for pr in $prs; do
+            git fetch --quiet origin "pull/$pr/head"
+            sha=$(git rev-parse FETCH_HEAD)
+            echo "::group::#$pr ($sha)"
+            if out=$(python tools/check_migration_versions.py "$base" "$sha"); then
+              state=success
+            else
+              state=failure
+              failed=1
+            fi
+            echo "$out"
+            echo "::endgroup::"
+            gh api "repos/$GITHUB_REPOSITORY/statuses/$sha" \
+              -f state="$state" \
+              -f context="Migration version" \
+              -f description="$(echo "$out" | tail -n 1)" \
+              -f target_url="$RUN_URL" > /dev/null
+          done
+
+          # PR 이벤트에서는 이 job도 실패로 표시한다. main push에서는 결과를 각 PR에만 남기고 main 커밋은 초록으로 둔다.
+          if [ -n "$PR_NUMBER" ]; then
+            exit "$failed"
+          fi
