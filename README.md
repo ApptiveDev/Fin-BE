@@ -36,12 +36,15 @@
 | 유저 정보 조회 | GET    | `/me`    |
 | 유저 정보 수정 | PATCH  | `/me`    |
 | 회원 탈퇴    | DELETE | `/me`    |
+| 프로필 조회   | GET    | `/me/profile` |
+| 프로필 수정   | PUT    | `/me/profile` |
+| 프로필 삭제   | DELETE | `/me/profile` |
 
 ### /term
 | 기능       | Method | API Path |
 | -------- | ------ | -------- |
 | 약관 목록 조회 | GET    | `/`      |
-| 약관 동의    | POST   | `/agree` |
+| 약관 동의    | POST   | `/`      |
 
 ### /category
 | 기능            | Method | API Path        |
@@ -54,6 +57,7 @@
 | 동적 폼 조회  | POST   | `/search/dynamic-form` |
 | 맞춤 상품 추천 | POST   | `/search/products` |
 | 상품명 검색   | GET    | `/search/products` |
+| 상품 상세 조회 | POST   | `/search/products/{productId}/detail` |
 
 맞춤 상품 추천 응답의 `productDetails`에는 추천 목록에 포함된 상품의 상세 정보가 함께 반환됩니다. 상품 단위가 아니라 **옵션(`productPropertyId`) 단위**로 1건씩이며, 리스트 카드와 `productPropertyId`로 짝지어 쓰도록 설계되어 있습니다. 적합도순 탭과 금리순 탭이 같은 상품에서 서로 다른 옵션을 고를 수 있어, 한 상품에서 최대 2건이 나올 수 있습니다.
 
@@ -83,6 +87,11 @@
 | 기능              | Method | API Path |
 |-----------------|--------|----------|
 | 적금/예금 최종 수익 계산기 | POST   | `/calculator` |
+
+### /providers
+| 기능       | Method | API Path |
+|----------|--------|----------|
+| 은행 목록 조회 | GET    | `/providers/banks` |
 
 
 ## 4. 개발현황
