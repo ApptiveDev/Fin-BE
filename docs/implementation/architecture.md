@@ -16,7 +16,7 @@ flowchart LR
 ```
 
 - **수집기(Fin-API)**: 공공 API 원본을 `product_raw`에 쌓고, 비정형 우대조건·자격 텍스트를 LLM으로 구조화해(`llm_enrichment_cache`) `product`, `product_properties`, 키워드·우대금리 테이블에 정규화해 넣는다. 이 저장소에는 수집기 코드가 없고, 수집기용 테이블의 스키마(V3, V4)만 같은 Flyway 이력으로 관리한다.
-- **백엔드(Fin-BE)**: 상품 데이터는 읽기만 하고, 사용자·프로필·약관 동의·찜·리프레시 토큰을 쓴다. 추천 점수와 금리는 요청마다 메모리에서 계산한다(사전 계산 테이블 없음). 캐시는 키워드 옵션 매핑(`keywordOptionMap`, `keywordOptionMappings`)과 중위소득(`medianIncome`)에만 쓴다.
+- **백엔드(Fin-BE)**: 상품 데이터는 읽기만 하고, 사용자·프로필·약관 동의·찜·리프레시 토큰을 쓴다. 추천 점수와 금리는 요청마다 메모리에서 계산한다(사전 계산 테이블 없음). 캐시는 키워드 옵션 매핑(`keywordOptionMap`, `keywordOptionMappings`)과 중위소득(`medianIncome`)에 만료 없이 쓰고, 상품 상세의 `#최고이율` 임계값(`bankMaxInterestThreshold`)에 요청 조건별로 10분 쓴다(Caffeine, `CacheConfig`).
 - **프론트엔드(Fin-FE)**: 비로그인 권한 분기, 1단계 입력 보존, GA4 이벤트, 금융 용어 풀이는 FE 책임이다.
 
 ## 기술 스택

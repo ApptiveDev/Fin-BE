@@ -314,6 +314,41 @@ class ProductDetailServiceIntegrationTest extends IntegrationTestSupport {
     }
 
     @Test
+    void 같은_조건의_상세_재요청은_최고이율_컷을_다시_계산하지_않는다() {
+        // 목록 카드마다 같은 조건으로 상세를 부르므로, 컷을 매번 계산하면 요청마다 전체 상품을 다시 읽는다(#52).
+        Long productId = productId("SEARCH_YOUTH_SAVING");
+        ProductDetailRequestDto request = request(propertyId("SEARCH_YOUTH_SAVING"), 100L);
+        assertThat(productDetailService.getProductDetail(productId, request, authenticatedUser()).keywords())
+                .contains(KeywordValueEnum.BENEFIT_MAX_INTEREST); // 컷 4.5
+
+        // 가입 가능한 고금리 상품 2개 추가 → 다시 계산하면 컷 = 9.0이 되어 칩이 빠진다.
+        jdbcTemplate.update("""
+                INSERT INTO product (source_id, type, product_code, product_name, content)
+                VALUES
+                    ((SELECT id FROM product_source WHERE code = 'FSS'), 'SAVING', 'SEARCH_HIGH_1', '고금리1', ''),
+                    ((SELECT id FROM product_source WHERE code = 'FSS'), 'SAVING', 'SEARCH_HIGH_2', '고금리2', '')
+                """);
+        jdbcTemplate.update("""
+                INSERT INTO product_properties
+                    (product_id, provider_id, base_rate, max_rate, min_monthly_limit, max_monthly_limit, is_joinable, save_trm)
+                VALUES
+                    ((SELECT id FROM product WHERE product_code = 'SEARCH_HIGH_1'),
+                     (SELECT id FROM provider WHERE code = 'SEARCH_BANK_A'), 9.0, 10.0, 10, 1000, true, 12),
+                    ((SELECT id FROM product WHERE product_code = 'SEARCH_HIGH_2'),
+                     (SELECT id FROM provider WHERE code = 'SEARCH_BANK_A'), 8.0, 9.0, 10, 1000, true, 12)
+                """);
+
+        assertThat(productDetailService.getProductDetail(productId, request, authenticatedUser()).keywords())
+                .as("캐시된 컷 4.5를 그대로 쓴다")
+                .contains(KeywordValueEnum.BENEFIT_MAX_INTEREST);
+
+        clearCaches();
+        assertThat(productDetailService.getProductDetail(productId, request, authenticatedUser()).keywords())
+                .as("캐시를 비우면 새 데이터로 다시 계산한다")
+                .doesNotContain(KeywordValueEnum.BENEFIT_MAX_INTEREST);
+    }
+
+    @Test
     void 은행상품_상세는_영속된_정적_최고이율_태그가_있어도_동적기준_미달이면_칩이_없다() {
         // 레거시 정적 BENEFIT_MAX_INTEREST 행이 남아있어도(재정규화 전 상황 모사),
         // 동적 컷(4.5) 미달인 SAFE_DEPOSIT(3.45)은 칩이 노출되면 안 된다 — 배지는 동적 결과만 반영.
