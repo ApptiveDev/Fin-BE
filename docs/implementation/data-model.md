@@ -17,6 +17,7 @@
 | V7 | (`main`에 없음) PR #36이 저축기간 개월 옵션(`TERM_1_MONTH` 등)을 추가하는 데 쓴다 |
 | V8 | 파킹 카드용 `max_rate_applicable_min/max_amount`(최고금리 적용 잔액 범위, 하한 초과·상한 이하), `interest_payment_method`(이자지급방식 원문). 예치 한도 `min/max_deposit_amount`는 예금과 파킹이 같이 쓴다 |
 | V10 | B1 캘린더용 `youth_policy`(온통청년 청년정책), `youth_policy_round`(신청 회차), `policy_product_round`(정부상품 신청 회차). V9는 PR #41이 쓴다 |
+| V15 | 기준 데이터: 2027 중위소득 (V2의 2026년 값과 같은 반올림 규칙) |
 
 `spring.flyway.baseline-version: 2`, `baseline-on-migrate: true`로 Flyway 도입 이전에 만든 DB도 V3부터 이어서 적용할 수 있다.
 
@@ -106,7 +107,7 @@ erDiagram
 
 | 테이블 | 내용 |
 | --- | --- |
-| `median_incomes` | 연도 × 가구원 수 × 중위소득 % → 월 소득(만 원). 2026년 값 |
+| `median_incomes` | 연도 × 가구원 수 × 중위소득 % → 월 소득(만 원). 2026·2027년 값. 매년 7월 고시되는 다음 해 값을 마이그레이션으로 추가한다 |
 | `category`, `category_option` | 입력 키워드. 카테고리 ID 1~6은 `CategoryIdEnum`과 일치해야 한다 |
 | `terms`, `term_versions` | 약관 |
 
