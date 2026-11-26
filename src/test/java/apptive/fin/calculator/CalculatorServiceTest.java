@@ -102,17 +102,19 @@ class CalculatorServiceTest {
     }
 
     @Test
-    @DisplayName("적금 요청에 reserveType이 없으면 IllegalArgumentException을 던진다")
-    void saving_withoutReserveType_throwsException() {
+    @DisplayName("적금 계산은 reserveType을 쓰지 않으므로 없어도 팩토리에 위임된다")
+    void saving_withoutReserveType_delegatesToFactory() {
         CalculatorRequestDto request = new CalculatorRequestDto(
                 1L, ProductType.SAVING, InterestRateType.SINGLE_INTEREST, null,
                 new BigDecimal("0.04"), new BigDecimal("100000"), 12, TaxType.GENERAL
         );
         when(productPropertyRepository.findById(1L)).thenReturn(Optional.of(dummyProperty));
+        when(calculatorFactory.getCalculator(ProductType.SAVING)).thenReturn(rateCalculator);
+        when(rateCalculator.calculate(request)).thenReturn(dummyResponse);
 
-        assertThatThrownBy(() -> calculatorService.simulate(request))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("reserveType");
+        CalculatorResponseDto result = calculatorService.simulate(request);
+
+        assertThat(result).isEqualTo(dummyResponse);
     }
 
     @Test

@@ -27,6 +27,7 @@ import apptive.fin.search.service.ResolveKeywordService;
 import apptive.fin.search.service.SearchRequestPolicy;
 import apptive.fin.search.util.ApplyLinkResolver;
 import apptive.fin.search.util.ProductAvailability;
+import apptive.fin.user.UserErrorCode;
 import apptive.fin.user.entity.User;
 import apptive.fin.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -96,20 +97,21 @@ public class MyFinService {
     // 찜 추가
     @Transactional
     public void addFavorite(Long userId, Long productPropertyId) {
+        // 이미 찜한 상품은 개수와 상관없이 중복으로 알린다
+        if (myfinRepository.existsByUserIdAndProductPropertyId(userId, productPropertyId)) {
+            throw new BusinessException(MyFinErrorCode.FAVORITE_ALREADY_EXISTS);
+        }
+
         int currentCount = myfinRepository.countByUserId(userId);
         if (currentCount >= MAX_FIN) {
             throw new BusinessException(MyFinErrorCode.FAVORITE_LIMIT_EXCEEDED);
-        }
-
-        if (myfinRepository.existsByUserIdAndProductPropertyId(userId, productPropertyId)) {
-            throw new BusinessException(MyFinErrorCode.FAVORITE_ALREADY_EXISTS);
         }
 
         ProductProperty productProperty = productPropertyRepository.findByIdAndIsJoinableTrue(productPropertyId)
                 .orElseThrow(() -> new BusinessException(MyFinErrorCode.PRODUCT_NOT_FOUND));
 
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new BusinessException(MyFinErrorCode.PRODUCT_NOT_FOUND));
+                .orElseThrow(() -> new BusinessException(UserErrorCode.USER_NOT_FOUND));
 
         MyFin myFin = MyFin.builder()
                 .user(user)

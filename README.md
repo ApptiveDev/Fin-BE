@@ -16,6 +16,8 @@
 - 사용자 맞춤 금융 상품 추천
 
 ## 3. API 명세
+엔드포인트별 요청·응답, 인증 수준, 오류 코드는 [Fin API 명세](https://yuyeol3.github.io/fin-api-docs/)에 있습니다. 아래 표는 엔드포인트 요약입니다.
+
 ### /auth
 | 기능      | Method | API Path   |
 | ------- | ------ | ---------- |
@@ -34,12 +36,15 @@
 | 유저 정보 조회 | GET    | `/me`    |
 | 유저 정보 수정 | PATCH  | `/me`    |
 | 회원 탈퇴    | DELETE | `/me`    |
+| 프로필 조회   | GET    | `/me/profile` |
+| 프로필 수정   | PUT    | `/me/profile` |
+| 프로필 삭제   | DELETE | `/me/profile` |
 
 ### /term
 | 기능       | Method | API Path |
 | -------- | ------ | -------- |
 | 약관 목록 조회 | GET    | `/`      |
-| 약관 동의    | POST   | `/agree` |
+| 약관 동의    | POST   | `/`      |
 
 ### /category
 | 기능            | Method | API Path        |
@@ -52,6 +57,7 @@
 | 동적 폼 조회  | POST   | `/search/dynamic-form` |
 | 맞춤 상품 추천 | POST   | `/search/products` |
 | 상품명 검색   | GET    | `/search/products` |
+| 상품 상세 조회 | POST   | `/search/products/{productId}/detail` |
 
 맞춤 상품 추천 응답의 `productDetails`에는 추천 목록에 포함된 상품의 상세 정보가 함께 반환됩니다. 상품 단위가 아니라 **옵션(`productPropertyId`) 단위**로 1건씩이며, 리스트 카드와 `productPropertyId`로 짝지어 쓰도록 설계되어 있습니다. 적합도순 탭과 금리순 탭이 같은 상품에서 서로 다른 옵션을 고를 수 있어, 한 상품에서 최대 2건이 나올 수 있습니다.
 
@@ -84,6 +90,11 @@
 |-----------------|--------|----------|
 | 적금/예금 최종 수익 계산기 | POST   | `/calculator` |
 
+### /providers
+| 기능       | Method | API Path |
+|----------|--------|----------|
+| 은행 목록 조회 | GET    | `/providers/banks` |
+
 
 ## 4. 개발현황
 Update : 2026/07/13
@@ -105,14 +116,17 @@ Update : 2026/07/13
 | `backend-ci.yml` | 단위 테스트(`test`), 통합 테스트(`integrationTest`) | O |
 | `deploy.yml` | `backend-ci.yml` 통과 후 이미지 빌드·배포. `main` → dev 서버, `release` → 운영 서버 | - |
 | `backend-code-health.yml` | 커버리지(JaCoCo)·복잡도/버그 패턴(PMD)·중복(CPD)·Code Health(Codelens)를 main 스냅샷과 비교해 PR 코멘트로 게시 | X (정보 제공용) |
+| `migration-version-check.yml` | PR이 추가한 Flyway 마이그레이션 버전이 main의 최대 버전보다 큰지 검사해 `Migration version` 커밋 상태로 게시 | O |
 
 - `backend-ci.yml`은 모든 PR에서 돌고, `main`·`release` push 때는 `deploy.yml`이 배포 전에 호출한다. 배포 절차와 서버 설정은 [배포 문서](docs/implementation/deployment.md).
 - `IntegrationTestSupport`를 상속한 테스트는 `integration` 태그가 붙어 `integrationTest`에서만 실행된다(Docker 필요).
+- `migration-version-check.yml`은 main에 마이그레이션이 들어오면 열린 PR을 모두 다시 검사해 상태를 갱신한다. 실패하면 PR이 추가한 마이그레이션을 main 최대 버전 다음 번호부터 다시 매긴다.
 - main 비교 기준은 main push 때 저장되는 `backend-code-health-main` artifact(30일 보관)다. 없으면 Base가 N/A로 표시된다.
 - 로컬 실행
   ```bash
   ./gradlew test              # 단위 테스트
   ./gradlew integrationTest   # 통합 테스트 (Testcontainers)
   ./gradlew codeHealthReports # build/reports/{jacoco/combined.xml,pmd/main.xml,cpd/main.xml}
-  python -m unittest discover -s tools/tests  # 리포트 생성기 테스트
+  python -m unittest discover -s tools/tests  # 리포트 생성기·마이그레이션 버전 검사 테스트
+  python tools/check_migration_versions.py origin/main HEAD  # 마이그레이션 버전 검사
   ```

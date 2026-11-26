@@ -74,7 +74,7 @@ sequenceDiagram
 
 ## 회원 정보와 탈퇴 (`user`)
 
-- `GET /user/me`, `PATCH /user/me`(이메일 중복 검사 포함), `DELETE /user/me`.
+- `GET /user/me`, `PATCH /user/me`(보낸 필드만 수정. 이메일 형식과 이름 공백 검증, 본인 이메일을 뺀 중복 검사), `DELETE /user/me`.
 - 탈퇴는 `users` 행을 지우고, 리프레시 토큰·프로필·약관 동의·찜은 FK `ON DELETE CASCADE`로 함께 지워진다.
 
 ## 환경 변수
