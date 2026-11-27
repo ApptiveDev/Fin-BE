@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="x-apple-disable-message-reformatting">
+<title>[Y-Fin.] {{product.name}} 만기가 {{alert.daysLeftText}} 남았어요</title>
+<!--[if !mso]><!-->
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.css" rel="stylesheet">
+<style>body,table,td,a,p,h1,div{font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic','맑은 고딕',Arial,sans-serif !important;}</style>
+<!--<![endif]-->
+</head>
+<body style="margin:0;padding:0;background-color:#f2f3f5;">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:#f2f3f5;">{{product.maturityDateLong}}에 만기가 돼요. 만기 후 어디에 맡길지 미리 비교해 보세요.</div>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f2f3f5;">
+<tr><td align="center" style="padding:40px 12px;">
+
+  <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic','맑은 고딕',Arial,sans-serif;">
+
+    <tr><td style="background-color:#ffffff;border:1px solid #e5e7eb;border-radius:16px;padding:40px;">
+
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td align="left" valign="middle">
+            <img src="{{assets.logoUrl}}" width="90" height="53" alt="Y-Fin" style="display:block;border:0;color:#03bfa5;font-size:28px;font-weight:bold;">
+          </td>
+          <td align="right" valign="middle" style="font-size:12px;line-height:18px;color:#8a8f99;">만기 알림</td>
+        </tr>
+      </table>
+
+      <h1 style="margin:32px 0 0;font-size:26px;line-height:36px;font-weight:700;color:#222222;">{{product.name}}<br>만기가 <span style="color:#7b1fa2;">{{alert.daysLeftText}}</span> 남았어요</h1>
+
+      <p style="margin:24px 0 0;font-size:15px;line-height:24px;color:#222222;"><b>{{product.maturityDateLong}}</b>에 만기가 돼요. 만기 후 어디에 맡길지 미리 비교해 보세요.</p>
+
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:24px;border:1px solid #e5e7eb;border-radius:14px;">
+        <tr><td style="padding:22px 24px 8px;">
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <td style="background-color:#f3e5fa;border-radius:11px;padding:0 10px;height:22px;font-size:11px;line-height:22px;font-weight:600;color:#7b1fa2;white-space:nowrap;">만기 D-{{alert.daysLeft}}</td>
+              <td width="6" style="font-size:0;line-height:0;">&nbsp;</td>
+              <td style="background-color:#f2f3f5;border-radius:11px;padding:0 10px;height:22px;font-size:11px;line-height:22px;font-weight:600;color:#3d3d3d;white-space:nowrap;">내가 등록한 가입 상품</td>
+            </tr>
+          </table>
+          <div style="margin:12px 0 0;font-size:18px;line-height:26px;font-weight:700;color:#222222;">{{product.name}}</div>
+        </td></tr>
+        <tr><td style="padding:8px 24px 0;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+            <tr>
+              <td style="border-top:1px solid #f0f1f3;padding:12px 0;font-size:12px;line-height:16px;color:#8a8f99;" align="left">가입일</td>
+              <td style="border-top:1px solid #f0f1f3;padding:12px 0;font-size:12px;line-height:16px;font-weight:600;color:#222222;" align="right">{{product.joinDate}}</td>
+            </tr>
+            <tr>
+              <td style="border-top:1px solid #f0f1f3;padding:12px 0;font-size:12px;line-height:16px;color:#8a8f99;" align="left">저축 기간</td>
+              <td style="border-top:1px solid #f0f1f3;padding:12px 0;font-size:12px;line-height:16px;font-weight:600;color:#222222;" align="right">{{product.saveMonths}}개월</td>
+            </tr>
+            <tr>
+              <td style="border-top:1px solid #f0f1f3;padding:12px 0;font-size:12px;line-height:16px;color:#8a8f99;" align="left">만기 예정일</td>
+              <td style="border-top:1px solid #f0f1f3;padding:12px 0;font-size:12px;line-height:16px;font-weight:600;color:#222222;" align="right">{{product.maturityDate}}</td>
+            </tr>
+          </table>
+        </td></tr>
+      </table>
+
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:16px;">
+        <tr><td style="background-color:#effffd;border-radius:12px;padding:16px 18px;font-size:13px;line-height:22px;color:#222222;">
+          만기 후 잠깐 맡길 돈이라면 <b style="color:#03bfa5;">단기 예치</b>로, 1년 이상 저축할 수 있다면 <b style="color:#03bfa5;">목돈 만들기</b>로 비교해 볼 수 있어요. 지난번 입력한 금액·기간을 그대로 채워둘게요.
+        </td></tr>
+      </table>
+
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:24px;">
+        <tr><td align="center" bgcolor="#03bfa5" style="background-color:#03bfa5;border-radius:10px;">
+          <a href="{{links.compare}}" target="_blank" style="display:block;padding:16px 0;font-size:16px;line-height:24px;font-weight:600;color:#ffffff;text-decoration:none;">만기 후 선택지 비교하기 &nbsp;›</a>
+        </td></tr>
+      </table>
+
+      <p style="margin:20px 0 0;font-size:12px;line-height:18px;color:#8a8f99;text-align:center;">만기일은 가입일과 저축 기간으로 계산한 예정일이에요. 실제 지급일은 은행 영업일 규칙을 따라요.</p>
+
+    </td></tr>
+
+    <tr><td style="padding:24px 28px 0;font-size:12px;line-height:18px;color:#8a8f99;">
+      <p style="margin:0 0 10px;">일정은 발송일 06:00 온통청년 공고 기준이며 기관 사정에 따라 바뀔 수 있어요.</p>
+      <p style="margin:0 0 10px;">Y-Fin.은 해당 상품의 판매·중개 주체가 아니며, 신청은 기관 공식 페이지에서 진행됩니다.</p>
+      <p style="margin:0 0 10px;">이 메일은 회원님이 직접 신청한 일정 안내입니다.</p>
+      <p style="margin:0 0 10px;">알림을 하나씩 끄거나 다시 켜는 건 Y-Fin 내 알림에서 할 수 있어요.</p>
+      <p style="margin:0 0 10px;">
+        <a href="{{links.settings}}" target="_blank" style="color:#03bfa5;font-weight:700;text-decoration:underline;">알림 설정 관리</a>
+        &nbsp;&nbsp;
+        <a href="{{links.unsubscribe}}" target="_blank" style="color:#8a8f99;text-decoration:underline;">전체 수신거부</a>
+      </p>
+      <p style="margin:0;">Y-Fin. · {{company.address}} · {{company.supportEmail}}</p>
+    </td></tr>
+
+  </table>
+
+</td></tr>
+</table>
+</body>
+</html>

@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ko" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="x-apple-disable-message-reformatting">
+<title>[Y-Fin.] 오늘 확인할 일정 {{itemCount}}건</title>
+<!--[if !mso]><!-->
+<link href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard-dynamic-subset.css" rel="stylesheet">
+<style>body,table,td,a,p,h1,div{font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic','맑은 고딕',Arial,sans-serif !important;}</style>
+<!--<![endif]-->
+</head>
+<body style="margin:0;padding:0;background-color:#f2f3f5;">
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:#f2f3f5;">{{baseDateText}} 기준, 신청하신 알림을 한 번에 모았어요.</div>
+
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f2f3f5;">
+<tr><td align="center" style="padding:40px 12px;">
+
+  <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;font-family:'Pretendard','Apple SD Gothic Neo','Malgun Gothic','맑은 고딕',Arial,sans-serif;">
+
+    <tr><td style="background-color:#ffffff;border:1px solid #e5e7eb;border-radius:16px;padding:40px;">
+
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+        <tr>
+          <td align="left" valign="middle">
+            <img src="{{assets.logoUrl}}" width="90" height="53" alt="Y-Fin" style="display:block;border:0;color:#03bfa5;font-size:28px;font-weight:bold;">
+          </td>
+          <td align="right" valign="middle" style="font-size:12px;line-height:18px;color:#8a8f99;">일정 알림</td>
+        </tr>
+      </table>
+
+      <h1 style="margin:32px 0 0;font-size:26px;line-height:36px;font-weight:700;color:#222222;">오늘 확인할 일정 <span style="color:#03bfa5;">{{itemCount}}건</span></h1>
+
+      <p style="margin:24px 0 0;font-size:15px;line-height:24px;color:#222222;">{{baseDateText}} 기준, 신청하신 알림을 한 번에 모았어요.</p>
+
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:24px;">
+        {{#schedules}}
+        <tr>
+          <td style="border-top:1px solid #f0f1f3;padding:18px 0;" valign="middle">
+            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+              <tr>
+                <td width="58" valign="middle">
+                  <table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>
+                    <td style="background-color:{{badgeBg}};border-radius:11px;padding:0 9px;height:22px;font-size:11px;line-height:22px;font-weight:700;color:{{badgeColor}};white-space:nowrap;">마감 D-{{daysLeft}}</td>
+                  </tr></table>
+                </td>
+                <td width="16" style="font-size:0;line-height:0;">&nbsp;</td>
+                <td valign="middle">
+                  <div style="font-size:15px;line-height:22px;font-weight:700;color:#222222;">{{name}}</div>
+                  <div style="margin-top:2px;font-size:12px;line-height:18px;color:#8a8f99;">{{deadlineText}}</div>
+                </td>
+                <td align="right" valign="middle" style="white-space:nowrap;">
+                  <a href="{{externalUrl}}" target="_blank" style="font-size:13px;line-height:20px;font-weight:700;color:#03bfa5;text-decoration:none;">온통청년 보기 &nbsp;›</a>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        {{/schedules}}
+      </table>
+
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:12px;">
+        <tr><td align="center" bgcolor="#03bfa5" style="background-color:#03bfa5;border-radius:10px;">
+          <a href="{{links.schedule}}" target="_blank" style="display:block;padding:16px 0;font-size:16px;line-height:24px;font-weight:600;color:#ffffff;text-decoration:none;">Y-Fin.에서 모두 보기</a>
+        </td></tr>
+      </table>
+
+    </td></tr>
+
+    <tr><td style="padding:24px 28px 0;font-size:12px;line-height:18px;color:#8a8f99;">
+      <p style="margin:0 0 10px;">일정은 발송일 06:00 온통청년 공고 기준이며 기관 사정에 따라 바뀔 수 있어요.</p>
+      <p style="margin:0 0 10px;">Y-Fin.은 해당 상품의 판매·중개 주체가 아니며, 신청은 기관 공식 페이지에서 진행됩니다.</p>
+      <p style="margin:0 0 10px;">이 메일은 회원님이 직접 신청한 일정 안내입니다.</p>
+      <p style="margin:0 0 10px;">알림을 하나씩 끄거나 다시 켜는 건 Y-Fin 내 알림에서 할 수 있어요.</p>
+      <p style="margin:0 0 10px;">
+        <a href="{{links.settings}}" target="_blank" style="color:#03bfa5;font-weight:700;text-decoration:underline;">알림 설정 관리</a>
+        &nbsp;&nbsp;
+        <a href="{{links.unsubscribe}}" target="_blank" style="color:#8a8f99;text-decoration:underline;">전체 수신거부</a>
+      </p>
+      <p style="margin:0;">Y-Fin. · {{company.address}} · {{company.supportEmail}}</p>
+    </td></tr>
+
+  </table>
+
+</td></tr>
+</table>
+</body>
+</html>
