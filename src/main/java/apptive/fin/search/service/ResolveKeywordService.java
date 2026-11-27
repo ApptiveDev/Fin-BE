@@ -7,6 +7,7 @@ import apptive.fin.search.enums.KeywordValueEnum;
 import apptive.fin.search.SearchErrorCode;
 import apptive.fin.search.dto.OptionRequestDto;
 import apptive.fin.search.dto.ResolvedKeywords;
+import apptive.fin.search.dto.SearchRequestDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +21,12 @@ import apptive.fin.category.service.CategoryOptionService.OptionMapping;
 @RequiredArgsConstructor
 public class ResolveKeywordService {
     private final CategoryOptionService categoryOptionService;
+
+    // 추천 목록과 같은 기준으로 요청의 키워드를 정한다. 상세·찜도 이걸 써야 목록과 같은 적합도가 나온다(#58).
+    public ResolvedKeywords resolveKeywords(SearchRequestDto request) {
+        ResolvedKeywords requested = resolveKeywords(request.options());
+        return requested.withoutMismatchedPeriod(request.category(requested));
+    }
 
     public ResolvedKeywords resolveKeywords(List<OptionRequestDto> options){
         Map<Long, OptionMapping> mapping = categoryOptionService.getOptionMappings();

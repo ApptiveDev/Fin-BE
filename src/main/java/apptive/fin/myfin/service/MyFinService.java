@@ -63,25 +63,19 @@ public class MyFinService {
         }
 
         ResolvedKeywords keywords = request != null && request.options() != null ?
-            resolveKeywordService.resolveKeywords(request.options()) :
+            resolveKeywordService.resolveKeywords(request) :
             ResolvedKeywords.emptyKeywords();
 
         // SearchService와 동일한 tabB 활성화 조건 (은행상품 거래이력 반영 여부)
         boolean tabBEnabled = searchRequestPolicy.canUsePersonalization(request, keywords, userDetails);
 
         // 은행 상품 #최고이율 상위 30% 판정용 임계 금리 계산
-        // SearchService와 동일하게 "가입 가능한 전체 은행상품" 결과셋 기준으로 계산해야
+        // SearchService와 동일하게 "가입 가능한 목돈 후보 은행상품" 결과셋 기준으로 계산해야
         // 추천 목록과 찜 목록의 적합도가 일치한다. 찜한 상품만으로 계산하면 모집단이 작아져
-        // 값이 달라지므로(#33) eligibilityFilterService로 동일한 모집단을 구한다.
-        List<Double> bankMaxRates = request != null
-                ? eligibilityFilterService.filterEligibleOptions(request, keywords).stream()
-                        .filter(option -> option.product().isBank())
-                        .map(option -> option.property().getMaxRate())
-                        .filter(rate -> rate != null)
-                        .map(java.math.BigDecimal::doubleValue)
-                        .toList()
-                : List.of();
-        Double bankMaxInterestThreshold = BankMaxInterestPolicy.calculateThreshold(bankMaxRates);
+        // 값이 달라지므로(#33, #58) 목록과 같은 후보를 구한다.
+        Double bankMaxInterestThreshold = request != null
+                ? BankMaxInterestPolicy.calculateThresholdOf(eligibilityFilterService.filterLongTermCandidates(request, keywords))
+                : null;
 
         List<MyfinResponseDto.Item> items = favorites.stream()
                 .map(myFin -> toItemDto(myFin, request, keywords, bankMaxInterestThreshold, tabBEnabled))

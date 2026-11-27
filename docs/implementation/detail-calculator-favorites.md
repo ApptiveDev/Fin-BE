@@ -4,7 +4,7 @@
 
 ## 상품 상세 (`POST /search/products/{productId}/detail`)
 
-공개 API다. 본문은 생략할 수 있고, 넣을 때는 `{ productPropertyId, options, detailedOptions }` 형태다(추천 요청과 같은 입력 + 리스트가 고른 옵션 ID).
+공개 API다. 본문은 생략할 수 있고, 넣을 때는 `{ productPropertyId, options, detailedOptions, category }` 형태다(추천 요청과 같은 입력 + 리스트가 고른 옵션 ID). `category`는 검색 요청에 보낸 대분류이고, 없으면 저축기간으로 정한다.
 
 ### 옵션 선택
 
@@ -21,7 +21,7 @@
 
 잠기면 `lockMessage`를 주고, 정부 상품의 `government`(환산 수익률, 예상 만기 기여금, 매칭 유형, 유효 월 납입, 기여 기간)는 null, 은행 상품의 `bank`는 기본·최고금리만 채우고 달성 가능 금리와 충족·미충족 우대조건은 비운다. 청약 상품은 수치를 보여주지 않는다.
 
-`matchScore`(적합도)는 잠금과 별개로 `productPropertyId`와 `options`가 있으면 계산한다. 리스트와 같은 값이 나오도록 거래 이력 반영 여부와 `#최고이율` 임계값을 리스트와 같은 규칙으로 맞춘다.
+`matchScore`(적합도)는 잠금과 별개로 `productPropertyId`와 `options`가 있으면 계산한다. 리스트와 같은 값이 나오도록 거래 이력 반영 여부, 키워드(대분류와 맞지 않는 저축기간 제거), `#최고이율` 임계값을 리스트와 같은 규칙으로 맞춘다.
 
 ### 금리표 (`rateTable`)
 

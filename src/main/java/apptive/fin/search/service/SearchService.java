@@ -19,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -47,9 +46,8 @@ public class SearchService {
      * 요청의 대분류(없으면 저축기간)로 파이프라인을 고른다.
      */
     public UnifiedSearchResultDto searchUnified(SearchRequestDto request, AuthUserDetails userDetails) {
-        ResolvedKeywords requestedKeywords = resolveKeywordService.resolveKeywords(request.options());
-        ProductCategoryEnum category = request.category(requestedKeywords);
-        ResolvedKeywords resolvedKeywords = withoutMismatchedPeriod(requestedKeywords, category);
+        ResolvedKeywords resolvedKeywords = resolveKeywordService.resolveKeywords(request);
+        ProductCategoryEnum category = request.category(resolvedKeywords);
 
         if (category == ProductCategoryEnum.SHORT_TERM) {
             ShortTermResultDto shortTermResult = searchShortTerm(request, userDetails, resolvedKeywords);
@@ -62,21 +60,6 @@ public class SearchService {
 
     public UnifiedSearchResultDto searchUnified(SearchRequestDto request) {
         return searchUnified(request, null);
-    }
-
-    // 대분류와 맞지 않는 저축기간은 고르지 않은 것으로 본다 (적합도 기간 축에서 빠지고, 단기는 1·3개월 상품을 모두 보여준다).
-    private ResolvedKeywords withoutMismatchedPeriod(ResolvedKeywords keywords, ProductCategoryEnum category) {
-        KeywordValueEnum period = keywords.savingPeriod();
-        if (period == null || ProductCategoryEnum.fromSaveTrm(period.toSaveTrm()) == category) {
-            return keywords;
-        }
-        return new ResolvedKeywords(
-                keywords.regions(),
-                keywords.identities(),
-                null,
-                keywords.coreBenefits(),
-                keywords.bankConditions()
-        );
     }
 
     /**
@@ -178,18 +161,11 @@ public class SearchService {
     // 내부 검색 로직 (키워드 해석 완료 후 호출)
     private ProductSearchResultDto searchInternal(SearchRequestDto request, AuthUserDetails userDetails, ResolvedKeywords resolvedKeywords) {
 
-        // 사용자가 가입 가능한 상품 필터링
-        List<EligibleProductOption> eligible = eligibilityFilterService.filterEligibleOptions(
+        // 사용자가 가입 가능한 목돈 후보 옵션
+        List<EligibleProductOption> eligible = eligibilityFilterService.filterLongTermCandidates(
                 request,
                 resolvedKeywords
         );
-
-        // 고른 기간이 없으면(대분류를 명시한 요청) 목돈 기간 옵션만 남긴다. 단기 옵션이 상품 대표로 뽑히지 않게 한다.
-        if (request.getSaveTrm(resolvedKeywords) == null) {
-            eligible = eligible.stream()
-                    .filter(option -> ProductCategoryEnum.fromSaveTrm(option.property().getSaveTrm()) == ProductCategoryEnum.LONG_TERM)
-                    .toList();
-        }
 
         // 선택된 지역 키워드가 빈칸이 아니라면
         if (!resolvedKeywords.regions().isEmpty()) {
@@ -217,12 +193,7 @@ public class SearchService {
         );
 
         // 은행 #최고이율_중심 상위 30% 판정용 임계 금리(결과셋 maxRate 기준). null이면 정적 태그 방식으로 폴백.
-        List<Double> bankMaxInterestRates = bankList.stream()
-                .map(option -> option.property().getMaxRate())
-                .filter(Objects::nonNull)
-                .map(java.math.BigDecimal::doubleValue)
-                .toList();
-        Double bankMaxInterestThreshold = BankMaxInterestPolicy.calculateThreshold(bankMaxInterestRates);
+        Double bankMaxInterestThreshold = BankMaxInterestPolicy.calculateThresholdOf(bankList);
 
         // 정부상품 점수 계산 + tieBreaker(기여금총액) 설정 후 정렬
         // PRD 동점 규칙: 적합도 → 기여금총액 → 상품명

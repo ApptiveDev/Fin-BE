@@ -195,7 +195,8 @@ FIXED_AMOUNT : gov_monthly_fixed_contribution × 기여 기간(월)
 같은 상품의 수치가 화면마다 달라지지 않게 하는 것이 이 패키지의 주요 제약이다.
 
 - 리스트, 상세, 찜 목록이 모두 `SearchRequestPolicy.canUsePersonalization`으로 개인화 여부를 판정한다.
-- `#최고이율` 임계값은 리스트와 상세(추천 맥락이 있을 때), 찜 목록 모두 "가입 가능한 은행 옵션 전체 결과셋"으로 계산한다. 찜한 상품만으로 계산하면 값이 달라진다(이슈 #33).
+- 키워드는 리스트, 상세, 찜 목록 모두 `ResolveKeywordService.resolveKeywords(SearchRequestDto)`로 정한다. 대분류와 맞지 않는 저축기간을 지우므로, 상세 요청에도 검색 때의 `category`가 필요하다(이슈 #58).
+- `#최고이율` 임계값은 리스트와 상세(추천 맥락이 있을 때), 찜 목록 모두 `EligibilityFilterService.filterLongTermCandidates`(기간이 없으면 목돈 기간 옵션만)의 은행 옵션으로 `BankMaxInterestPolicy.calculateThresholdOf`가 계산한다. 찜한 상품만으로 계산하면 값이 달라진다(이슈 #33, #58).
 - 상세와 카드는 리스트가 고른 `productPropertyId`를 받아 같은 헬퍼로 계산한다.
 
-관련 테스트: `MatchScoreServiceTest`, `RateCalculatorServiceTest`, `EligibilityFilterServiceIntegrationTest`, `EligibilityBoundaryIntegrationTest`, `PrdGoldenScenarioTest`(기획 예시 시나리오), `GovernmentSeedYieldIntegrationTest`(시드 정부 상품 수익률), `MyFinFitScoreParityIntegrationTest`(찜·리스트 점수 일치).
+관련 테스트: `MatchScoreServiceTest`, `RateCalculatorServiceTest`, `EligibilityFilterServiceIntegrationTest`, `EligibilityBoundaryIntegrationTest`, `PrdGoldenScenarioTest`(기획 예시 시나리오), `GovernmentSeedYieldIntegrationTest`(시드 정부 상품 수익률), `MyFinFitScoreParityIntegrationTest`(찜·리스트 점수 일치), `CategoryParityIntegrationTest`(대분류를 명시한 검색에서 리스트·상세·찜 점수 일치).
