@@ -13,8 +13,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Tag(name = "Test Email", description = "테스트 이메일 발송 API (dev 전용)")
-@Profile("dev")
+@Tag(name = "Test Email", description = "테스트 이메일 발송 API (로컬 개발 전용)")
+// 인증 없이 아무 주소로나 발송하므로 로컬(dev 단독)에서만 켠다. 개발 서버(dev,server)와 운영(server)에서는 꺼진다.
+@Profile("dev & !server")
 @RestController
 @RequestMapping("/test/email")
 @RequiredArgsConstructor
