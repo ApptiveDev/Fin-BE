@@ -116,12 +116,16 @@ jobs:
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
           KAKAO_CLIENT_ID: ${{ secrets.KAKAO_CLIENT_ID }}
           KAKAO_CLIENT_SECRET: ${{ secrets.KAKAO_CLIENT_SECRET }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          UNSUBSCRIBE_SIGNING_SECRET: ${{ secrets.UNSUBSCRIBE_SIGNING_SECRET }}
+          FRONTEND_BASE_URL: ${{ vars.FRONTEND_BASE_URL }}
         run: |
           umask 077
           {
             echo "IMAGE_TAG=${GITHUB_SHA}"
             for name in SPRING_PROFILES_ACTIVE SERVER_NAME FRONTEND_URL POSTGRES_PASSWORD JWT_SECRET \
-                GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET KAKAO_CLIENT_ID KAKAO_CLIENT_SECRET; do
+                GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET KAKAO_CLIENT_ID KAKAO_CLIENT_SECRET \
+                RESEND_API_KEY UNSUBSCRIBE_SIGNING_SECRET FRONTEND_BASE_URL; do
               # 작은따옴표로 감싸 compose가 값을 그대로 읽게 한다.
               printf "%s='%s'\n" "$name" "${!name}"
             done
