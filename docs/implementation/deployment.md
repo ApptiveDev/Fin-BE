@@ -37,8 +37,15 @@ Fin-BE 레포의 Environment `dev`, `prod`에 둔다.
 | var | `GCE_INSTANCE`, `GCE_ZONE` | VM 이름, 존 |
 | var | `SERVER_NAME` | 도메인. nginx `server_name`과 인증서 경로에 쓴다 |
 | var | `FRONTEND_URL` | 프론트 주소. 쉼표로 여러 개(예: dev는 `https://fin-fe-test-phi.vercel.app,http://localhost:5173`). 모두 CORS 허용, OAuth 로그인 후에는 로그인을 시작한 주소로, 알 수 없으면 첫 주소로 리다이렉트 |
+| var | `FRONTEND_BASE_URL` | 이메일 인증 후 이동할 프론트 주소(하나) |
 | secret | `POSTGRES_PASSWORD` | DB 비밀번호 |
 | secret | `JWT_SECRET`, `GOOGLE_CLIENT_ID/SECRET`, `KAKAO_CLIENT_ID/SECRET` | 앱 시크릿 |
+| secret | `RESEND_API_KEY` | Resend 메일 발송 키. Environment마다 따로 발급 |
+| secret | `UNSUBSCRIBE_SIGNING_SECRET` | 수신거부 링크 서명 키(`openssl rand -base64 32`). Environment마다 다른 값 |
+
+메일 변수 셋(`FRONTEND_BASE_URL`, `RESEND_API_KEY`, `UNSUBSCRIBE_SIGNING_SECRET`)은 등록하지 않아도 앱이 떠서 배포 health check를 통과한다. 빈 값이 넘어가면 `application.yml` 기본값도 쓰이지 않으므로, 발송이 실패하고 인증 후 이동 주소가 깨진다. Environment를 새로 만들면 셋 다 등록한다.
+
+메일 링크의 백엔드 주소(`APP_BASE_URL`)는 따로 두지 않고 `deploy/docker-compose.yml`에서 `https://<SERVER_NAME>`으로 만든다.
 
 OAuth 콘솔(Google, Kakao)에는 `https://<SERVER_NAME>/login/oauth2/code/{google,kakao}`가 리다이렉트 URI로 등록돼 있어야 한다.
 

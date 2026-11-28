@@ -46,6 +46,11 @@ services:
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
       KAKAO_CLIENT_ID: ${KAKAO_CLIENT_ID}
       KAKAO_CLIENT_SECRET: ${KAKAO_CLIENT_SECRET}
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      UNSUBSCRIBE_SIGNING_SECRET: ${UNSUBSCRIBE_SIGNING_SECRET}
+      FRONTEND_BASE_URL: ${FRONTEND_BASE_URL}
+      # 메일 속 인증·수신거부 링크의 주소. nginx가 / 전체를 backend로 넘긴다.
+      APP_BASE_URL: https://${SERVER_NAME}
     # nginx를 거쳐서만 들어온다
     expose:
       - "8080"
